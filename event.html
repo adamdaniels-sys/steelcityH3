@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Steel City H3 — Hash detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="spice.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="home.html" class="brand" style="text-decoration: none; color: inherit;">
+      <img src="logo-original.jpg" alt="" />
+      Steel City H3
+    </a>
+    <nav>
+      <a href="home.html#events">Up Next</a>
+      <a href="home.html#past">Past Hashes</a>
+      <a href="home.html#hashing-101">What's a hash?</a>
+      <a href="home.html#jargon">Jargon</a>
+      <a href="home.html#mismanagement">Cast</a>
+    </nav>
+    <a href="login.html" class="login-chip" id="login-chip">
+      <span class="av" id="login-av">?</span>
+      <span id="login-name">Sign in</span>
+    </a>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="container">
+    <a href="home.html">Home</a>
+    <span class="sep">▸</span>
+    <a href="home.html#events">Hashes</a>
+    <span class="sep">▸</span>
+    <span id="crumb-title">Loading…</span>
+  </div>
+</div>
+
+<main id="main">
+  <section class="event-hero">
+    <div class="container">
+      <div class="panel">
+        <div id="ev-stat" class="ev-stat">Loading…</div>
+        <h1 id="ev-title">…</h1>
+        <div class="ev-when" id="ev-when">…</div>
+
+        <div class="event-grid">
+          <div class="ev-info">
+            <h2>The details</h2>
+            <dl id="ev-details">
+              <dt>Run #</dt><dd id="d-runno">—</dd>
+              <dt>Date</dt><dd id="d-date">—</dd>
+              <dt>Start</dt><dd id="d-time">—</dd>
+              <dt>Where</dt><dd id="d-where">—</dd>
+              <dt>Hares</dt><dd id="d-hares">—</dd>
+              <dt>Pace</dt><dd id="d-pace">Walk or run</dd>
+              <dt>Distance</dt><dd id="d-distance">—</dd>
+              <dt>On-on</dt><dd id="d-onon">—</dd>
+            </dl>
+
+            <div id="admin-edit" style="display:none; margin-top: 22px; padding: 14px 18px; background: var(--orange); color: var(--ink); border: 3px solid var(--ink); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.92rem;">
+              <b>▸ Admin tools</b> — you'd see "Edit event", "Upload photos", "Post blog write-up" buttons here. (Mockup only.)
+              <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn cream" type="button" disabled>Edit details</button>
+                <button class="btn cream" type="button" disabled>Upload photos</button>
+                <button class="btn cream" type="button" disabled>Post write-up</button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="ev-side" id="rsvp-card">
+            <!-- RSVP UI injected by JS -->
+          </aside>
+        </div>
+
+        <!-- Going / attended list -->
+        <div style="margin-top: 30px;">
+          <h2 style="font-family: 'Bangers', sans-serif; font-size: 1.8rem; letter-spacing: 0.04em; margin-bottom: 14px;" id="going-heading">Who's coming</h2>
+          <ul class="going-list" id="going-list"></ul>
+        </div>
+
+        <!-- Route -->
+        <div class="route-box" id="route-box">
+          <h2>The <span class="or">route</span></h2>
+          <p id="route-blurb">Route TBC — start point and trail map shared closer to the date.</p>
+          <div class="route-placeholder">
+            <div class="stack">
+              <div class="big">▸ Route map placeholder</div>
+              <div class="lil">Smutley uploads a MapMyRoute / Strava link here. Photos of OS-style maps work too.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Past-event content -->
+        <div id="past-content" style="display:none;">
+          <div class="recap-blog">
+            <h2 id="blog-title">Write-up</h2>
+            <div class="by" id="blog-by">By Scribe</div>
+            <div id="blog-body"></div>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <h2 style="font-family: 'Bangers', sans-serif; font-size: 1.8rem; letter-spacing: 0.04em; margin-bottom: 8px;">Photos</h2>
+            <div class="photo-grid" id="photo-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="big">ON-ON<span class="yel">·H3!</span></div>
+    <div class="meta">Steel City H3 · Sheffield · Year 1 · Find us on Facebook</div>
+  </div>
+</footer>
+
+<!-- ===== Event data + page logic ===== -->
+<script>
+  // Static event data — would come from the backend in production.
+  // Each event has: id, runno, title, status ('upcoming'|'past'),
+  // date (ISO), time, where, hares, pace, distance, onon, blurb, blog
+  const EVENTS = {
+    18: {
+      runno: 18, title: "June Hash",
+      status: "upcoming", date: "2026-06-20", time: "12:00 noon",
+      where: "Sheffield centre — start point TBC",
+      hares: "TBC", pace: "Walk or run", distance: "3–5 miles",
+      onon: "TBA — usually a proper Sheffield boozer",
+      blurb: "Sheffield month! Start point and exact pub announced on the Wednesday before by email."
+    },
+    19: {
+      runno: 19, title: "July Hash",
+      status: "upcoming", date: "2026-07-18", time: "12:00 noon",
+      where: "Derbyshire Dales — start point TBC",
+      hares: "VOLUNTEERS WANTED — email Smutley", pace: "Walk or run", distance: "4–6 miles",
+      onon: "A Dales pub with a fire, ideally with food",
+      blurb: "Dales month. Hares wanted — first time haring? We'll help. Reply to Smutley."
+    },
+    20: {
+      runno: 20, title: "August Hash",
+      status: "upcoming", date: "2026-08-15", time: "12:00 noon",
+      where: "Sheffield centre — start point TBC",
+      hares: "TBC", pace: "Walk or run", distance: "3–5 miles",
+      onon: "TBC",
+      blurb: "Mid-summer Sheffield hash. Probably warm; bring water and a hat."
+    },
+    21: {
+      runno: 21, title: "September Hash",
+      status: "upcoming", date: "2026-09-19", time: "12:00 noon",
+      where: "Derbyshire Dales — start point TBC",
+      hares: "TBC", pace: "Walk or run", distance: "4–6 miles",
+      onon: "TBC",
+      blurb: "Last chance for shorts. Dales walk and a pint of something seasonal."
+    },
+    17: {
+      runno: 17, title: "Bertie's Been Framed",
+      status: "past", date: "2026-04-12", time: "11:00",
+      where: "City Hall, City Square, Sheffield",
+      hares: "Cock-a-Tool", pace: "Walk", distance: "≈ 3 miles",
+      onon: "Hair-of-the-dog at the city centre",
+      blurb: "1st Anniversary Day 3 — the hang(ing)-over hash.",
+      blogBy: "Sister Scribe",
+      blog: [
+        "The hang(ing)-over hash. 11 am City Hall start, hare: Cock-a-Tool. About a dozen of us, varying shades of green, all clutching takeaway coffees.",
+        "The trail was mercifully short and forgiving — Cock-a-Tool had taken pity on us. A gentle wander home through a bleary Sheffield, with one check that no-one was sober enough to solve. We agreed to just keep walking.",
+        "Solved the framing of Bertie. Possibly. Closing pint at City Hall. Bring on the rest of Year 1.",
+      ],
+      attendees: ["Smutley", "Bigfoot", "Jake the Peg", "Cock-a-Tool", "Sister Scribe", "Trampy Pete", "Hash Cash Hannah", "Lost-Again Liz"],
+    },
+    16: {
+      runno: 16, title: "The 1st Anniversary Hash",
+      status: "past", date: "2026-04-11", time: "12:00 noon",
+      where: "Banker's Draft (Wetherspoons), Market Place, Sheffield",
+      hares: "Bigfoot &amp; Jake the Peg", pace: "Walk or run", distance: "≈ 5 miles",
+      onon: "Pub #4 — pizza, real ale, music",
+      blurb: "1st Anniversary Day 2 — the main event.",
+      blogBy: "Bigfoot",
+      blog: [
+        "Kicked off at noon at the Banker's Draft. About 25 of us — biggest hash to date. Trail laid by yours truly and Jake the Peg, across the city to Pub #1 for chip butties at 1.30.",
+        "Runners peeled off at 2.30 for Pub #2 via the Wicker. Walkers took the direct line to Pub #3. We all met up at Pub #4 by 5.",
+        "Real ale through to closing. Pizza. Music. Stayed 'til the bus stopped at 23:52. Walked home. Probably.",
+      ],
+      attendees: ["Smutley", "Bigfoot", "Jake the Peg", "Cock-a-Tool", "Sister Scribe", "Trampy Pete", "Hash Cash Hannah", "Lost-Again Liz", "Two-Pints Tony", "Compass-Free Carol", "FRB Phil", "Down-Down Dot", "Mucky Mick", "+12 more"],
+    },
+    15: {
+      runno: 15, title: "Gangs of Sheffield",
+      status: "past", date: "2026-04-10", time: "17:00",
+      where: "The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG",
+      hares: "Smutley", pace: "Walk", distance: "≈ 3 miles",
+      onon: "Pub crawl finale — room reserved 'til 1 am",
+      blurb: "1st Anniversary Day 1 — Peaky Blinders, Little Chicago, £282.15 raised for St Luke's.",
+      blogBy: "Smutley",
+      blog: [
+        "What a turnout. The Old Queen's Head was already filling up by 5pm — Peaky Blinders hats and waistcoats everywhere, three flat caps for every two heads.",
+        "Guided tour of Little Chicago by author John Stokes and pub historian Dave Pickersgill — 20 places, all gone within a week. Heard stories that would curl your moustache.",
+        "Pub crawl across the Little Chicago area, ending at our reserved room. Real ale (CAMRA cards accepted), food until 9, music 'til 1.",
+        "Charity bucket: <b>£282.15 for St Luke's Hospice</b>. Beat that next year. (We will.)",
+      ],
+      attendees: ["Smutley", "Bigfoot", "Jake the Peg", "Cock-a-Tool", "Sister Scribe", "Trampy Pete", "Hash Cash Hannah", "Lost-Again Liz", "+18 more"],
+    },
+    14: {
+      runno: 14, title: "March Hash — Mosborough Meander",
+      status: "past", date: "2026-03-21", time: "12:00 noon",
+      where: "Mosborough, Sheffield",
+      hares: "Smutley", pace: "Walk", distance: "≈ 4 miles",
+      onon: "The George, Mosborough",
+      blurb: "A surprisingly civilised hash through the old village.",
+      blogBy: "Lost-Again Liz",
+      blog: [
+        "Surprisingly civilised. Three pairs of new boots, a clear sky, and a pub with a fire still going for some reason in March.",
+        "Trail was solid — Smutley had clearly done a recce. One check near the church which we solved in under a minute (a club first).",
+        "Closing pint at The George. Mick stayed for another. Two of them.",
+      ],
+      attendees: ["Smutley", "Bigfoot", "Jake the Peg", "Cock-a-Tool", "Lost-Again Liz", "Mucky Mick", "FRB Phil"],
+    },
+    13: {
+      runno: 13, title: "February Hash — Loxley Lash",
+      status: "past", date: "2026-02-14", time: "12:00 noon",
+      where: "Loxley Valley, Sheffield",
+      hares: "Bigfoot", pace: "Walk or run", distance: "≈ 5 miles",
+      onon: "The Plough, Low Bradfield",
+      blurb: "Lost in Loxley. Found by smell.",
+      blogBy: "Two-Pints Tony",
+      blog: [
+        "A masterclass in trail subterfuge from Compass-Free Carol's stand-in (Bigfoot, hare). We added at least a mile to the planned route.",
+        "We found the on-on by smell alone — the wind was helpfully blowing pub kitchen extractor straight at us by mile 4.",
+        "Closing pints at The Plough. Excellent pies.",
+      ],
+      attendees: ["Smutley", "Bigfoot", "Jake the Peg", "Compass-Free Carol", "Two-Pints Tony", "Cock-a-Tool", "FRB Phil"],
+    },
+  };
+
+  // ----- Helpers -----
+  function $(sel) { return document.querySelector(sel); }
+  function getQueryId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+  }
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function getUser() {
+    try { return JSON.parse(localStorage.getItem('sch3-user') || 'null'); } catch (e) { return null; }
+  }
+  function getRsvps(id) {
+    try { return JSON.parse(localStorage.getItem('sch3-rsvp-' + id) || '[]'); } catch (e) { return []; }
+  }
+  function setRsvps(id, list) {
+    localStorage.setItem('sch3-rsvp-' + id, JSON.stringify(list));
+  }
+  function initials(name) {
+    return name.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  // ----- Login chip -----
+  (function() {
+    const u = getUser();
+    if (!u) return;
+    $('#login-name').textContent = u.name.split(/\s+/)[0];
+    $('#login-av').textContent = initials(u.name);
+  })();
+
+  // ----- Render -----
+  const id = getQueryId();
+  const ev = EVENTS[id];
+
+  if (!ev) {
+    $('#main').innerHTML = '<div class="container" style="padding: 80px 0;"><div class="panel" style="padding: 40px;"><h1 style="font-family: \'Bangers\', sans-serif; font-size: 3rem;">Hash not found.</h1><p style="margin-top: 16px;"><a href="home.html" class="btn cream">▸ Back to home</a></p></div></div>';
+  } else {
+    document.title = "Hash #" + ev.runno + " — " + ev.title + " · Steel City H3";
+    $('#crumb-title').textContent = "Run #" + ev.runno + " · " + ev.title;
+    $('#ev-stat').textContent = ev.status === 'past' ? "▸ Past Hash" : "▸ Coming Up";
+    if (ev.status === 'past') $('#ev-stat').classList.add('past');
+    $('#ev-title').innerHTML = "Run #" + ev.runno + " <span class='or'>·</span> " + ev.title;
+    $('#ev-when').textContent = formatDate(ev.date) + ' · ' + ev.time;
+
+    $('#d-runno').textContent = '#' + ev.runno;
+    $('#d-date').textContent = formatDate(ev.date);
+    $('#d-time').textContent = ev.time;
+    $('#d-where').textContent = ev.where;
+    $('#d-hares').innerHTML = ev.hares;
+    $('#d-pace').textContent = ev.pace;
+    $('#d-distance').textContent = ev.distance;
+    $('#d-onon').textContent = ev.onon;
+
+    // ----- RSVP card -----
+    function renderRsvp() {
+      const card = $('#rsvp-card');
+      const user = getUser();
+      if (ev.status === 'past') {
+        card.innerHTML =
+          '<h2>Attended</h2>' +
+          '<p style="font-family: \'Nunito\', sans-serif; font-weight: 600; color: var(--ink-2);">This one\'s in the books. Scroll down for the write-up and photos.</p>';
+        return;
+      }
+      // Upcoming
+      const rsvps = getRsvps(id);
+      const myRsvp = user && rsvps.find(r => r.email === user.email);
+
+      let inner = '<div class="rsvp">';
+      inner += '<h2>Coming along?</h2>';
+
+      if (!user) {
+        inner += '<p class="note">Sign in (with your hash name) to confirm you\'re coming. Takes 20 seconds.</p>';
+        inner += '<div class="rsvp-actions"><a class="btn" href="login.html?then=' + encodeURIComponent(location.pathname + location.search) + '">▸ Sign in to RSVP</a></div>';
+      } else if (myRsvp) {
+        inner += '<p class="note">You\'re on the list as <b>' + user.name + '</b>. See you Saturday.</p>';
+        inner += '<div class="rsvp-actions">';
+        inner += '<button class="btn muted" type="button" id="cancel-rsvp">▸ Can\'t make it after all</button>';
+        inner += '</div>';
+      } else {
+        inner += '<p class="note">You\'re signed in as <b>' + user.name + '</b>. One click and you\'re on the list.</p>';
+        inner += '<div class="rsvp-actions">';
+        inner += '<button class="btn orange" type="button" id="do-rsvp">▸ Yes, I\'ll be there!</button>';
+        inner += '</div>';
+      }
+
+      inner += '</div>';
+      card.innerHTML = inner;
+
+      // Wire buttons
+      const doBtn = document.getElementById('do-rsvp');
+      if (doBtn) doBtn.addEventListener('click', () => {
+        const list = getRsvps(id);
+        list.push({ email: user.email, name: user.name, when: new Date().toISOString() });
+        setRsvps(id, list);
+        renderRsvp();
+        renderGoing();
+      });
+      const cancelBtn = document.getElementById('cancel-rsvp');
+      if (cancelBtn) cancelBtn.addEventListener('click', () => {
+        const list = getRsvps(id).filter(r => r.email !== user.email);
+        setRsvps(id, list);
+        renderRsvp();
+        renderGoing();
+      });
+    }
+    renderRsvp();
+
+    // ----- Going list / attendees -----
+    function renderGoing() {
+      const ul = $('#going-list');
+      const heading = $('#going-heading');
+      const user = getUser();
+      if (ev.status === 'past') {
+        heading.textContent = 'Who attended (' + (ev.attendees || []).length + ')';
+        ul.innerHTML = (ev.attendees || []).map(n => {
+          return '<li><span class="av">' + initials(n) + '</span><span>' + n + '</span></li>';
+        }).join('');
+        return;
+      }
+      const rsvps = getRsvps(id);
+      heading.textContent = 'Who\'s coming (' + rsvps.length + ')';
+      if (rsvps.length === 0) {
+        ul.innerHTML = '<li class="going-empty">No-one yet. Be the first!</li>';
+        return;
+      }
+      ul.innerHTML = rsvps.map(r => {
+        const isYou = user && r.email === user.email;
+        const when = new Date(r.when).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        return '<li' + (isYou ? ' class="you"' : '') + '><span class="av">' + initials(r.name) + '</span><span>' + r.name + (isYou ? ' (you)' : '') + '</span><span class="when">RSVP\'d ' + when + '</span></li>';
+      }).join('');
+    }
+    renderGoing();
+
+    // ----- Past content -----
+    if (ev.status === 'past') {
+      $('#past-content').style.display = 'block';
+      $('#route-box').style.display = 'none';
+      $('#blog-title').textContent = 'Write-up: ' + ev.title;
+      $('#blog-by').textContent = 'By ' + (ev.blogBy || 'A scribe');
+      $('#blog-body').innerHTML = (ev.blog || []).map(p => '<p>' + p + '</p>').join('');
+
+      // photo placeholders
+      const photoHues = [5, 25, 145, 215, 280, 50];
+      $('#photo-grid').innerHTML = photoHues.map((h, i) =>
+        '<div class="photo-tile" style="background: ' +
+        'linear-gradient(135deg, hsla(' + h + ', 60%, 55%, 0.6), hsla(' + (h + 30) + ', 50%, 35%, 0.7)), ' +
+        'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0, rgba(255,255,255,0.06) 14px, rgba(0,0,0,0.04) 14px, rgba(0,0,0,0.04) 28px), #6a5340;">' +
+        '<span class="lbl">Photo ' + (i + 1) + '</span></div>'
+      ).join('');
+    } else {
+      $('#route-blurb').textContent = ev.blurb || 'Route shared closer to the date.';
+    }
+
+    // ----- Admin tools (if user is admin) -----
+    const user = getUser();
+    if (user && user.isAdmin) {
+      $('#admin-edit').style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>
