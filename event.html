@@ -15,16 +15,16 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="home.html" class="brand" style="text-decoration: none; color: inherit;">
+    <a href="/" class="brand" style="text-decoration: none; color: inherit;">
       <img src="logo-original.jpg" alt="" />
       Steel City H3
     </a>
     <nav>
-      <a href="home.html#events">Up Next</a>
-      <a href="home.html#past">Past Hashes</a>
-      <a href="home.html#hashing-101">What's a hash?</a>
-      <a href="home.html#jargon">Jargon</a>
-      <a href="home.html#mismanagement">Cast</a>
+      <a href="/#events">Up Next</a>
+      <a href="/#past">Past Hashes</a>
+      <a href="/#hashing-101">What's a hash?</a>
+      <a href="/#jargon">Jargon</a>
+      <a href="/#mismanagement">Cast</a>
     </nav>
     <a href="login.html" class="login-chip" id="login-chip">
       <span class="av" id="login-av">?</span>
@@ -35,9 +35,9 @@
 
 <div class="subbar">
   <div class="container">
-    <a href="home.html">Home</a>
+    <a href="/">Home</a>
     <span class="sep">▸</span>
-    <a href="home.html#events">Hashes</a>
+    <a href="/#events">Hashes</a>
     <span class="sep">▸</span>
     <span id="crumb-title">Loading…</span>
   </div>
@@ -276,7 +276,7 @@
   const ev = EVENTS[id];
 
   if (!ev) {
-    $('#main').innerHTML = '<div class="container" style="padding: 80px 0;"><div class="panel" style="padding: 40px;"><h1 style="font-family: \'Bangers\', sans-serif; font-size: 3rem;">Hash not found.</h1><p style="margin-top: 16px;"><a href="home.html" class="btn cream">▸ Back to home</a></p></div></div>';
+    $('#main').innerHTML = '<div class="container" style="padding: 80px 0;"><div class="panel" style="padding: 40px;"><h1 style="font-family: \'Bangers\', sans-serif; font-size: 3rem;">Hash not found.</h1><p style="margin-top: 16px;"><a href="/" class="btn cream">▸ Back to home</a></p></div></div>';
   } else {
     document.title = "Hash #" + ev.runno + " — " + ev.title + " · Steel City H3";
     $('#crumb-title').textContent = "Run #" + ev.runno + " · " + ev.title;

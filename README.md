@@ -4,7 +4,7 @@ The website for **Steel City H3**, Sheffield's youngest Hash House Harriers chap
 
 ## What's in here
 
-- **`home.html`** — the main landing page (upcoming hashes, past hashes, hashing 101, jargon, mismanagement contacts, other groups, about)
+- **`index.html`** — the main landing page (upcoming hashes, past hashes, hashing 101, jargon, mismanagement contacts, other groups, about)
 - **`event.html`** — single-event detail page. Takes a `?id=` query param (e.g. `event.html?id=18`). Handles upcoming + past states from one template.
 - **`login.html`** — sign-in / sign-up mockup with email + 6-digit OTP flow
 - **`spice.css`** — shared stylesheet (Spice & Steel design system)
@@ -12,14 +12,14 @@ The website for **Steel City H3**, Sheffield's youngest Hash House Harriers chap
 
 ## Running it
 
-Open `home.html` in any modern browser. No build step, no server required — it's all static HTML + CSS + a small amount of vanilla JS.
+Open `index.html` in any modern browser. No build step, no server required — it's all static HTML + CSS + a small amount of vanilla JS.
 
 To preview locally with a tiny dev server (optional, recommended so query params work cleanly):
 
 ```bash
 # Python 3
 python3 -m http.server 8000
-# then open http://localhost:8000/home.html
+# then open http://localhost:8000/
 
 # or with Node
 npx serve .

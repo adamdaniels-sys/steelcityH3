@@ -15,15 +15,15 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="home.html" class="brand" style="text-decoration: none; color: inherit;">
+    <a href="/" class="brand" style="text-decoration: none; color: inherit;">
       <img src="logo-original.jpg" alt="" />
       Steel City H3
     </a>
     <nav>
-      <a href="home.html#events">Up Next</a>
-      <a href="home.html#past">Past Hashes</a>
-      <a href="home.html#hashing-101">What's a hash?</a>
-      <a href="home.html#mismanagement">Cast</a>
+      <a href="/#events">Up Next</a>
+      <a href="/#past">Past Hashes</a>
+      <a href="/#hashing-101">What's a hash?</a>
+      <a href="/#mismanagement">Cast</a>
     </nav>
   </div>
 </header>
@@ -80,7 +80,7 @@
         ▸ <b>Admin access detected.</b> You'll see edit buttons on event pages and the home admin panel.
       </div>
       <div style="display: grid; gap: 10px;">
-        <a class="btn orange" href="home.html" id="go-then">▸ Back to the site</a>
+        <a class="btn orange" href="/" id="go-then">▸ Back to the site</a>
         <button class="btn muted" type="button" id="signout-btn">↶ Sign out</button>
       </div>
     </div>
@@ -120,13 +120,13 @@
   function getThen() {
     const params = new URLSearchParams(location.search);
     const t = params.get('then');
-    if (!t) return 'home.html';
+    if (!t) return '/';
     // sanity: only allow same-origin relative links
     try {
       const url = new URL(t, location.href);
       if (url.origin === location.origin) return url.pathname + url.search + url.hash;
     } catch (e) {}
-    return 'home.html';
+    return '/';
   }
 
   // ----- tabs -----
