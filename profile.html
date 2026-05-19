@@ -202,16 +202,17 @@
     btn.disabled = true;
     btn.textContent = '▸ Saving…';
 
+    // Same UPSERT pattern as /complete-profile.html — see comment there.
     const { error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: session.user.id,
         real_name,
         hash_name,
         phone: phone_e164,
         is_hash_virgin,
         newsletter_opt_in,
-      })
-      .eq('id', session.user.id);
+      }, { onConflict: 'id' });
 
     btn.disabled = false;
     btn.textContent = originalLabel;

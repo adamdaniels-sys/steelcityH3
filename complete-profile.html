@@ -185,16 +185,20 @@
     btn.disabled = true;
     btn.textContent = '▸ Saving…';
 
+    // UPSERT (not UPDATE) so the form can recreate the row if it's been
+    // deleted between signup and now. The trigger only creates the row on
+    // auth.users INSERT, so a deleted profile would otherwise be unrecoverable
+    // from the client without admin intervention.
     const { error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: session.user.id,
         real_name,
         hash_name,
         phone: phone_e164,
         is_hash_virgin,
         newsletter_opt_in,
-      })
-      .eq('id', session.user.id);
+      }, { onConflict: 'id' });
 
     btn.disabled = false;
     btn.textContent = originalLabel;
