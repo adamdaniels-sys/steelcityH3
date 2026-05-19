@@ -896,6 +896,12 @@
         .catch((err) => console.warn('[event] hare confirmation email failed:', err));
     }
 
+    // Also notify the admin mailbox (on-on@steelcityh3.org → forwards to Smutley)
+    // so admins know someone offered to hare. Fire-and-forget.
+    supabase.functions
+      .invoke('rapid-processor', { body: { event_id: currentEvent.id, notify: 'hare_volunteer' } })
+      .catch((err) => console.warn('[event] hare admin notify failed:', err));
+
     // Refresh hare display + panel
     const haresStr = await composeHaresString(currentEvent);
     $('#d-hares').textContent = haresStr;

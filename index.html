@@ -415,10 +415,10 @@
 
   function statusBadge(status) {
     switch (status) {
-      case 'open':         return { label: 'Open!',        warn: false };
-      case 'hares_wanted': return { label: 'Hares wanted', warn: true  };
-      case 'closed':       return { label: 'Closed',       warn: true  };
-      default:             return { label: 'TBC',          warn: false };
+      case 'open':         return { label: 'Open!',           warn: false };
+      case 'hares_wanted': return { label: 'Offer to hare!',  warn: true  };
+      case 'closed':       return { label: 'Closed',          warn: true  };
+      default:             return { label: 'TBC',             warn: false };
     }
   }
 
@@ -434,14 +434,41 @@
     return `<div class="attendance">▸ ${parts.join(' · ')}</div>`;
   }
 
-  function renderPersonal(myRsvp) {
-    if (!myRsvp || myRsvp.status === 'not_this_time') return '';
-    const label = myRsvp.status === 'on_on' ? "You're on-on!" : 'You said maybe';
-    const guests = myRsvp.guests_count || 0;
-    const sticker = guests > 0
-      ? `<span class="virgin-stick">+${guests} virgin${guests === 1 ? '' : 's'}</span>`
-      : '';
-    return `<div class="your-rsvp"><span>▸ ${escapeHtml(label)}</span>${sticker}</div>`;
+  function renderPersonal(myRsvp, isHare) {
+    // Corner sticker stack at top-right of the card. Composed of:
+    //   * Main status sticker (You're on-on / Maybe / Cannot make) — only if RSVP'd
+    //   * Hare sub-sticker — only if isHare
+    //   * Virgins sub-sticker — only if guests > 0 AND not cancelled
+    if (!myRsvp && !isHare) return '';
+
+    const stickers = [];
+
+    if (myRsvp) {
+      let mainCls, mainLabel;
+      if (myRsvp.status === 'on_on') {
+        mainCls = 'corner-stick-on-on';
+        mainLabel = "▸ You're on-on!";
+      } else if (myRsvp.status === 'maybe') {
+        mainCls = 'corner-stick-maybe';
+        mainLabel = '▸ Maybe';
+      } else {
+        mainCls = 'corner-stick-cant';
+        mainLabel = "▸ Can't make";
+      }
+      stickers.push(`<span class="corner-stick corner-stick-main ${mainCls}">${mainLabel}</span>`);
+    }
+
+    if (isHare) {
+      stickers.push(`<span class="corner-stick corner-stick-sub corner-stick-hare">▸ Hare</span>`);
+    }
+
+    const guests = myRsvp?.guests_count || 0;
+    const inGuestsState = myRsvp && myRsvp.status !== 'not_this_time';
+    if (inGuestsState && guests > 0) {
+      stickers.push(`<span class="corner-stick corner-stick-sub corner-stick-virgins">+${guests} virgin${guests === 1 ? '' : 's'}</span>`);
+    }
+
+    return `<div class="ev-personal-corner">${stickers.join('')}</div>`;
   }
 
   function composeHaresStringForCard(ev, hareRows) {
@@ -455,7 +482,7 @@
     return 'TBC';
   }
 
-  function renderUpcomingCard(ev, colorClass, counts, myRsvp, hareRows) {
+  function renderUpcomingCard(ev, colorClass, counts, myRsvp, hareRows, isHare) {
     const d = parseDate(ev.event_date);
     const day = d.getUTCDate();
     const monthAbbr = MONTHS_SHORT[d.getUTCMonth()];
@@ -468,6 +495,7 @@
     return `
       <a class="panel ev ${colorClass}${badge.warn ? ' warn' : ''}" href="event.html?id=${ev.id}" style="text-decoration:none;color:inherit;display:block;">
         <span class="issue">▸ Run #${ev.run_number}</span>
+        ${renderPersonal(myRsvp, isHare)}
         <div class="date-row">
           <span class="d">${day}</span>
           <span class="dm"><span class="m">${monthAbbr}</span><span class="y">${weekdayAbbr} · ${year}</span></span>
@@ -480,7 +508,6 @@
           <dt>Pace</dt><dd>${escapeHtml(ev.pace || 'Walk or run')}</dd>
         </dl>
         ${renderAttendance(counts)}
-        ${renderPersonal(myRsvp)}
         <span class="stat">${escapeHtml(stat)}</span>
       </a>
     `;
@@ -567,9 +594,13 @@
         (myRsvpsRes.data || []).forEach((r) => myRsvpsByEventId.set(r.event_id, r));
 
         const haresByEventId = new Map();
+        const userHareEventIds = new Set();
         (haresRes.data || []).forEach((row) => {
           if (!haresByEventId.has(row.event_id)) haresByEventId.set(row.event_id, []);
           haresByEventId.get(row.event_id).push(row);
+          if (session && row.user_id === session.user.id) {
+            userHareEventIds.add(row.event_id);
+          }
         });
 
         grid.innerHTML = evs
@@ -579,6 +610,7 @@
             countsByEventId.get(ev.id),
             myRsvpsByEventId.get(ev.id),
             haresByEventId.get(ev.id),
+            userHareEventIds.has(ev.id),
           ))
           .join('');
 

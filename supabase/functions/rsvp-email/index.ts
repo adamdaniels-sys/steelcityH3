@@ -36,6 +36,11 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 interface InvokeBody {
   event_id: number;
+  // Optional notification type. Defaults to 'rsvp_confirmation' which sends
+  // the user the "You're on-on for X" email (current behaviour). Set to
+  // 'hare_volunteer' to send an admin-facing notification to
+  // on-on@steelcityh3.org telling Smutley that someone offered to hare.
+  notify?: 'rsvp_confirmation' | 'hare_volunteer';
 }
 
 // CORS — function is invoked cross-origin from steelcityh3.org by the
@@ -259,6 +264,152 @@ On-on!
 Steel City H3`;
 }
 
+// ---------------------------------------------------------------------------
+// Path B helper: send the admin-facing "X offered to hare Y" email
+// ---------------------------------------------------------------------------
+
+async function sendHareVolunteerEmail(opts: {
+  event: { id: number; run_number: number; title: string; event_date: string; start_time: string; location_summary: string | null; location_full: string | null; status: string };
+  profile: { real_name: string | null; hash_name: string | null; phone: string | null };
+  userEmail: string;
+}): Promise<Response> {
+  const smtpHost = Deno.env.get("SMTP_HOST");
+  const smtpPort = Number(Deno.env.get("SMTP_PORT") || "465");
+  const smtpUser = Deno.env.get("SMTP_USER");
+  const smtpPass = Deno.env.get("SMTP_PASS");
+  const smtpFrom = Deno.env.get("SMTP_FROM") || `Steel City H3 <${smtpUser}>`;
+  const adminTo  = Deno.env.get("HARE_NOTIFY_EMAIL") || "on-on@steelcityh3.org";
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    return jsonResponse(500, { error: "missing_smtp_env" });
+  }
+
+  const siteUrl = (Deno.env.get("SITE_URL") || "https://steelcityh3.org").replace(/\/$/, "");
+  const adminEventUrl = `${siteUrl}/admin-event.html?id=${opts.event.id}`;
+  const publicEventUrl = `${siteUrl}/event.html?id=${opts.event.id}`;
+
+  const greetingName =
+    (opts.profile.hash_name && opts.profile.hash_name.trim()) ||
+    opts.profile.real_name ||
+    opts.userEmail;
+  const realName = opts.profile.real_name || "(no real name set)";
+  const phone = opts.profile.phone || "(no phone set)";
+  const dateLong = formatLongDate(opts.event.event_date);
+  const timeFriendly = formatTimeFriendly(opts.event.start_time);
+  const where = opts.event.location_full || opts.event.location_summary || "TBC";
+
+  const subject = `Hare volunteer: ${greetingName} for ${opts.event.title}`;
+
+  const html = `<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+  body { margin: 0; background: #f4e5b8; font-family: 'Nunito', Helvetica, Arial, sans-serif; color: #15110a; }
+  a { color: #ee5a17; }
+</style>
+</head>
+<body style="background: #f4e5b8; padding: 30px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%;">
+
+        <tr><td style="background: #15110a; border-bottom: 6px solid #ee5a17; padding: 18px 28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td valign="middle" style="font-family: 'Bangers', sans-serif; font-size: 22px; color: #f4e5b8; letter-spacing: 0.06em; text-transform: uppercase;">Steel City H3</td>
+            <td align="right" valign="middle" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">▸ Hare volunteer</td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding: 30px 0 18px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #faefcc; border: 4px solid #15110a;">
+
+            <tr><td align="center" style="padding: 36px 32px 8px;">
+              <div style="font-family: 'Bangers', sans-serif; font-size: 42px; line-height: 0.92; letter-spacing: 0.025em; color: #15110a; text-transform: uppercase;">
+                Volunteer hare!
+              </div>
+            </td></tr>
+
+            <tr><td style="padding: 16px 32px 6px;">
+              <p style="margin: 0; font-size: 16px; font-weight: 600; color: #3a2e1f; line-height: 1.55;">
+                <b style="color: #15110a;">${escapeHtml(greetingName)}</b> has offered to hare Run #${opts.event.run_number} — <b style="color: #15110a;">${escapeHtml(opts.event.title)}</b>.
+              </p>
+            </td></tr>
+
+            <tr><td style="padding: 18px 32px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; border: 3px solid #15110a;">
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700; width: 110px;">Event</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">Run #${opts.event.run_number} · ${escapeHtml(opts.event.title)}</td></tr>
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">When</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">${escapeHtml(dateLong)} · ${escapeHtml(timeFriendly)}</td></tr>
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">Where</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">${escapeHtml(where)}</td></tr>
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">Hash name</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">${escapeHtml(opts.profile.hash_name || "—")}</td></tr>
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">Real name</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">${escapeHtml(realName)}</td></tr>
+                <tr><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">Phone</td><td style="padding: 12px 18px; border-bottom: 2px solid #15110a; font-size: 15px; color: #15110a; font-weight: 700;">${escapeHtml(phone)}</td></tr>
+                <tr><td style="padding: 12px 18px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">Email</td><td style="padding: 12px 18px; font-size: 15px; color: #15110a; font-weight: 700;"><a href="mailto:${escapeHtml(opts.userEmail)}" style="color: #a72020;">${escapeHtml(opts.userEmail)}</a></td></tr>
+              </table>
+            </td></tr>
+
+            <tr><td align="center" style="padding: 0 32px 32px;">
+              <a href="${adminEventUrl}" style="display: inline-block; background: #ee5a17; color: #15110a; padding: 14px 28px; font-family: 'Bangers', sans-serif; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; border: 3px solid #15110a; box-shadow: 5px 5px 0 #15110a;">▸ Manage in admin</a>
+              <p style="margin: 12px 0 0; font-size: 13px; color: #6e5f48;">Or view publicly: <a href="${publicEventUrl}" style="color: #a72020;">${publicEventUrl}</a></p>
+            </td></tr>
+
+          </table>
+        </td></tr>
+
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td align="center" style="font-family: 'Bangers', sans-serif; font-size: 28px; letter-spacing: 0.04em; color: #ee5a17; text-transform: uppercase;">ON-ON!</td>
+          </tr><tr>
+            <td align="center" style="padding-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6e5f48; font-weight: 700;">Auto-sent from Steel City H3 admin</td>
+          </tr></table>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const text =
+    `Hare volunteer: ${greetingName} for ${opts.event.title}\n\n` +
+    `Event:     Run #${opts.event.run_number} · ${opts.event.title}\n` +
+    `When:      ${dateLong} · ${timeFriendly}\n` +
+    `Where:     ${where}\n` +
+    `Hash name: ${opts.profile.hash_name || "—"}\n` +
+    `Real name: ${realName}\n` +
+    `Phone:     ${phone}\n` +
+    `Email:     ${opts.userEmail}\n\n` +
+    `Manage:    ${adminEventUrl}\n` +
+    `Public:    ${publicEventUrl}\n\n` +
+    `On-on!`;
+
+  const useImplicitTls = smtpPort !== 587;
+  const client = new SMTPClient({
+    connection: {
+      hostname: smtpHost, port: smtpPort, tls: useImplicitTls,
+      auth: { username: smtpUser, password: smtpPass },
+    },
+  });
+
+  try {
+    await client.send({
+      from:    smtpFrom,
+      to:      adminTo,
+      subject,
+      content: text,
+      html,
+    });
+  } catch (err) {
+    console.error("[rsvp-email] hare-notify SMTP send failed:", err);
+    return jsonResponse(500, { error: "smtp_send_failed", detail: String(err) });
+  } finally {
+    try { await client.close(); } catch (_) { /* ignore */ }
+  }
+
+  return jsonResponse(200, { sent: true, to: adminTo, kind: "hare_volunteer", event_id: opts.event.id });
+}
+
 serve(async (req) => {
   // CORS preflight — must respond before any auth/method checks
   if (req.method === "OPTIONS") {
@@ -286,7 +437,7 @@ serve(async (req) => {
   }
   const user = userData.user;
 
-  // Parse the request body — frontend passes just event_id
+  // Parse the request body — frontend passes event_id + optional notify type
   let body: InvokeBody;
   try {
     body = await req.json();
@@ -297,13 +448,42 @@ serve(async (req) => {
     return jsonResponse(400, { error: "missing_event_id" });
   }
 
-  // Use the service-role client for the actual data fetch so RLS doesn't
-  // get in the way of reading the user's own profile (it would normally,
-  // but service role bypasses).
+  const notifyType = body.notify === "hare_volunteer" ? "hare_volunteer" : "rsvp_confirmation";
+
+  // Service-role client bypasses RLS for the data fetches
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Verify the user actually has an on_on RSVP for this event — guards
-  // against someone calling the function with arbitrary event_ids
+  // ---- Path A: hare_volunteer → notify admin mailbox ---------------------
+  if (notifyType === "hare_volunteer") {
+    // Verify the user is actually a volunteer hare for this event
+    const hareRes = await supabase
+      .from("event_hares")
+      .select("volunteered")
+      .eq("event_id", body.event_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (hareRes.error || !hareRes.data) {
+      return jsonResponse(200, { skipped: true, reason: "no hare row for this user+event" });
+    }
+
+    const [eventRes2, profileRes2] = await Promise.all([
+      supabase.from("events").select("*").eq("id", body.event_id).single(),
+      supabase.from("profiles").select("real_name, hash_name, phone").eq("id", user.id).single(),
+    ]);
+    if (eventRes2.error || !eventRes2.data) {
+      return jsonResponse(500, { error: "event_fetch_failed", detail: eventRes2.error?.message });
+    }
+    const event2 = eventRes2.data;
+    const profile2 = profileRes2.data || {};
+
+    return await sendHareVolunteerEmail({
+      event: event2,
+      profile: profile2,
+      userEmail: user.email,
+    });
+  }
+
+  // ---- Path B: rsvp_confirmation (default) — user "You're on-on" --------
   const rsvpRes = await supabase
     .from("rsvps")
     .select("status, guests_count")
@@ -322,7 +502,6 @@ serve(async (req) => {
   }
   const guestsCount = rsvpRes.data.guests_count || 0;
 
-  // Fetch event + profile in parallel
   const [eventRes, profileRes] = await Promise.all([
     supabase.from("events").select("*").eq("id", body.event_id).single(),
     supabase.from("profiles").select("real_name, hash_name").eq("id", user.id).single(),

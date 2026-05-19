@@ -2253,30 +2253,46 @@
   font-weight: 700;
   opacity: 0.85;
 }
-.ev .your-rsvp {
-  margin-top: 8px;
-  margin-bottom: 18px;  /* keep clear of the .stat absolute badge */
+
+/* Corner sticker stack at top-right of card — personal status + hare + virgins */
+.ev-personal-corner {
+  position: absolute;
+  top: -14px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 3;
+  pointer-events: none;
+}
+.corner-stick {
+  display: inline-block;
+  padding: 6px 12px;
   font-family: "Bangers", sans-serif;
-  font-size: 1.15rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  line-height: 1.05;
+  border: 3px solid var(--ink);
 }
-.ev .your-rsvp .virgin-stick {
-  background: var(--yellow);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-  padding: 3px 9px;
-  font-family: "Bangers", sans-serif;
-  font-size: 0.9rem;
-  letter-spacing: 0.04em;
-  line-height: 1;
+.corner-stick-main {
+  font-size: 1.15rem;
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(2deg);
+  padding: 8px 14px;
 }
+.corner-stick-on-on { background: var(--orange); color: var(--cream); }
+.corner-stick-maybe { background: var(--yellow); color: var(--ink);   }
+.corner-stick-cant  { background: var(--steel);  color: var(--cream); }
+
+.corner-stick-sub {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(-1deg);
+}
+.corner-stick-hare    { background: var(--yellow); color: var(--ink); }
+.corner-stick-virgins { background: var(--cream);  color: var(--ink); }
 
 /* ===== My On-Ons page ===== */
 
