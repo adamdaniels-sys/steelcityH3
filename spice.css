@@ -1698,3 +1698,53 @@
 }
 .profile-actions .btn { flex: 1; justify-content: center; min-width: 180px; }
 
+/* ===== Phase 2 ===== */
+
+/* Guest count stepper on the RSVP panel */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 6px 0 4px;
+}
+.stepper-btn {
+  width: 52px;
+  height: 52px;
+  background: var(--ink);
+  color: var(--cream);
+  border: 3px solid var(--cream);
+  box-shadow: 4px 4px 0 var(--orange);
+  font-family: "Bangers", sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 120ms, box-shadow 120ms;
+  padding: 0;
+}
+.stepper-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--orange);
+}
+.stepper-btn:active:not(:disabled) {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 var(--orange);
+}
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: 2px 2px 0 var(--ink-3);
+}
+.stepper-val {
+  font-family: "Bangers", sans-serif;
+  font-size: 3rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  min-width: 64px;
+  text-align: center;
+}
+
