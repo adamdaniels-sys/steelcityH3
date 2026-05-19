@@ -76,7 +76,7 @@
           </div>
           <div>
             <div class="lbl">Next on-on</div>
-            <div class="val">Sat 20 Jun</div>
+            <div class="val" id="next-on-on-val">Loading…</div>
           </div>
         </div>
       </div>
@@ -99,70 +99,11 @@
         </p>
       </div>
 
-      <div class="events-grid">
-        <a class="panel ev cream" href="event.html?id=18" style="text-decoration:none;color:inherit;display:block;">
-          <span class="issue">▸ Run #18</span>
-          <div class="date-row">
-            <span class="d">20</span>
-            <span class="dm"><span class="m">JUN</span><span class="y">SAT · 2026</span></span>
-          </div>
-          <h3>June Hash</h3>
-          <dl class="spec">
-            <dt>Where</dt><dd>Sheffield centre — TBC</dd>
-            <dt>Time</dt><dd>12 noon · on-on after</dd>
-            <dt>Hares</dt><dd>TBC</dd>
-            <dt>Pace</dt><dd>Walk or run</dd>
-          </dl>
-          <span class="stat">▸ Open!</span>
-        </a>
-
-        <a class="panel ev yellow warn" href="event.html?id=19" style="text-decoration:none;color:inherit;display:block;">
-          <span class="issue">▸ Run #19</span>
-          <div class="date-row">
-            <span class="d">18</span>
-            <span class="dm"><span class="m">JUL</span><span class="y">SAT · 2026</span></span>
-          </div>
-          <h3>July Hash</h3>
-          <dl class="spec">
-            <dt>Where</dt><dd>Derbyshire Dales</dd>
-            <dt>Time</dt><dd>12 noon · on-on after</dd>
-            <dt>Hares</dt><dd>Volunteers wanted!</dd>
-            <dt>Pace</dt><dd>Walk or run</dd>
-          </dl>
-          <span class="stat">▸ Hares wanted</span>
-        </a>
-
-        <a class="panel ev orange" href="event.html?id=20" style="text-decoration:none;color:inherit;display:block;">
-          <span class="issue">▸ Run #20</span>
-          <div class="date-row">
-            <span class="d">15</span>
-            <span class="dm"><span class="m">AUG</span><span class="y">SAT · 2026</span></span>
-          </div>
-          <h3>August Hash</h3>
-          <dl class="spec">
-            <dt>Where</dt><dd>Sheffield centre — TBC</dd>
-            <dt>Time</dt><dd>12 noon · on-on after</dd>
-            <dt>Hares</dt><dd>TBC</dd>
-            <dt>Pace</dt><dd>Walk or run</dd>
-          </dl>
-          <span class="stat">▸ Open!</span>
-        </a>
-
-        <a class="panel ev red" href="event.html?id=21" style="text-decoration:none;color:inherit;display:block;">
-          <span class="issue">▸ Run #21</span>
-          <div class="date-row">
-            <span class="d">19</span>
-            <span class="dm"><span class="m">SEP</span><span class="y">SAT · 2026</span></span>
-          </div>
-          <h3>September Hash</h3>
-          <dl class="spec">
-            <dt>Where</dt><dd>Derbyshire Dales</dd>
-            <dt>Time</dt><dd>12 noon · on-on after</dd>
-            <dt>Hares</dt><dd>TBC</dd>
-            <dt>Pace</dt><dd>Walk or run</dd>
-          </dl>
-          <span class="stat">▸ Open!</span>
-        </a>
+      <div class="events-grid" id="events-grid">
+        <!-- Populated by the inline module script at the bottom of the page -->
+      </div>
+      <div id="events-empty" hidden style="font-family: 'Bangers', sans-serif; font-size: 1.6rem; letter-spacing: 0.04em; padding: 20px 4px; color: var(--ink-2);">
+        Nowt scheduled yet. Check back soon.
       </div>
     </div>
   </section>
@@ -183,47 +124,8 @@
         </p>
       </div>
 
-      <div class="past-list">
-        <a class="past-row" href="event.html?id=17">
-          <div class="pn">#17</div>
-          <div>
-            <h4>Bertie's Been Framed</h4>
-            <div class="meta">Sun 12 Apr 2026 · Hare: Cock-a-Tool · 1st Anniversary Day 3</div>
-          </div>
-          <div class="go">→ Read more</div>
-        </a>
-        <a class="past-row" href="event.html?id=16">
-          <div class="pn">#16</div>
-          <div>
-            <h4>1st Anniversary Hash</h4>
-            <div class="meta">Sat 11 Apr 2026 · Hares: Bigfoot &amp; Jake the Peg · Anniversary Day 2</div>
-          </div>
-          <div class="go">→ Read more</div>
-        </a>
-        <a class="past-row" href="event.html?id=15">
-          <div class="pn">#15</div>
-          <div>
-            <h4>Gangs of Sheffield</h4>
-            <div class="meta">Fri 10 Apr 2026 · Hare: Smutley · Anniversary Day 1 · £282.15 raised</div>
-          </div>
-          <div class="go">→ Read more</div>
-        </a>
-        <a class="past-row" href="event.html?id=14">
-          <div class="pn">#14</div>
-          <div>
-            <h4>March Hash — Mosborough Meander</h4>
-            <div class="meta">Sat 21 Mar 2026 · Hares: Smutley · Sheffield</div>
-          </div>
-          <div class="go">→ Read more</div>
-        </a>
-        <a class="past-row" href="event.html?id=13">
-          <div class="pn">#13</div>
-          <div>
-            <h4>February Hash — Loxley Lash</h4>
-            <div class="meta">Sat 14 Feb 2026 · Hares: Bigfoot · Derbyshire Dales</div>
-          </div>
-          <div class="go">→ Read more</div>
-        </a>
+      <div class="past-list" id="past-list">
+        <!-- Populated by the inline module script at the bottom of the page -->
       </div>
     </div>
   </section>
@@ -486,22 +388,139 @@
   </div>
 </footer>
 
-<script>
-  // Login chip — reads logged-in user from localStorage and updates the chip
-  (function() {
-    try {
-      const raw = localStorage.getItem('sch3-user');
-      if (!raw) return;
-      const user = JSON.parse(raw);
-      if (!user || !user.name) return;
-      const name = document.getElementById('login-name');
-      const av = document.getElementById('login-av');
-      const chip = document.getElementById('login-chip');
-      const initials = user.name.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
-      if (name) name.textContent = user.name.split(/\s+/)[0];
-      if (av) av.textContent = initials || '?';
-      if (chip) chip.href = 'login.html';
-    } catch (e) { /* ignore */ }
+<script type="module">
+  // auth.js handles the header login chip via DOMContentLoaded — no extra wiring.
+  // We just need supabase here to query events.
+  import { supabase } from './auth.js';
+
+  const COLOR_ROTATION = ['cream', 'yellow', 'orange', 'red'];
+  const MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const WEEKDAYS_SHORT_UC = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const WEEKDAYS_FULL = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS_FULL = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Parse 'YYYY-MM-DD' (date column) into a Date — using noon UTC so timezone
+  // doesn't shift the day in the UK.
+  function parseDate(iso) {
+    return new Date(iso + 'T12:00:00Z');
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function statusBadge(status) {
+    switch (status) {
+      case 'open':         return { label: 'Open!',        warn: false };
+      case 'hares_wanted': return { label: 'Hares wanted', warn: true  };
+      case 'closed':       return { label: 'Closed',       warn: true  };
+      default:             return { label: 'TBC',          warn: false };
+    }
+  }
+
+  function renderUpcomingCard(ev, colorClass) {
+    const d = parseDate(ev.event_date);
+    const day = d.getUTCDate();
+    const monthAbbr = MONTHS_SHORT[d.getUTCMonth()];
+    const weekdayAbbr = WEEKDAYS_SHORT_UC[d.getUTCDay()];
+    const year = d.getUTCFullYear();
+    const badge = statusBadge(ev.status);
+    const stat = `▸ ${badge.label}`;
+
+    return `
+      <a class="panel ev ${colorClass}${badge.warn ? ' warn' : ''}" href="event.html?id=${ev.id}" style="text-decoration:none;color:inherit;display:block;">
+        <span class="issue">▸ Run #${ev.run_number}</span>
+        <div class="date-row">
+          <span class="d">${day}</span>
+          <span class="dm"><span class="m">${monthAbbr}</span><span class="y">${weekdayAbbr} · ${year}</span></span>
+        </div>
+        <h3>${escapeHtml(ev.title)}</h3>
+        <dl class="spec">
+          <dt>Where</dt><dd>${escapeHtml(ev.location_summary || 'TBC')}</dd>
+          <dt>Time</dt><dd>${ev.start_time ? formatTimeFriendly(ev.start_time) : '12 noon'} · on-on after</dd>
+          <dt>Hares</dt><dd>${escapeHtml(ev.hares || 'TBC')}</dd>
+          <dt>Pace</dt><dd>${escapeHtml(ev.pace || 'Walk or run')}</dd>
+        </dl>
+        <span class="stat">${escapeHtml(stat)}</span>
+      </a>
+    `;
+  }
+
+  function formatTimeFriendly(t) {
+    // t comes back as 'HH:MM:SS'
+    const [hStr, mStr] = t.split(':');
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    if (h === 12 && m === 0) return '12 noon';
+    if (h === 0  && m === 0) return 'midnight';
+    const period = h >= 12 ? 'pm' : 'am';
+    const h12 = h % 12 || 12;
+    return m === 0 ? `${h12}${period}` : `${h12}:${String(m).padStart(2, '0')}${period}`;
+  }
+
+  function renderPastRow(ev) {
+    const d = parseDate(ev.event_date);
+    const dateStr = `${WEEKDAYS_FULL[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_FULL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    const hareLabel = (ev.hares && ev.hares.includes('&')) ? 'Hares' : 'Hare';
+    const charity = ev.charity_raised ? ` · £${Number(ev.charity_raised).toFixed(2)} raised` : '';
+    const meta = `${dateStr} · ${hareLabel}: ${escapeHtml(ev.hares || 'TBC')} · ${escapeHtml(ev.location_summary || '')}${charity}`;
+    return `
+      <a class="past-row" href="event.html?id=${ev.id}">
+        <div class="pn">#${ev.run_number}</div>
+        <div>
+          <h4>${escapeHtml(ev.title)}</h4>
+          <div class="meta">${meta}</div>
+        </div>
+        <div class="go">→ Read more</div>
+      </a>
+    `;
+  }
+
+  (async () => {
+    const todayISO = new Date().toISOString().slice(0, 10);
+
+    const [upcomingResult, pastResult] = await Promise.all([
+      supabase
+        .from('events')
+        .select('*')
+        .gte('event_date', todayISO)
+        .in('status', ['open', 'hares_wanted', 'closed'])
+        .order('event_date', { ascending: true }),
+      supabase
+        .from('events')
+        .select('*')
+        .eq('status', 'completed')
+        .order('event_date', { ascending: false }),
+    ]);
+
+    if (upcomingResult.error) {
+      console.error('[index] events upcoming query failed:', upcomingResult.error);
+    } else {
+      const grid = document.getElementById('events-grid');
+      const empty = document.getElementById('events-empty');
+      const heroVal = document.getElementById('next-on-on-val');
+      const evs = upcomingResult.data || [];
+      if (evs.length === 0) {
+        empty.hidden = false;
+        if (heroVal) heroVal.textContent = 'TBC';
+      } else {
+        grid.innerHTML = evs.map((ev, i) => renderUpcomingCard(ev, COLOR_ROTATION[i % COLOR_ROTATION.length])).join('');
+        if (heroVal) {
+          const d = parseDate(evs[0].event_date);
+          heroVal.textContent = `${WEEKDAYS_FULL[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_FULL[d.getUTCMonth()]}`;
+        }
+      }
+    }
+
+    if (pastResult.error) {
+      console.error('[index] events past query failed:', pastResult.error);
+    } else {
+      const list = document.getElementById('past-list');
+      const evs = pastResult.data || [];
+      list.innerHTML = evs.map(renderPastRow).join('');
+    }
   })();
 </script>
 
