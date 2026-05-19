@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Admin — Member — Steel City H3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="spice.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="brand" style="text-decoration: none; color: inherit;">
+      <img src="logo-original.jpg" alt="" />
+      Steel City H3
+    </a>
+    <nav>
+      <a href="/#events">Up Next</a>
+      <a href="/admin.html" class="admin-active">Admin</a>
+    </nav>
+    <a href="/login.html" class="login-chip" id="login-chip">
+      <span class="av" id="login-av">?</span>
+      <span id="login-name">Sign in</span>
+    </a>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="container">
+    <a href="/">Home</a>
+    <span class="sep">▸</span>
+    <a href="/admin.html">Admin</a>
+    <span class="sep">▸</span>
+    <a href="/admin-members.html">Members</a>
+    <span class="sep">▸</span>
+    <span id="crumb-title">Loading…</span>
+  </div>
+</div>
+
+<main id="main">
+  <section class="sec" style="padding-top: 30px;">
+    <div class="container">
+
+      <div id="admin-loading" class="auth-loading">
+        <h1>Loading member…</h1>
+      </div>
+
+      <div id="admin-content" hidden>
+
+        <div class="sec-head">
+          <div>
+            <span class="sec-num">/ Admin · Member</span>
+            <h2 class="sec-title" id="page-title">Edit <span class="or">member</span></h2>
+          </div>
+          <p class="sec-lede" id="page-lede">Real name and phone never shown publicly. Changes recorded in the audit log.</p>
+        </div>
+
+        <form class="admin-form" id="member-form">
+          <h3>Profile</h3>
+
+          <div class="auth-field">
+            <label for="email">Email (read-only)</label>
+            <input type="email" id="email" disabled />
+            <div class="profile-hint">To change email, the member uses Supabase Auth's email-change flow (we'll wire this up in a later phase).</div>
+          </div>
+
+          <div class="auth-field">
+            <label for="real_name">Real name</label>
+            <input type="text" id="real_name" required />
+          </div>
+
+          <div class="auth-field">
+            <label for="hash_name">Hash name</label>
+            <input type="text" id="hash_name" placeholder="Leave blank if not awarded yet" />
+          </div>
+
+          <div class="auth-field">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" inputmode="tel" />
+            <div class="profile-hint">Stored in international format after save.</div>
+          </div>
+
+          <div class="profile-toggle">
+            <label class="label" for="is_hash_virgin">Hash virgin<span class="hint">First-timer status — turn off after they've done a couple.</span></label>
+            <input type="checkbox" id="is_hash_virgin" />
+          </div>
+
+          <div class="profile-toggle">
+            <label class="label" for="newsletter_opt_in">Newsletter opt-in<span class="hint">Will receive the Hash Despatch.</span></label>
+            <input type="checkbox" id="newsletter_opt_in" />
+          </div>
+
+          <div class="profile-actions" style="margin-top: 18px;">
+            <button class="btn orange" type="submit" id="submit-btn">▸ Save profile</button>
+            <a class="btn muted" href="/admin-members.html">↶ Back</a>
+          </div>
+          <div class="auth-msg" id="form-msg"></div>
+        </form>
+
+        <!-- Admin status -->
+        <section class="admin-form" style="margin-top: 30px;">
+          <h3>Admin status</h3>
+          <div id="admin-status-row" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <span id="admin-status-label" style="font-family: 'Bangers', sans-serif; font-size: 1.2rem; letter-spacing: 0.04em;">—</span>
+            <button class="btn orange" type="button" id="promote-btn" hidden>▸ Promote to admin</button>
+            <button class="btn" type="button" id="demote-btn" hidden style="background: var(--red); color: var(--cream); border-color: var(--cream);">↶ Demote from admin</button>
+          </div>
+          <p id="admin-status-note" class="profile-hint" style="margin-top: 10px;"></p>
+        </section>
+
+        <!-- RSVP history -->
+        <section class="admin-form" style="margin-top: 30px;">
+          <h3>RSVP history</h3>
+          <div id="rsvp-history-wrap">—</div>
+        </section>
+
+        <!-- Danger zone -->
+        <div class="danger-zone">
+          <h4>▸ Danger zone</h4>
+          <p style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin-bottom: 14px;" id="danger-summary">
+            Deleting this member removes their profile + all their RSVPs and hare slots. Their auth account stays — they can sign up again with a fresh profile.
+          </p>
+          <button class="btn" type="button" id="delete-member-btn">▸ Delete this member</button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- Delete-confirm modal -->
+<div class="modal-overlay" id="delete-modal" hidden>
+  <div class="modal">
+    <h3>Delete this member?</h3>
+    <p id="delete-modal-detail">—</p>
+    <p style="font-family: 'Nunito'; font-weight: 700;">Type <code id="delete-confirm-word">DELETE</code> to confirm:</p>
+    <input type="text" id="delete-confirm-input" style="background: var(--cream); border: 3px solid var(--ink); padding: 12px 14px; width: 100%; font-family: 'Nunito', sans-serif; font-weight: 700;" />
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="delete-cancel-btn">↶ Cancel</button>
+      <button class="btn" type="button" id="delete-confirm-btn" style="background: var(--red); color: var(--cream); border-color: var(--cream);" disabled>▸ Delete</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="big">ON-ON<span class="yel">·H3!</span></div>
+    <div class="meta">Steel City H3 · Sheffield · Year 1 · Find us on Facebook</div>
+  </div>
+</footer>
+
+<script type="module">
+  import { supabase, requireAdmin, showToast, getSession } from './auth.js';
+  import { parsePhoneNumberFromString } from 'https://esm.sh/libphonenumber-js@1.11.4';
+
+  const $ = (s) => document.querySelector(s);
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const params = new URLSearchParams(location.search);
+  const userId = params.get('id');
+
+  let memberDetail = null;
+  let mySession = null;
+
+  const MONTHS_FULL = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function parseDate(iso) { return new Date(iso + 'T12:00:00Z'); }
+  function formatShortDate(iso) {
+    const d = parseDate(iso);
+    return `${d.getUTCDate()} ${MONTHS_FULL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  }
+
+  function renderAdminStatus(adminCount) {
+    const isMe = mySession?.user?.id === userId;
+    const isAdmin = !!memberDetail.is_admin;
+    const promoteBtn = $('#promote-btn');
+    const demoteBtn  = $('#demote-btn');
+    const label = $('#admin-status-label');
+    const note  = $('#admin-status-note');
+
+    if (isAdmin) {
+      label.textContent = '▸ Currently an admin.';
+      promoteBtn.hidden = true;
+      demoteBtn.hidden  = false;
+      // Safeguards
+      if (isMe) {
+        demoteBtn.disabled = true;
+        note.textContent = "You can't demote yourself.";
+      } else if (adminCount <= 1) {
+        demoteBtn.disabled = true;
+        note.textContent = 'Steel City needs at least one admin.';
+      } else {
+        demoteBtn.disabled = false;
+        note.textContent = 'Demoting removes their admin privileges. They keep their member account.';
+      }
+    } else {
+      label.textContent = '▸ Not an admin.';
+      promoteBtn.hidden = false;
+      demoteBtn.hidden  = true;
+      note.textContent = 'Promoting gives them full management rights for events, members, and other admins.';
+    }
+  }
+
+  function renderRsvpHistory() {
+    const rsvps = memberDetail.rsvps || [];
+    const wrap = $('#rsvp-history-wrap');
+    if (rsvps.length === 0) {
+      wrap.innerHTML = `<p style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-3);">No RSVPs yet.</p>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <div style="overflow-x: auto;">
+        <table class="admin-table">
+          <thead><tr><th>Run</th><th>Date</th><th>Event</th><th>Status</th><th>Guests</th></tr></thead>
+          <tbody>
+            ${rsvps.map((r) => `
+              <tr>
+                <td><b>#${r.run_number}</b></td>
+                <td>${formatShortDate(r.event_date)}</td>
+                <td><a href="/event.html?id=${r.event_id}">${escapeHtml(r.title)}</a></td>
+                <td><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+                <td>${r.guests_count || 0}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function showMsg(text, ok = false) {
+    const el = $('#form-msg');
+    el.textContent = text;
+    el.classList.toggle('ok', ok);
+    el.classList.add('show');
+  }
+  function hideMsg() {
+    const el = $('#form-msg');
+    el.textContent = '';
+    el.classList.remove('show', 'ok');
+  }
+
+  // ---- Save profile -------------------------------------------------------
+
+  $('#member-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMsg();
+    const real_name = $('#real_name').value.trim();
+    const hash_name = $('#hash_name').value.trim() || null;
+    const phoneRaw  = $('#phone').value.trim();
+    const is_hash_virgin    = $('#is_hash_virgin').checked;
+    const newsletter_opt_in = $('#newsletter_opt_in').checked;
+
+    if (!real_name) { showMsg('Real name is required.'); return; }
+
+    let phone_e164 = null;
+    if (phoneRaw) {
+      const parsed = parsePhoneNumberFromString(phoneRaw, 'GB');
+      if (!parsed || !parsed.isValid()) {
+        showMsg('Phone number does not look valid.');
+        return;
+      }
+      phone_e164 = parsed.number;
+    }
+
+    const btn = $('#submit-btn');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = '▸ Saving…';
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ real_name, hash_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in })
+      .eq('id', userId);
+
+    btn.disabled = false;
+    btn.textContent = orig;
+
+    if (error) {
+      console.error('[admin-member] update failed:', error);
+      showMsg(error.message || "Couldn't save.");
+      return;
+    }
+    showToast('Profile saved.', { kind: 'ok' });
+    memberDetail.profile = { ...memberDetail.profile, real_name, hash_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in };
+  });
+
+  // ---- Promote / Demote ---------------------------------------------------
+
+  async function setAdminRole(promote) {
+    const btn = promote ? $('#promote-btn') : $('#demote-btn');
+    btn.disabled = true;
+    const origLabel = btn.textContent;
+    btn.textContent = '▸ Working…';
+
+    let res;
+    if (promote) {
+      res = await supabase.from('user_roles').insert({
+        user_id: userId, role: 'admin', granted_by: mySession.user.id,
+      });
+    } else {
+      // Re-check admin count immediately before delete to avoid a race
+      const { data: count } = await supabase.rpc('count_admins');
+      if ((count || 0) <= 1) {
+        btn.disabled = false;
+        btn.textContent = origLabel;
+        showToast("Can't demote — that's the last admin.", { kind: 'error' });
+        return;
+      }
+      res = await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'admin');
+    }
+
+    btn.disabled = false;
+    btn.textContent = origLabel;
+
+    if (res.error) {
+      console.error('[admin-member] role change failed:', res.error);
+      showToast(res.error.message || "Couldn't change role.", { kind: 'error' });
+      return;
+    }
+    memberDetail.is_admin = promote;
+    // Refresh admin count for safeguard rendering
+    const { data: adminCount } = await supabase.rpc('count_admins');
+    renderAdminStatus(adminCount || 0);
+    showToast(promote ? 'Promoted to admin.' : 'Demoted from admin.', { kind: 'ok' });
+  }
+
+  $('#promote-btn').addEventListener('click', () => setAdminRole(true));
+  $('#demote-btn').addEventListener('click',  () => setAdminRole(false));
+
+  // ---- Delete member -----------------------------------------------------
+
+  function openDeleteModal() {
+    const rsvpsCount = (memberDetail.rsvps || []).length;
+    const eventsCount = new Set((memberDetail.rsvps || []).map((r) => r.event_id)).size;
+    const word = (memberDetail.profile?.hash_name && memberDetail.profile.hash_name.trim())
+      ? memberDetail.profile.hash_name.trim()
+      : 'DELETE';
+    $('#delete-modal-detail').innerHTML =
+      `Will wipe their profile, <b>${rsvpsCount}</b> RSVPs across <b>${eventsCount}</b> events, and any hare slots they hold. Cannot be undone.`;
+    $('#delete-confirm-word').textContent = word;
+    $('#delete-confirm-input').value = '';
+    $('#delete-confirm-btn').disabled = true;
+    $('#delete-modal').hidden = false;
+    setTimeout(() => $('#delete-confirm-input').focus(), 50);
+  }
+
+  $('#delete-member-btn').addEventListener('click', openDeleteModal);
+  $('#delete-cancel-btn').addEventListener('click', () => { $('#delete-modal').hidden = true; });
+  $('#delete-confirm-input').addEventListener('input', (e) => {
+    const expected = $('#delete-confirm-word').textContent;
+    $('#delete-confirm-btn').disabled = e.target.value.trim() !== expected;
+  });
+  $('#delete-confirm-btn').addEventListener('click', async () => {
+    const btn = $('#delete-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = '▸ Deleting…';
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) {
+      btn.disabled = false;
+      btn.textContent = '▸ Delete';
+      console.error('[admin-member] delete failed:', error);
+      showToast(error.message || "Couldn't delete.", { kind: 'error' });
+      return;
+    }
+    try { sessionStorage.setItem('sch3-toast', 'Member deleted.'); } catch {}
+    window.location.replace('/admin-members.html');
+  });
+
+  // ---- Bootstrap ---------------------------------------------------------
+
+  (async () => {
+    await requireAdmin();
+    if (!userId) {
+      window.location.replace('/admin-members.html');
+      return;
+    }
+    mySession = await getSession();
+
+    const [detailRes, adminCountRes] = await Promise.all([
+      supabase.rpc('get_member_admin_detail', { p_user_id: userId }),
+      supabase.rpc('count_admins'),
+    ]);
+
+    if (detailRes.error || !detailRes.data?.profile) {
+      $('#admin-loading').innerHTML = `
+        <h1>Member not found.</h1>
+        <p><a href="/admin-members.html" class="btn cream" style="margin-top: 16px;">↶ Back to members</a></p>
+      `;
+      return;
+    }
+    memberDetail = detailRes.data;
+    const adminCount = adminCountRes.data || 0;
+
+    const p = memberDetail.profile;
+    $('#email').value             = memberDetail.email || '';
+    $('#real_name').value         = p.real_name || '';
+    $('#hash_name').value         = p.hash_name || '';
+    $('#phone').value             = p.phone || '';
+    $('#is_hash_virgin').checked    = !!p.is_hash_virgin;
+    $('#newsletter_opt_in').checked = !!p.newsletter_opt_in;
+
+    const displayName = p.hash_name || p.real_name || memberDetail.email || 'Member';
+    $('#crumb-title').textContent = displayName;
+    document.title = `Admin — ${displayName} — Steel City H3`;
+    $('#page-title').innerHTML = `Edit <span class="or">${escapeHtml(displayName)}</span>`;
+
+    renderAdminStatus(adminCount);
+    renderRsvpHistory();
+
+    $('#admin-loading').hidden = true;
+    $('#admin-content').hidden = false;
+  })().catch((err) => {
+    if (err?.message !== 'Not admin' && err?.message !== 'Not signed in') {
+      console.error('[admin-member] error:', err);
+    }
+  });
+</script>
+
+</body>
+</html>
