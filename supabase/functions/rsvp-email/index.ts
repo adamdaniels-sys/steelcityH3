@@ -403,6 +403,15 @@ async function sendHareVolunteerEmail(opts: {
       subject,
       content: text,
       html,
+      mimeContent: [
+        { mimeType: "text/plain; charset=utf-8",                 content: text },
+        { mimeType: "text/html;  charset=utf-8; format=flowed",  content: html },
+      ],
+      headers: {
+        "List-Unsubscribe":      "<mailto:on-on@steelcityh3.org?subject=Unsubscribe%20me>",
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        "X-Entity-Ref-ID":       `hare-${opts.event.id}`,
+      },
     });
   } catch (err) {
     console.error("[rsvp-email] hare-notify SMTP send failed:", err);
@@ -609,12 +618,27 @@ serve(async (req) => {
   });
 
   try {
+    // mimeContent forces denomailer to emit explicit multipart/alternative
+    // with both text/plain and text/html parts (mail-tester was flagging
+    // MIME_HTML_ONLY even though we passed `content` + `html`, suggesting
+    // the auto-MIME wasn't building the plain-text part properly). Custom
+    // headers add List-Unsubscribe so receiving filters recognise it as
+    // legitimate transactional mail.
     await client.send({
       from:    smtpFrom,
       to:      user.email,
       subject: `You're on-on for ${event.title}`,
       content: text,
       html,
+      mimeContent: [
+        { mimeType: "text/plain; charset=utf-8",                 content: text },
+        { mimeType: "text/html;  charset=utf-8; format=flowed",  content: html },
+      ],
+      headers: {
+        "List-Unsubscribe":      "<mailto:on-on@steelcityh3.org?subject=Unsubscribe%20me>",
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        "X-Entity-Ref-ID":       `rsvp-${event.id}-${user.id}`,
+      },
     });
   } catch (err) {
     console.error("[rsvp-email] SMTP send failed:", err);
