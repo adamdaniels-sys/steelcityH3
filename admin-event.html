@@ -216,8 +216,12 @@
 
 <script type="module">
   import { supabase, requireAdmin, showToast } from './auth.js';
+  import { HarePicker } from './hare-picker.js';
 
   const $ = (s) => document.querySelector(s);
+
+  let harePicker = null;
+  let initialHareIds = [];  // hare set as saved in DB, for diffing
   function escapeHtml(s) {
     return String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -305,12 +309,11 @@
   }
 
   async function loadForEdit(id) {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error || !data) {
+    const [evRes, hareRes] = await Promise.all([
+      supabase.from('events').select('*').eq('id', id).single(),
+      supabase.from('event_hares').select('user_id').eq('event_id', id),
+    ]);
+    if (evRes.error || !evRes.data) {
       $('#admin-content').innerHTML = `
         <div class="panel" style="padding: 30px;">
           <h2 style="font-family: 'Bangers', sans-serif; font-size: 2rem;">Hash not found</h2>
@@ -319,6 +322,9 @@
       `;
       return;
     }
+    const data = evRes.data;
+    initialHareIds = (hareRes.data || []).map((r) => r.user_id);
+    if (harePicker) harePicker.setSelected(initialHareIds);
     originalEvent = data;
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
@@ -382,6 +388,24 @@
     const errMsg = validatePayload(payload);
     if (errMsg) { showMsg(errMsg); return; }
 
+    // Status auto-flip suggestion based on hare set vs current status
+    const selectedHares = harePicker ? harePicker.getSelected() : [];
+    const hasAdditionalText = !!payload.additional_hares_text;
+    const hasAnyHare = selectedHares.length > 0 || hasAdditionalText;
+    if (payload.status === 'hares_wanted' && hasAnyHare) {
+      const ok = window.confirm("Hares are sorted now — flip status to 'Open'?");
+      if (ok) {
+        payload.status = 'open';
+        $('#status').value = 'open';
+      }
+    } else if (payload.status === 'open' && !hasAnyHare) {
+      const ok = window.confirm("No hares set — flip status to 'Hares wanted'?");
+      if (ok) {
+        payload.status = 'hares_wanted';
+        $('#status').value = 'hares_wanted';
+      }
+    }
+
     const btn = $('#submit-btn');
     btn.disabled = true;
     const originalLabel = btn.textContent;
@@ -394,23 +418,65 @@
       res = await supabase.from('events').update(payload).eq('id', eventId).select().single();
     }
 
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-
     if (res.error) {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
       console.error('[admin-event] save failed:', res.error);
       showMsg(res.error.message || "Couldn't save. Try again.");
       return;
     }
 
-    // Stash a confirmation toast for the next page, then redirect to edit view
+    const savedEventId = res.data.id;
+
+    // Sync structured hares: diff initialHareIds vs selectedHares, do
+    // adds/removes against event_hares. New events come in with empty
+    // initialHareIds so this turns into pure inserts.
+    if (harePicker) {
+      const current = new Set(selectedHares);
+      const before = new Set(initialHareIds);
+      const toAdd = [...current].filter((id) => !before.has(id));
+      const toRemove = [...before].filter((id) => !current.has(id));
+
+      const ops = [];
+      if (toAdd.length > 0) {
+        ops.push(
+          supabase.from('event_hares').insert(
+            toAdd.map((uid) => ({ event_id: savedEventId, user_id: uid, volunteered: false })),
+          ),
+        );
+      }
+      if (toRemove.length > 0) {
+        ops.push(
+          supabase.from('event_hares')
+            .delete()
+            .eq('event_id', savedEventId)
+            .in('user_id', toRemove),
+        );
+      }
+      if (ops.length > 0) {
+        const results = await Promise.all(ops);
+        for (const r of results) {
+          if (r.error) {
+            console.error('[admin-event] hare sync failed:', r.error);
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+            showMsg('Saved event but couldn\'t sync hares: ' + r.error.message);
+            return;
+          }
+        }
+      }
+      initialHareIds = [...current];
+    }
+
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+
     try {
       sessionStorage.setItem('sch3-toast', isNew ? `Created Run #${res.data.run_number}.` : `Saved Run #${res.data.run_number}.`);
     } catch {}
     if (isNew) {
       window.location.replace(`/admin-event.html?id=${res.data.id}`);
     } else {
-      // Stay on the same page, refresh data
       originalEvent = res.data;
       showToast('Saved.', { kind: 'ok' });
     }
@@ -446,10 +512,26 @@
     window.location.replace('/admin-events.html');
   });
 
+  async function initHarePicker() {
+    // Load all profiles — admin RLS lets us read every row including real names
+    const { data: members, error } = await supabase
+      .from('profiles')
+      .select('id, hash_name, real_name')
+      .order('hash_name', { ascending: true, nullsFirst: false });
+    if (error) {
+      console.warn('[admin-event] members load failed:', error);
+      return;
+    }
+    const host = document.getElementById('hare-multiselect-host');
+    harePicker = new HarePicker(host, members || []);
+  }
+
   (async () => {
     await requireAdmin();
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;
+
+    await initHarePicker();
 
     if (isNew) {
       setMode(isBlank ? 'new-blank' : 'new-smart');
