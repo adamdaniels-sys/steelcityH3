@@ -18,6 +18,13 @@
 
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+
+  /* Force the [hidden] attribute to always win. Various .btn / .panel /
+     other rules set display: inline-flex / grid / etc, which override the
+     UA's default `[hidden] { display: none }` and leave hidden=true
+     elements visible. !important here is the cleanest way to ensure
+     element.hidden = true actually hides things. */
+  [hidden] { display: none !important; }
   html { font-size: 18px; }
   body {
     font-family: "Nunito", system-ui, sans-serif;
