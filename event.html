@@ -69,6 +69,9 @@
               <dt id="dt-distance" hidden>Distance</dt><dd id="d-distance" hidden>—</dd>
               <dt id="dt-onon" hidden>On-on</dt><dd id="d-onon" hidden>—</dd>
             </dl>
+            <button class="btn cream" type="button" id="add-to-cal" hidden style="margin-top: 22px;">
+              ▸ Add to calendar
+            </button>
           </div>
 
           <!-- RSVP card — two-step flow: pick → edit draft → confirm.
@@ -306,10 +309,16 @@
       $('#d-onon').textContent = ev.on_on_pub;
     }
 
-    // ---- Upcoming events: route placeholder with the description as blurb ----
+    // ---- Upcoming events: route placeholder + add-to-calendar button ----
     if (!isPast) {
       $('#route-box').hidden = false;
       $('#route-blurb').textContent = ev.description || 'Route shared closer to the date.';
+
+      if (ev.status !== 'closed') {
+        const calBtn = $('#add-to-cal');
+        calBtn.hidden = false;
+        calBtn.addEventListener('click', () => downloadIcs(ev));
+      }
     }
 
     // ---- Past events: scribe write-up ----
@@ -743,6 +752,116 @@
 
   // (Might-come collapse toggle removed — per UX feedback the attendee list
   // stays fully expanded so members can see both sections at a glance.)
+
+  // ===========================================================================
+  // .ics calendar download — Phase 2 chunk 7
+  // ===========================================================================
+  // Pure browser-side. Builds an .ics file from the event row and triggers a
+  // download via a temporary <a> element. Uses VTIMEZONE for Europe/London
+  // (with DST rules baked in) so the time renders correctly for users in
+  // any timezone — Google/Apple/Outlook Calendar all handle this.
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function icsLocalDateTime(dateISO, timeHMS) {
+    // dateISO: 'YYYY-MM-DD'; timeHMS: 'HH:MM:SS' or 'HH:MM'
+    // → 'YYYYMMDDTHHMMSS' (no Z, no offset; caller adds TZID prefix)
+    const datePart = dateISO.replace(/-/g, '');
+    const parts = timeHMS.split(':');
+    const hh = pad2(parts[0] || '00');
+    const mm = pad2(parts[1] || '00');
+    const ss = pad2(parts[2] || '00');
+    return `${datePart}T${hh}${mm}${ss}`;
+  }
+
+  function addHoursToLocal(dateISO, timeHMS, hours) {
+    const [y, m, d] = dateISO.split('-').map(Number);
+    const parts = timeHMS.split(':').map(Number);
+    // Construct as UTC so arithmetic isn't shifted by the browser's offset
+    const dt = new Date(Date.UTC(y, m - 1, d, parts[0] || 0, parts[1] || 0, parts[2] || 0));
+    dt.setUTCHours(dt.getUTCHours() + hours);
+    return {
+      date: `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`,
+      time: `${pad2(dt.getUTCHours())}:${pad2(dt.getUTCMinutes())}:${pad2(dt.getUTCSeconds())}`,
+    };
+  }
+
+  function icsUtcStamp() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
+  }
+
+  function icsEscape(text) {
+    return String(text ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\r?\n/g, '\\n');
+  }
+
+  function buildIcs(ev) {
+    const startTime = ev.start_time || '12:00:00';
+    const dtstart = icsLocalDateTime(ev.event_date, startTime);
+    const end = addHoursToLocal(ev.event_date, startTime, 3);
+    const dtend = icsLocalDateTime(end.date, end.time);
+    const eventUrl = `${location.origin}/event.html?id=${ev.id}`;
+
+    const descParts = [];
+    if (ev.description) descParts.push(ev.description);
+    if (ev.hares)       descParts.push(`Hares: ${ev.hares}`);
+    if (ev.pace)        descParts.push(`Pace: ${ev.pace}`);
+    descParts.push(`Full details: ${eventUrl}`);
+
+    // RFC 5545 requires CRLF line endings
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Steel City H3//Member portal//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VTIMEZONE',
+      'TZID:Europe/London',
+      'BEGIN:STANDARD',
+      'DTSTART:19961027T020000',
+      'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
+      'TZOFFSETFROM:+0100',
+      'TZOFFSETTO:+0000',
+      'TZNAME:GMT',
+      'END:STANDARD',
+      'BEGIN:DAYLIGHT',
+      'DTSTART:19810329T010000',
+      'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3',
+      'TZOFFSETFROM:+0000',
+      'TZOFFSETTO:+0100',
+      'TZNAME:BST',
+      'END:DAYLIGHT',
+      'END:VTIMEZONE',
+      'BEGIN:VEVENT',
+      `UID:event-${ev.id}@steelcityh3.org`,
+      `DTSTAMP:${icsUtcStamp()}`,
+      `DTSTART;TZID=Europe/London:${dtstart}`,
+      `DTEND;TZID=Europe/London:${dtend}`,
+      `SUMMARY:${icsEscape(`Steel City H3 — ${ev.title}`)}`,
+      `LOCATION:${icsEscape(ev.location_full || ev.location_summary || 'TBC')}`,
+      `DESCRIPTION:${icsEscape(descParts.join('\n\n'))}`,
+      `URL:${eventUrl}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+  }
+
+  function downloadIcs(ev) {
+    const ics = buildIcs(ev);
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `steel-city-h3-run-${ev.run_number}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 </body>
