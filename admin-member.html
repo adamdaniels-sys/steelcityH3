@@ -365,7 +365,12 @@
     const btn = $('#delete-confirm-btn');
     btn.disabled = true;
     btn.textContent = '▸ Deleting…';
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    // Full GDPR delete via Edge Function — wipes auth.users row, profile
+    // cascades to RSVPs, event_hares, user_roles. Admin_actions actor_id is
+    // ON DELETE SET NULL so the audit log survives but anonymises.
+    const { data, error } = await supabase.functions.invoke('rapid-processor', {
+      body: { op: 'delete_account', target_user_id: userId },
+    });
     if (error) {
       btn.disabled = false;
       btn.textContent = '▸ Delete';
@@ -373,7 +378,7 @@
       showToast(error.message || "Couldn't delete.", { kind: 'error' });
       return;
     }
-    try { sessionStorage.setItem('sch3-toast', 'Member deleted.'); } catch {}
+    try { sessionStorage.setItem('sch3-toast', 'Member deleted (full wipe).'); } catch {}
     window.location.replace('/admin-members.html');
   });
 

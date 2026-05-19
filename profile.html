@@ -108,9 +108,37 @@
           <button class="btn muted" type="button" id="signout-btn">↶ Sign out</button>
         </div>
       </form>
+
+      <!-- GDPR — self-delete -->
+      <div class="danger-zone" style="margin-top: 30px;">
+        <h4>▸ Delete my account</h4>
+        <p style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin-bottom: 14px;">
+          Wipes your profile, all your RSVPs, and any hare slots you hold.
+          Your auth account is removed too — no trace stays on the system.
+          Cannot be undone. If you want to come back, you sign up fresh.
+        </p>
+        <button class="btn" type="button" id="delete-account-btn">▸ Delete my account</button>
+      </div>
     </div>
   </div>
 </main>
+
+<!-- Delete-confirm modal -->
+<div class="modal-overlay" id="delete-modal" hidden>
+  <div class="modal">
+    <h3>Delete your account?</h3>
+    <p>
+      Final check — this wipes your profile, RSVPs, and hare slots, plus your
+      auth account. Cannot be undone.
+    </p>
+    <p style="font-family: 'Nunito'; font-weight: 700;">Type <code>DELETE</code> to confirm:</p>
+    <input type="text" id="delete-confirm-input" style="background: var(--cream); border: 3px solid var(--ink); padding: 12px 14px; width: 100%; font-family: 'Nunito', sans-serif; font-weight: 700;" />
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="delete-cancel-btn">↶ Cancel</button>
+      <button class="btn" type="button" id="delete-confirm-btn" style="background: var(--red); color: var(--cream); border-color: var(--cream);" disabled>▸ Delete my account</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="container">
@@ -238,6 +266,41 @@
   });
 
   $('#signout-btn').addEventListener('click', signOut);
+
+  // ---- Self-delete account (GDPR) ----------------------------------------
+
+  $('#delete-account-btn').addEventListener('click', () => {
+    $('#delete-confirm-input').value = '';
+    $('#delete-confirm-btn').disabled = true;
+    $('#delete-modal').hidden = false;
+    setTimeout(() => $('#delete-confirm-input').focus(), 50);
+  });
+  $('#delete-cancel-btn').addEventListener('click', () => {
+    $('#delete-modal').hidden = true;
+  });
+  $('#delete-confirm-input').addEventListener('input', (e) => {
+    $('#delete-confirm-btn').disabled = e.target.value.trim() !== 'DELETE';
+  });
+  $('#delete-confirm-btn').addEventListener('click', async () => {
+    const btn = $('#delete-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = '▸ Deleting…';
+    const { data, error } = await supabase.functions.invoke('rapid-processor', {
+      body: { op: 'delete_account' },
+    });
+    if (error) {
+      console.error('[profile] self-delete failed:', error);
+      btn.disabled = false;
+      btn.textContent = '▸ Delete my account';
+      alert("Couldn't delete: " + (error.message || 'unknown error'));
+      return;
+    }
+    // Sign out locally (auth.users row is already gone server-side) and bounce home
+    try { sessionStorage.setItem('sch3-toast', 'Account deleted. On-on.'); } catch {}
+    try { await supabase.auth.signOut(); } catch {}
+    try { localStorage.removeItem('sch3-then'); } catch {}
+    window.location.replace('/');
+  });
 </script>
 
 </body>

@@ -34,14 +34,18 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-interface InvokeBody {
+// Body can be EITHER an email-send request (event_id + optional notify) or
+// an account-delete request (op='delete_account' + optional target_user_id).
+// Function discriminates on body.op.
+interface EmailBody {
   event_id: number;
-  // Optional notification type. Defaults to 'rsvp_confirmation' which sends
-  // the user the "You're on-on for X" email (current behaviour). Set to
-  // 'hare_volunteer' to send an admin-facing notification to
-  // on-on@steelcityh3.org telling Smutley that someone offered to hare.
   notify?: 'rsvp_confirmation' | 'hare_volunteer';
 }
+interface DeleteAccountBody {
+  op: 'delete_account';
+  target_user_id?: string;
+}
+type InvokeBody = EmailBody | DeleteAccountBody;
 
 // CORS — function is invoked cross-origin from steelcityh3.org by the
 // supabase-js client, which means the browser sends an OPTIONS preflight
@@ -437,21 +441,54 @@ serve(async (req) => {
   }
   const user = userData.user;
 
-  // Parse the request body — frontend passes event_id + optional notify type
+  // Parse the request body — could be email request OR account-delete
   let body: InvokeBody;
   try {
-    body = await req.json();
+    body = await req.json() as InvokeBody;
   } catch (err) {
     return jsonResponse(400, { error: "invalid_json", detail: String(err) });
   }
-  if (!body?.event_id || typeof body.event_id !== "number") {
+
+  // Service-role client bypasses RLS for the data fetches + admin auth ops
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  // ---- Op: delete_account ------------------------------------------------
+  if ((body as DeleteAccountBody)?.op === "delete_account") {
+    const dBody = body as DeleteAccountBody;
+    const targetUid = dBody.target_user_id || user.id;
+    const isSelf = targetUid === user.id;
+
+    if (!isSelf) {
+      // Admin path — caller must be admin
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleRow) {
+        return jsonResponse(403, { error: "forbidden", detail: "Admin role required to delete other users." });
+      }
+    }
+
+    // Delete the auth.users row — cascade handles profiles → rsvps,
+    // event_hares, user_roles. admin_actions.actor_id is ON DELETE SET NULL
+    // so the audit log survives but anonymises.
+    const { error: delErr } = await supabase.auth.admin.deleteUser(targetUid);
+    if (delErr) {
+      console.error("[rsvp-email] admin.deleteUser failed:", delErr);
+      return jsonResponse(500, { error: "delete_failed", detail: delErr.message });
+    }
+    return jsonResponse(200, { deleted: true, user_id: targetUid, self: isSelf });
+  }
+
+  // ---- Otherwise: email request (existing logic) ------------------------
+  const eBody = body as EmailBody;
+  if (!eBody?.event_id || typeof eBody.event_id !== "number") {
     return jsonResponse(400, { error: "missing_event_id" });
   }
 
-  const notifyType = body.notify === "hare_volunteer" ? "hare_volunteer" : "rsvp_confirmation";
-
-  // Service-role client bypasses RLS for the data fetches
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const notifyType = eBody.notify === "hare_volunteer" ? "hare_volunteer" : "rsvp_confirmation";
 
   // ---- Path A: hare_volunteer → notify admin mailbox ---------------------
   if (notifyType === "hare_volunteer") {
@@ -459,7 +496,7 @@ serve(async (req) => {
     const hareRes = await supabase
       .from("event_hares")
       .select("volunteered")
-      .eq("event_id", body.event_id)
+      .eq("event_id", eBody.event_id)
       .eq("user_id", user.id)
       .maybeSingle();
     if (hareRes.error || !hareRes.data) {
@@ -467,7 +504,7 @@ serve(async (req) => {
     }
 
     const [eventRes2, profileRes2] = await Promise.all([
-      supabase.from("events").select("*").eq("id", body.event_id).single(),
+      supabase.from("events").select("*").eq("id", eBody.event_id).single(),
       supabase.from("profiles").select("real_name, hash_name, phone").eq("id", user.id).single(),
     ]);
     if (eventRes2.error || !eventRes2.data) {
@@ -488,7 +525,7 @@ serve(async (req) => {
     .from("rsvps")
     .select("status, guests_count")
     .eq("user_id", user.id)
-    .eq("event_id", body.event_id)
+    .eq("event_id", eBody.event_id)
     .maybeSingle();
 
   if (rsvpRes.error) {
@@ -503,7 +540,7 @@ serve(async (req) => {
   const guestsCount = rsvpRes.data.guests_count || 0;
 
   const [eventRes, profileRes] = await Promise.all([
-    supabase.from("events").select("*").eq("id", body.event_id).single(),
+    supabase.from("events").select("*").eq("id", eBody.event_id).single(),
     supabase.from("profiles").select("real_name, hash_name").eq("id", user.id).single(),
   ]);
 

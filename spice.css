@@ -1644,7 +1644,7 @@
 /* ===== Profile pages — form helpers shared by /complete-profile and /profile ===== */
 
 .profile-wrap {
-  max-width: 560px;
+  max-width: 660px;
   margin: 60px auto 100px;
   padding: 0 24px;
   position: relative;
