@@ -157,7 +157,7 @@
         <!-- Attendee list — populated from get_attendee_list RPC. -->
         <div id="attendee-list-wrap" hidden style="margin-top: 30px;">
           <section id="on-on-section" hidden>
-            <h2 id="on-on-heading" class="attendee-heading">Who's coming</h2>
+            <h2 id="on-on-heading" class="attendee-heading">Who's Cumming</h2>
             <ul class="going-list" id="on-on-list"></ul>
             <button class="btn muted" type="button" id="on-on-more" hidden style="margin-top: 12px;">▸ Show the rest</button>
           </section>
@@ -477,6 +477,7 @@
         ? `Bringing ${g} hash virgin${g === 1 ? '' : 's'}. See you Saturday.`
         : "Just you. Tap Edit to add hash virgins if you're bringing any.";
       quickBtn.hidden = false;
+      quickBtn.style.display = '';
     } else if (r.status === 'maybe') {
       headline.textContent = "You said maybe — fingers crossed!";
       const g = r.guests_count || 0;
@@ -484,10 +485,14 @@
         ? `Pencilled in with ${g} hash virgin${g === 1 ? '' : 's'} if you make it.`
         : "Pencilled in. Switch to on-on when you know for sure.";
       quickBtn.hidden = false;
+      quickBtn.style.display = '';
     } else {
       headline.textContent = "Marked yourself out.";
       detail.textContent = "Tap Edit if you change your mind.";
       quickBtn.hidden = true;
+      // Belt and braces — explicit display:none in case the global [hidden]
+      // override gets out-competed by some browser cache or specificity edge case.
+      quickBtn.style.display = 'none';
     }
   }
 
@@ -754,7 +759,7 @@
     // On-on
     if (onOnRows.length > 0) {
       onOnSection.hidden = false;
-      $('#on-on-heading').textContent = `Who's coming (${bodiesTotal(onOnRows)})`;
+      $('#on-on-heading').textContent = `Who's Cumming (${bodiesTotal(onOnRows)})`;
       renderAttendeeSection(onOnRows, $('#on-on-list'), $('#on-on-more'));
     } else {
       onOnSection.hidden = true;
