@@ -3,14 +3,18 @@
     Supabase Dashboard → Authentication → Emails → Templates → "Magic Link"
 
   Subject line for that template:
-    Your sign-in code for Steel City H3 ▸ {{ .Token }}
+    Your sign-in link for Steel City H3
 
   Adapted from the Claude-Design template at emails/magic-link.html.
   Differences from the original:
     * {{ hash_name }} removed — Supabase Auth can't read profiles.real_name.
-      Greeting now reads "Hello — tap the big button below…".
+      Greeting now reads "Right then — tap the big button below…".
     * {{ magic_link }}  → {{ .ConfirmationURL }} (Supabase placeholder)
-    * {{ otp_code }}    → {{ .Token }} (Supabase placeholder)
+    * OTP code block removed entirely — the website doesn't accept code
+      entry yet (only the magic-link button). Showing a code with no way
+      to use it would just confuse people. The flow can be re-enabled
+      later by adding {{ .Token }} back in plus an OTP input on
+      /login.html.
     * <img src="logo-original.jpg" …/> removed — Supabase emails can't
       reference our static assets. To re-add a logo, upload it to a
       public URL (e.g. Supabase Storage) and paste the full https://
@@ -38,7 +42,7 @@
 <body style="background: #f4e5b8; margin: 0; padding: 0; font-family: 'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; color: #15110a;">
 
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    One tap and you're in. Code expires in 10 minutes. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+    One tap and you're in. Link expires in an hour. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; padding: 30px 12px;">
@@ -68,12 +72,12 @@
 
             <tr><td align="center" style="padding: 8px 32px 26px;">
               <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #3a2e1f; line-height: 1.5;">
-                Right then — tap the big button below to sign in.
-                Or pop the code into the website yourself. Easy either way.
+                Right then — tap the big button below and you're sorted.
+                Takes about four seconds.
               </p>
             </td></tr>
 
-            <tr><td align="center" style="padding: 0 32px 28px;">
+            <tr><td align="center" style="padding: 0 32px 18px;">
               <table role="presentation" cellpadding="0" cellspacing="0"><tr>
                 <td style="background: #15110a; padding: 0;">
                   <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #ee5a17; color: #15110a; padding: 18px 36px; font-family: 'Bangers', 'Impact', sans-serif; font-size: 28px; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; border: 3px solid #15110a; box-shadow: 6px 6px 0 #15110a; white-space: nowrap;">
@@ -81,24 +85,12 @@
                   </a>
                 </td>
               </tr></table>
-            </td></tr>
-
-            <tr><td align="center" style="padding: 6px 32px 20px;">
-              <div style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 20px; color: #6e5f48; letter-spacing: 0.16em; text-transform: uppercase;">
-                ▸ or use this code ▸
-              </div>
-            </td></tr>
-
-            <tr><td align="center" style="padding: 0 32px 36px;">
-              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-                <td style="background: #ffd23a; border: 4px solid #15110a; padding: 22px 36px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 38px; font-weight: 700; letter-spacing: 0.4em; color: #15110a; text-align: center;">
-                  {{ .Token }}
-                </td>
-              </tr></table>
               <p class="mono" style="margin: 14px 0 0; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6e5f48; font-weight: 700;">
-                ▸ Expires in 1 hour
+                ▸ Link expires in 1 hour
               </p>
             </td></tr>
+
+            <tr><td style="padding: 22px 32px 0;"></td></tr>
 
             <tr><td style="padding: 0 32px 36px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; border: 2px dashed #15110a;"><tr>
