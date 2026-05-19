@@ -1,0 +1,139 @@
+<!--
+  Paste this into:
+    Supabase Dashboard → Authentication → Emails → Templates → "Magic Link"
+
+  Subject line for that template:
+    Your sign-in code for Steel City H3 ▸ {{ .Token }}
+
+  Adapted from the Claude-Design template at emails/magic-link.html.
+  Differences from the original:
+    * {{ hash_name }} removed — Supabase Auth can't read profiles.real_name.
+      Greeting now reads "Hello — tap the big button below…".
+    * {{ magic_link }}  → {{ .ConfirmationURL }} (Supabase placeholder)
+    * {{ otp_code }}    → {{ .Token }} (Supabase placeholder)
+    * <img src="logo-original.jpg" …/> removed — Supabase emails can't
+      reference our static assets. To re-add a logo, upload it to a
+      public URL (e.g. Supabase Storage) and paste the full https://
+      URL into the src attribute.
+-->
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<meta name="supported-color-schemes" content="light only" />
+<title>Your sign-in code — Steel City H3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Lilita+One&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+  body, table, td { margin: 0; padding: 0; }
+  table { border-collapse: collapse; }
+  img { display: block; border: 0; }
+  a { color: #ee5a17; text-decoration: underline; }
+  .bangers { font-family: 'Bangers', 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', sans-serif; }
+  .body-font { font-family: 'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+</style>
+</head>
+<body style="background: #f4e5b8; margin: 0; padding: 0; font-family: 'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; color: #15110a;">
+
+  <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+    One tap and you're in. Code expires in 10 minutes. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; padding: 30px 12px;">
+    <tr><td align="center">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%;">
+
+        <tr><td style="background: #15110a; border-bottom: 6px solid #ee5a17; padding: 18px 28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td valign="middle" style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 22px; color: #f4e5b8; letter-spacing: 0.06em; text-transform: uppercase;">
+              Steel City H3
+            </td>
+            <td align="right" valign="middle" class="mono" style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">
+              ▸ Sign-in
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding: 30px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #faefcc; border: 4px solid #15110a;">
+
+            <tr><td align="center" style="padding: 40px 32px 12px;">
+              <div class="bangers" style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 52px; line-height: 0.92; letter-spacing: 0.025em; color: #15110a; text-transform: uppercase;">
+                One tap<br/>&amp; <span style="color: #ee5a17;">you're in!</span>
+              </div>
+            </td></tr>
+
+            <tr><td align="center" style="padding: 8px 32px 26px;">
+              <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #3a2e1f; line-height: 1.5;">
+                Right then — tap the big button below to sign in.
+                Or pop the code into the website yourself. Easy either way.
+              </p>
+            </td></tr>
+
+            <tr><td align="center" style="padding: 0 32px 28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td style="background: #15110a; padding: 0;">
+                  <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #ee5a17; color: #15110a; padding: 18px 36px; font-family: 'Bangers', 'Impact', sans-serif; font-size: 28px; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; border: 3px solid #15110a; box-shadow: 6px 6px 0 #15110a; white-space: nowrap;">
+                    ▸ Sign me in
+                  </a>
+                </td>
+              </tr></table>
+            </td></tr>
+
+            <tr><td align="center" style="padding: 6px 32px 20px;">
+              <div style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 20px; color: #6e5f48; letter-spacing: 0.16em; text-transform: uppercase;">
+                ▸ or use this code ▸
+              </div>
+            </td></tr>
+
+            <tr><td align="center" style="padding: 0 32px 36px;">
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td style="background: #ffd23a; border: 4px solid #15110a; padding: 22px 36px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 38px; font-weight: 700; letter-spacing: 0.4em; color: #15110a; text-align: center;">
+                  {{ .Token }}
+                </td>
+              </tr></table>
+              <p class="mono" style="margin: 14px 0 0; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6e5f48; font-weight: 700;">
+                ▸ Expires in 1 hour
+              </p>
+            </td></tr>
+
+            <tr><td style="padding: 0 32px 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; border: 2px dashed #15110a;"><tr>
+                <td style="padding: 14px 18px; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 13px; color: #3a2e1f; font-weight: 600; line-height: 1.5;">
+                  <b style="color: #a72020;">▸ Didn't request this?</b>
+                  Someone (probably with the wrong email) tried to sign in to Steel City H3.
+                  You can ignore this email — your account is safe and no-one else has your code.
+                </td>
+              </tr></table>
+            </td></tr>
+
+          </table>
+        </td></tr>
+
+        <tr><td style="padding: 14px 0 30px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td align="center" class="bangers" style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 32px; letter-spacing: 0.04em; color: #ee5a17; text-transform: uppercase;">
+              ON-ON!
+            </td>
+          </tr><tr>
+            <td align="center" class="mono" style="padding-top: 12px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6e5f48; font-weight: 700;">
+              Steel City H3 · Sheffield · Year 1
+            </td>
+          </tr><tr>
+            <td align="center" style="padding-top: 8px; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 11px; color: #6e5f48;">
+              You're getting this because someone (hopefully you) requested a sign-in.<br/>
+              No reply needed — questions? <a href="mailto:smutley@hotmail.co.uk" style="color: #a72020;">smutley@hotmail.co.uk</a>
+            </td>
+          </tr></table>
+        </td></tr>
+
+      </table>
+
+    </td></tr>
+  </table>
+
+</body>
+</html>
