@@ -1817,6 +1817,123 @@
   line-height: 1;
 }
 
+/* ===== My On-Ons page ===== */
+
+.onons-section-heading {
+  font-family: "Bangers", sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin-bottom: 18px;
+  line-height: 1;
+}
+.onons-list {
+  display: grid;
+  gap: 12px;
+}
+.onons-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 22px;
+  background: var(--cream-2);
+  border: 4px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  text-decoration: none;
+  color: var(--ink);
+}
+.onons-row-past {
+  background: var(--cream);
+  box-shadow: 4px 4px 0 var(--ink-3);
+}
+.onons-row:hover { background: var(--cream-3); }
+.onons-row-past:hover { background: var(--cream-2); }
+.onons-date {
+  text-align: center;
+  border-right: 3px solid var(--ink);
+  padding-right: 16px;
+}
+.onons-date .d {
+  font-family: "Bangers", sans-serif;
+  font-size: 2.4rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.onons-date .m {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--orange);
+  font-weight: 700;
+  margin-top: 4px;
+}
+.onons-body {
+  min-width: 0;
+}
+.onons-title {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--ink);
+  text-decoration: none;
+  display: block;
+  margin-bottom: 6px;
+}
+a.onons-title:hover { color: var(--orange); }
+.onons-meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.onons-status-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+.onons-status-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+.onons-status-select {
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  padding: 8px 12px;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  cursor: pointer;
+  min-width: 140px;
+}
+.onons-status-select:focus { outline: 3px solid var(--orange); outline-offset: 0; }
+.onons-status-select:disabled { opacity: 0.6; cursor: wait; }
+.onons-readonly-status {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+@media (max-width: 600px) {
+  .onons-row { grid-template-columns: 60px 1fr; padding: 14px 16px; gap: 12px; }
+  .onons-status-wrap { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+  .onons-date { padding-right: 10px; }
+  .onons-date .d { font-size: 2rem; }
+  .onons-title { font-size: 1.2rem; }
+}
+
 /* "(you)" tag on your own attendee row */
 .going-list .you-tag {
   margin-left: auto;

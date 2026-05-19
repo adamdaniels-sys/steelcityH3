@@ -114,6 +114,7 @@ function buildDropdown(displayName, av) {
     </button>
     <div class="login-dropdown" id="login-dropdown" role="menu" hidden>
       <a role="menuitem" href="/profile.html">▸ Your hash card</a>
+      <a role="menuitem" href="/my-on-ons.html">▸ My On-Ons</a>
       <button type="button" role="menuitem" id="signout-btn">↶ Sign out</button>
     </div>
   `;
