@@ -859,6 +859,10 @@
     const orig = btn.textContent;
     btn.textContent = '▸ Adding you…';
     const session = await getSession();
+    // Capture current RSVP state so we know whether the auto-RSVP trigger
+    // upgraded us into on_on (and therefore we should fire the confirmation email)
+    const wasOnOnBefore = currentRsvp?.status === 'on_on';
+
     const { error } = await supabase.from('event_hares').insert({
       event_id: currentEvent.id,
       user_id: session.user.id,
@@ -872,6 +876,26 @@
       return;
     }
     showToast("Thanks — Smutley will be in touch.", { kind: 'ok' });
+
+    // The auto-RSVP DB trigger will have created/upgraded the rsvp to on_on.
+    // Refresh our local view, then if this is a fresh transition into on_on,
+    // invoke the confirmation email Edge Function.
+    const { data: refreshedRsvp } = await supabase
+      .from('rsvps')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .eq('event_id', currentEvent.id)
+      .maybeSingle();
+    currentRsvp = refreshedRsvp || null;
+    renderRsvpState();
+    refreshAttendeeList(currentEvent, false);
+
+    if (!wasOnOnBefore && currentRsvp?.status === 'on_on') {
+      supabase.functions
+        .invoke('rapid-processor', { body: { event_id: currentEvent.id } })
+        .catch((err) => console.warn('[event] hare confirmation email failed:', err));
+    }
+
     // Refresh hare display + panel
     const haresStr = await composeHaresString(currentEvent);
     $('#d-hares').textContent = haresStr;

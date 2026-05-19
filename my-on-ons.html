@@ -135,6 +135,9 @@
   function renderUpcomingRow(item) {
     const ev = item.event;
     const r = item.rsvp;
+    const hareSticker = item.isHare
+      ? `<span class="hare-stick" title="You're haring this one">▸ Hare</span>`
+      : '';
     return `
       <div class="onons-row" data-event-id="${ev.id}">
         <div class="onons-date">
@@ -147,6 +150,7 @@
           </a>
           <div class="onons-meta">
             ${formatShortDate(ev.event_date)} · ${escapeHtml(ev.location_summary || 'TBC')}${escapeHtml(guestSuffix(r.guests_count))}
+            ${hareSticker}
           </div>
         </div>
         <label class="onons-status-wrap">
@@ -162,6 +166,9 @@
   function renderPastRow(item) {
     const ev = item.event;
     const r = item.rsvp;
+    const hareSticker = item.isHare
+      ? `<span class="hare-stick" title="You hared this one">▸ Hared</span>`
+      : '';
     return `
       <a class="onons-row onons-row-past" href="/event.html?id=${ev.id}">
         <div class="onons-date">
@@ -172,6 +179,7 @@
           <span class="onons-title">Run #${ev.run_number} · ${escapeHtml(ev.title)}</span>
           <div class="onons-meta">
             ${formatShortDate(ev.event_date)} · ${escapeHtml(ev.location_summary || '')}${escapeHtml(guestSuffix(r.guests_count))}
+            ${hareSticker}
           </div>
         </div>
         <span class="onons-readonly-status">${escapeHtml(STATUS_LABELS[r.status] || r.status)}</span>
@@ -220,15 +228,20 @@
       return;
     }
 
-    // Fetch all the user's RSVPs joined with their event details.
-    // Supabase supports embedded join via the FK relationship.
-    const { data, error } = await supabase
-      .from('rsvps')
-      .select('id, status, guests_count, event:events(id, run_number, title, event_date, location_summary, status)')
-      .eq('user_id', session.user.id);
+    // Fetch RSVPs + the user's hare assignments in parallel
+    const [rsvpRes, hareRes] = await Promise.all([
+      supabase
+        .from('rsvps')
+        .select('id, status, guests_count, event:events(id, run_number, title, event_date, location_summary, status)')
+        .eq('user_id', session.user.id),
+      supabase
+        .from('event_hares')
+        .select('event_id')
+        .eq('user_id', session.user.id),
+    ]);
 
-    if (error) {
-      console.error('[my-on-ons] fetch failed:', error);
+    if (rsvpRes.error) {
+      console.error('[my-on-ons] fetch failed:', rsvpRes.error);
       document.getElementById('loading').innerHTML = `
         <h1>Couldn't load your hash diary.</h1>
         <p>Refresh and try again. If it keeps failing, email Smutley.</p>
@@ -237,12 +250,13 @@
     }
 
     const todayISO = new Date().toISOString().slice(0, 10);
+    const hareEventIds = new Set((hareRes.data || []).map((r) => r.event_id));
 
-    // Each row from the query has shape: { id, status, guests_count, event: {...} }
-    // Split into upcoming vs past based on event_date.
-    // Per brief: Past = "events the user RSVP'd on_on for". So filter past
-    // to only show on_on rows.
-    const items = (data || []).map((r) => ({ rsvp: r, event: r.event }));
+    const items = (rsvpRes.data || []).map((r) => ({
+      rsvp: r,
+      event: r.event,
+      isHare: r.event ? hareEventIds.has(r.event.id) : false,
+    }));
     const upcoming = items.filter((it) => it.event && it.event.event_date >= todayISO);
     const past     = items.filter((it) => it.event && it.event.event_date <  todayISO && it.rsvp.status === 'on_on');
 
