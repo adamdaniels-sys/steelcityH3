@@ -367,7 +367,7 @@ serve(async (req) => {
   const text = buildEmailText(opts);
 
   const smtpHost = Deno.env.get("SMTP_HOST");
-  const smtpPort = Number(Deno.env.get("SMTP_PORT") || "587");
+  const smtpPort = Number(Deno.env.get("SMTP_PORT") || "465");
   const smtpUser = Deno.env.get("SMTP_USER");
   const smtpPass = Deno.env.get("SMTP_PASS");
   const smtpFrom = Deno.env.get("SMTP_FROM") || `Steel City H3 <${smtpUser}>`;
@@ -376,11 +376,18 @@ serve(async (req) => {
     return jsonResponse(500, { error: "missing_smtp_env" });
   }
 
+  // Use implicit TLS on port 465 (SMTPS). STARTTLS on port 587 fails in the
+  // Edge Functions runtime due to a known Deno startTls() resource-ID bug:
+  //   BadResource: Bad resource ID at Object.startTls
+  // 465 connects with TLS from the start — no upgrade dance, no broken call.
+  // IONOS supports both ports; we just pick the one that works here.
+  const useImplicitTls = smtpPort !== 587;
+
   const client = new SMTPClient({
     connection: {
       hostname: smtpHost,
       port:     smtpPort,
-      tls:      false,  // port 587 uses STARTTLS — denomailer upgrades automatically
+      tls:      useImplicitTls,
       auth: { username: smtpUser, password: smtpPass },
     },
   });
