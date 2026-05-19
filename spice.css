@@ -1780,6 +1780,43 @@
   color: var(--orange);
 }
 
+/* Homepage event card — attendance counts + personal RSVP indicator */
+.ev .attendance {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 2px solid currentColor;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.ev .your-rsvp {
+  margin-top: 8px;
+  margin-bottom: 18px;  /* keep clear of the .stat absolute badge */
+  font-family: "Bangers", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ev .your-rsvp .virgin-stick {
+  background: var(--yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  padding: 3px 9px;
+  font-family: "Bangers", sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
 /* "(you)" tag on your own attendee row */
 .going-list .you-tag {
   margin-left: auto;
