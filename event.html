@@ -50,6 +50,7 @@
         <div id="ev-stat" class="ev-stat">Loading…</div>
         <h1 id="ev-title">…</h1>
         <div class="ev-when" id="ev-when">…</div>
+        <a href="#" id="admin-edit-link" class="admin-pencil" hidden>▸ Edit this hash</a>
 
         <!-- Cancelled banner, shown when event.status = 'closed' -->
         <div id="cancelled-banner" hidden style="margin-bottom: 24px; padding: 18px 22px; background: var(--red); color: var(--cream); border: 4px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); font-family: 'Bangers', sans-serif; font-size: 1.4rem; letter-spacing: 0.04em; text-transform: uppercase;">
@@ -143,6 +144,16 @@
           </aside>
         </div>
 
+        <!-- Hare self-nominate panel (signed-in non-admin members on hares_wanted events) -->
+        <aside class="rsvp" id="hare-panel" hidden style="background: var(--orange); color: var(--cream); margin-top: 24px;">
+          <h2 id="hare-panel-headline" style="color: var(--cream);">No hares yet for this one.</h2>
+          <p class="note" style="color: var(--cream-3);" id="hare-panel-detail">Fancy laying the trail?</p>
+          <div class="rsvp-actions">
+            <button class="btn cream" type="button" id="volunteer-btn" hidden>▸ I'll hare this one</button>
+            <button class="btn cream" type="button" id="withdraw-btn" hidden>↶ Actually, I can't hare this one</button>
+          </div>
+        </aside>
+
         <!-- Attendee list — populated from get_attendee_list RPC. -->
         <div id="attendee-list-wrap" hidden style="margin-top: 30px;">
           <section id="on-on-section" hidden>
@@ -197,7 +208,7 @@
 </footer>
 
 <script type="module">
-  import { supabase, getSession } from './auth.js';
+  import { supabase, getSession, isAdmin, showToast } from './auth.js';
 
   const WEEKDAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -295,8 +306,11 @@
     $('#d-date').textContent  = formatLongDate(ev.event_date);
     $('#d-time').textContent  = formatTimeFriendly(ev.start_time);
     $('#d-where').textContent = ev.location_full || ev.location_summary || 'TBC';
-    $('#d-hares').textContent = ev.hares || 'TBC';
     $('#d-pace').textContent  = ev.pace || 'Walk or run';
+
+    // Hares — combine structured event_hares + additional_hares_text + legacy
+    const haresStr = await composeHaresString(ev);
+    $('#d-hares').textContent = haresStr;
 
     if (ev.distance_miles != null) {
       $('#dt-distance').hidden = false;
@@ -334,6 +348,12 @@
 
     // ---- Attendee list (Phase 2 chunk 3) ----
     await refreshAttendeeList(ev, isPast);
+
+    // ---- Admin pencil (Phase 3) ----
+    initAdminPencil(ev, isPast);
+
+    // ---- Hare self-nominate panel (Phase 3) ----
+    await refreshHarePanel(ev, isPast);
   })().catch((err) => {
     console.error('[event] unexpected error:', err);
     showNotFound();
@@ -752,6 +772,136 @@
 
   // (Might-come collapse toggle removed — per UX feedback the attendee list
   // stays fully expanded so members can see both sections at a glance.)
+
+  // ===========================================================================
+  // Phase 3 — hare display, admin pencil, self-nominate panel
+  // ===========================================================================
+
+  async function composeHaresString(ev) {
+    // Combine: structured event_hares (resolved via RPC) + additional_hares_text + legacy text
+    const parts = [];
+    try {
+      const { data: hareRows } = await supabase.rpc('get_event_hares_display', { p_event_id: ev.id });
+      (hareRows || []).forEach((h) => parts.push(h.display_name));
+    } catch (e) {
+      console.warn('[event] hare display fetch failed:', e);
+    }
+    if (ev.additional_hares_text && ev.additional_hares_text.trim()) {
+      parts.push(ev.additional_hares_text.trim());
+    }
+    if (parts.length > 0) return parts.join(', ');
+    if (ev.hares && ev.hares.trim()) return ev.hares;
+    if (ev.status === 'hares_wanted') return 'Volunteers wanted!';
+    return 'TBC';
+  }
+
+  async function initAdminPencil(ev, isPast) {
+    if (isPast && ev.status !== 'completed') return;
+    const admin = await isAdmin();
+    if (!admin) return;
+    const link = $('#admin-edit-link');
+    link.setAttribute('href', `/admin-event.html?id=${ev.id}`);
+    link.hidden = false;
+  }
+
+  async function refreshHarePanel(ev, isPast) {
+    const panel = $('#hare-panel');
+    if (isPast || ev.status === 'closed') return;
+
+    const session = await getSession();
+    if (!session) return;
+
+    // Admins manage hares via the admin UI, not the self-nominate panel
+    const admin = await isAdmin();
+    if (admin) return;
+
+    // Find if THIS user is already a volunteer hare for this event
+    const { data: myHare } = await supabase
+      .from('event_hares')
+      .select('user_id, volunteered')
+      .eq('event_id', ev.id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+
+    // Find if there are any hares at all
+    const { data: allHares } = await supabase
+      .from('event_hares')
+      .select('user_id')
+      .eq('event_id', ev.id);
+
+    const hareCount = (allHares || []).length;
+    const isAdditional = ev.additional_hares_text && ev.additional_hares_text.trim();
+
+    if (myHare) {
+      // User has volunteered — show withdrawal option
+      panel.hidden = false;
+      $('#hare-panel-headline').textContent = 'You\'re down to hare this one.';
+      $('#hare-panel-detail').textContent = 'Smutley\'ll be in touch nearer the date. Need to bow out? No drama.';
+      $('#volunteer-btn').hidden = true;
+      $('#withdraw-btn').hidden = false;
+      return;
+    }
+
+    // Show "I'll hare" only if event is hares_wanted AND no hares assigned yet
+    // (the brief says: if event already has hares, this UI hides)
+    if (ev.status === 'hares_wanted' && hareCount === 0 && !isAdditional) {
+      panel.hidden = false;
+      $('#hare-panel-headline').textContent = 'No hares yet for this one.';
+      $('#hare-panel-detail').textContent = 'Fancy laying the trail? Smutley\'ll talk you through it if it\'s your first time.';
+      $('#volunteer-btn').hidden = false;
+      $('#withdraw-btn').hidden = true;
+    }
+  }
+
+  document.getElementById('volunteer-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('volunteer-btn');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = '▸ Adding you…';
+    const session = await getSession();
+    const { error } = await supabase.from('event_hares').insert({
+      event_id: currentEvent.id,
+      user_id: session.user.id,
+      volunteered: true,
+    });
+    btn.disabled = false;
+    btn.textContent = orig;
+    if (error) {
+      console.error('[event] volunteer failed:', error);
+      showToast(error.message || "Couldn't add you as hare.", { kind: 'error' });
+      return;
+    }
+    showToast("Thanks — Smutley will be in touch.", { kind: 'ok' });
+    // Refresh hare display + panel
+    const haresStr = await composeHaresString(currentEvent);
+    $('#d-hares').textContent = haresStr;
+    await refreshHarePanel(currentEvent, false);
+  });
+
+  document.getElementById('withdraw-btn').addEventListener('click', async () => {
+    const ok = window.confirm("Stand down from haring this one?");
+    if (!ok) return;
+    const btn = document.getElementById('withdraw-btn');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = '▸ Withdrawing…';
+    const session = await getSession();
+    const { error } = await supabase.from('event_hares')
+      .delete()
+      .eq('event_id', currentEvent.id)
+      .eq('user_id', session.user.id);
+    btn.disabled = false;
+    btn.textContent = orig;
+    if (error) {
+      console.error('[event] withdraw failed:', error);
+      showToast(error.message || "Couldn't withdraw.", { kind: 'error' });
+      return;
+    }
+    showToast("OK, you're off the hare list.", { kind: 'ok' });
+    const haresStr = await composeHaresString(currentEvent);
+    $('#d-hares').textContent = haresStr;
+    await refreshHarePanel(currentEvent, false);
+  });
 
   // ===========================================================================
   // .ics calendar download — Phase 2 chunk 7

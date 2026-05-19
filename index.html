@@ -99,6 +99,7 @@
         </p>
       </div>
 
+      <a href="/admin-event.html?id=new" id="admin-add-event" class="admin-pencil" hidden style="margin-bottom: 12px;">+ Add a hash</a>
       <div class="events-grid" id="events-grid">
         <!-- Populated by the inline module script at the bottom of the page -->
       </div>
@@ -392,7 +393,7 @@
   // auth.js handles the header login chip via DOMContentLoaded — no extra wiring.
   // We just need supabase + the session helper for the personal "you're on-on"
   // indicators on each card.
-  import { supabase, getSession } from './auth.js';
+  import { supabase, getSession, isAdmin } from './auth.js';
 
   const COLOR_ROTATION = ['cream', 'yellow', 'orange', 'red'];
   const MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -443,7 +444,18 @@
     return `<div class="your-rsvp"><span>▸ ${escapeHtml(label)}</span>${sticker}</div>`;
   }
 
-  function renderUpcomingCard(ev, colorClass, counts, myRsvp) {
+  function composeHaresStringForCard(ev, hareRows) {
+    const parts = (hareRows || []).map((h) => h.display_name);
+    if (ev.additional_hares_text && ev.additional_hares_text.trim()) {
+      parts.push(ev.additional_hares_text.trim());
+    }
+    if (parts.length > 0) return parts.join(', ');
+    if (ev.hares && ev.hares.trim()) return ev.hares;
+    if (ev.status === 'hares_wanted') return 'Volunteers wanted!';
+    return 'TBC';
+  }
+
+  function renderUpcomingCard(ev, colorClass, counts, myRsvp, hareRows) {
     const d = parseDate(ev.event_date);
     const day = d.getUTCDate();
     const monthAbbr = MONTHS_SHORT[d.getUTCMonth()];
@@ -451,6 +463,7 @@
     const year = d.getUTCFullYear();
     const badge = statusBadge(ev.status);
     const stat = `▸ ${badge.label}`;
+    const haresStr = composeHaresStringForCard(ev, hareRows);
 
     return `
       <a class="panel ev ${colorClass}${badge.warn ? ' warn' : ''}" href="event.html?id=${ev.id}" style="text-decoration:none;color:inherit;display:block;">
@@ -463,7 +476,7 @@
         <dl class="spec">
           <dt>Where</dt><dd>${escapeHtml(ev.location_summary || 'TBC')}</dd>
           <dt>Time</dt><dd>${ev.start_time ? formatTimeFriendly(ev.start_time) : '12 noon'} · on-on after</dd>
-          <dt>Hares</dt><dd>${escapeHtml(ev.hares || 'TBC')}</dd>
+          <dt>Hares</dt><dd>${escapeHtml(haresStr)}</dd>
           <dt>Pace</dt><dd>${escapeHtml(ev.pace || 'Walk or run')}</dd>
         </dl>
         ${renderAttendance(counts)}
@@ -531,13 +544,12 @@
         empty.hidden = false;
         if (heroVal) heroVal.textContent = 'TBC';
       } else {
-        // Fetch attendance counts in bulk + the current user's own RSVPs for
-        // these events (if signed in) so each card can show overall counts +
-        // a personal "you're on-on / you said maybe" indicator.
+        // Fetch attendance counts + user's own RSVPs + structured hares for
+        // each upcoming event in parallel.
         const ids = evs.map((e) => e.id);
         const session = await getSession();
 
-        const [countsRes, myRsvpsRes] = await Promise.all([
+        const [countsRes, myRsvpsRes, haresRes] = await Promise.all([
           supabase.rpc('get_event_attendance_counts', { p_event_ids: ids }),
           session
             ? supabase.from('rsvps')
@@ -545,6 +557,7 @@
                 .eq('user_id', session.user.id)
                 .in('event_id', ids)
             : Promise.resolve({ data: [] }),
+          supabase.rpc('get_events_hares_display', { p_event_ids: ids }),
         ]);
 
         const countsByEventId = new Map();
@@ -553,12 +566,19 @@
         const myRsvpsByEventId = new Map();
         (myRsvpsRes.data || []).forEach((r) => myRsvpsByEventId.set(r.event_id, r));
 
+        const haresByEventId = new Map();
+        (haresRes.data || []).forEach((row) => {
+          if (!haresByEventId.has(row.event_id)) haresByEventId.set(row.event_id, []);
+          haresByEventId.get(row.event_id).push(row);
+        });
+
         grid.innerHTML = evs
           .map((ev, i) => renderUpcomingCard(
             ev,
             COLOR_ROTATION[i % COLOR_ROTATION.length],
             countsByEventId.get(ev.id),
             myRsvpsByEventId.get(ev.id),
+            haresByEventId.get(ev.id),
           ))
           .join('');
 
@@ -575,6 +595,12 @@
       const list = document.getElementById('past-list');
       const evs = pastResult.data || [];
       list.innerHTML = evs.map(renderPastRow).join('');
+    }
+
+    // Inline "+ Add a hash" pencil for admins
+    if (await isAdmin()) {
+      const addLink = document.getElementById('admin-add-event');
+      if (addLink) addLink.hidden = false;
     }
   })();
 </script>
