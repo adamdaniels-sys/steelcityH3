@@ -38,10 +38,23 @@ interface InvokeBody {
   event_id: number;
 }
 
+// CORS — function is invoked cross-origin from steelcityh3.org by the
+// supabase-js client, which means the browser sends an OPTIONS preflight
+// before the POST. Without this, the preflight returns 405 and the actual
+// POST never fires.
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 function jsonResponse(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...CORS_HEADERS,
+    },
   });
 }
 
@@ -247,6 +260,10 @@ Steel City H3`;
 }
 
 serve(async (req) => {
+  // CORS preflight — must respond before any auth/method checks
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: CORS_HEADERS });
+  }
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "method_not_allowed" });
   }
