@@ -189,7 +189,13 @@
     // deleted between signup and now. The trigger only creates the row on
     // auth.users INSERT, so a deleted profile would otherwise be unrecoverable
     // from the client without admin intervention.
-    const { error } = await supabase
+    //
+    // Also sync hash_name into auth.users.user_metadata.display_name so the
+    // Supabase Authentication → Users dashboard shows readable names instead
+    // of bare emails. Skipped if no hash_name yet (hash virgins). We
+    // intentionally don't put real_name in user_metadata — that field is
+    // readable by the user themselves and would leak into JWTs.
+    const profileWrite = supabase
       .from('profiles')
       .upsert({
         id: session.user.id,
@@ -200,6 +206,12 @@
         newsletter_opt_in,
       }, { onConflict: 'id' });
 
+    const metadataWrite = hash_name
+      ? supabase.auth.updateUser({ data: { display_name: hash_name } })
+      : Promise.resolve({ error: null });
+
+    const [{ error }, { error: metaError }] = await Promise.all([profileWrite, metadataWrite]);
+
     btn.disabled = false;
     btn.textContent = originalLabel;
 
@@ -207,6 +219,10 @@
       console.error('[complete-profile] update failed:', error);
       showMsg(error.message || 'Couldn\'t save that. Try again, and if it fails twice, email Smutley.');
       return;
+    }
+    if (metaError) {
+      // Non-fatal — the profile saved fine. Just log it.
+      console.warn('[complete-profile] display_name sync failed:', metaError);
     }
 
     // All good — send them on.

@@ -202,8 +202,8 @@
     btn.disabled = true;
     btn.textContent = '▸ Saving…';
 
-    // Same UPSERT pattern as /complete-profile.html — see comment there.
-    const { error } = await supabase
+    // Same UPSERT + display_name sync as /complete-profile.html.
+    const profileWrite = supabase
       .from('profiles')
       .upsert({
         id: session.user.id,
@@ -214,6 +214,12 @@
         newsletter_opt_in,
       }, { onConflict: 'id' });
 
+    const metadataWrite = hash_name
+      ? supabase.auth.updateUser({ data: { display_name: hash_name } })
+      : Promise.resolve({ error: null });
+
+    const [{ error }, { error: metaError }] = await Promise.all([profileWrite, metadataWrite]);
+
     btn.disabled = false;
     btn.textContent = originalLabel;
 
@@ -221,6 +227,9 @@
       console.error('[profile] update failed:', error);
       showMsg(error.message || 'Couldn\'t save that. Try again.');
       return;
+    }
+    if (metaError) {
+      console.warn('[profile] display_name sync failed:', metaError);
     }
 
     showMsg('Saved.', true);
