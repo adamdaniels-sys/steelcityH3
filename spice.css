@@ -1748,6 +1748,37 @@
   text-align: center;
 }
 
+/* Status picker on the editing-state RSVP panel */
+.status-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.status-pick-btn {
+  background: var(--cream);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  padding: 12px 18px;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  transition: background 100ms, transform 100ms, box-shadow 100ms;
+  line-height: 1;
+}
+.status-pick-btn:hover:not(.selected) {
+  background: var(--cream-3);
+}
+.status-pick-btn.selected {
+  background: var(--orange);
+  color: var(--cream);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
 /* Attendee list section headings + collapse toggle */
 .attendee-heading {
   font-family: "Bangers", sans-serif;

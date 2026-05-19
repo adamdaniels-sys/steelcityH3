@@ -71,7 +71,9 @@
             </dl>
           </div>
 
-          <!-- RSVP card — populated by inline script based on auth + RSVP state.
+          <!-- RSVP card — two-step flow: pick → edit draft → confirm.
+               Email + attendee-list update only fire on confirm, so
+               accidental clicks don't notify or update anything.
                Hidden for past/cancelled events. -->
           <aside class="ev-side" id="rsvp-card" hidden>
 
@@ -84,49 +86,55 @@
               </div>
             </div>
 
-            <!-- State B: signed in, no RSVP yet -->
+            <!-- State B: signed in, no RSVP yet — pick a status to start editing -->
             <div class="rsvp" id="rsvp-pristine" hidden>
               <h2>Coming along?</h2>
-              <p class="note">Pick your shade:</p>
+              <p class="note">Pick your shade — you'll get to add hash virgins next, then confirm.</p>
               <div class="rsvp-actions" style="flex-direction: column; gap: 10px; align-items: stretch;">
-                <button class="btn orange" type="button" data-action="rsvp" data-status="on_on">▸ On-on!</button>
-                <button class="btn muted" type="button" data-action="rsvp" data-status="maybe">▸ Maybe</button>
-                <button class="btn muted" type="button" data-action="rsvp" data-status="not_this_time">▸ Can't make it</button>
+                <button class="btn orange" type="button" data-action="start-edit" data-status="on_on">▸ On-on!</button>
+                <button class="btn muted"  type="button" data-action="start-edit" data-status="maybe">▸ Maybe</button>
+                <button class="btn muted"  type="button" data-action="quick-cant-make">▸ Can't make it</button>
               </div>
-              <div class="auth-msg" id="rsvp-msg"></div>
             </div>
 
-            <!-- State C: signed in, RSVP'd on_on or maybe -->
-            <div class="rsvp" id="rsvp-active" hidden>
-              <h2 id="rsvp-active-headline">You're on-on for this one!</h2>
+            <!-- State C: editing a draft — pre-confirm form -->
+            <div class="rsvp" id="rsvp-editing" hidden>
+              <h2 id="rsvp-editing-headline">Your on-on</h2>
 
-              <p class="note" style="margin-bottom: 6px;"><b>Bringing hash virgins?</b></p>
-              <div class="stepper">
-                <button type="button" id="guests-minus" class="stepper-btn" aria-label="Fewer guests">−</button>
-                <span class="stepper-val" id="guests-count" aria-live="polite">0</span>
-                <button type="button" id="guests-plus" class="stepper-btn" aria-label="More guests">+</button>
+              <div class="status-picker">
+                <button type="button" class="status-pick-btn" data-action="pick-status" data-status="on_on">▸ On-on!</button>
+                <button type="button" class="status-pick-btn" data-action="pick-status" data-status="maybe">▸ Maybe</button>
+                <button type="button" class="status-pick-btn" data-action="pick-status" data-status="not_this_time">▸ Can't make it</button>
               </div>
-              <p class="profile-hint" id="guests-cost-hint" style="text-align: center; margin-top: 4px;">
-                Each hash virgin you bring is on your tab — ~£<span id="amount-per-head">5</span> each, cash on the day, all to St Luke's.
-              </p>
 
-              <div class="rsvp-actions" style="margin-top: 16px;">
-                <button class="btn muted" type="button" data-action="rsvp" data-status="maybe"  id="btn-switch-maybe">▸ Change to Maybe</button>
-                <button class="btn orange" type="button" data-action="rsvp" data-status="on_on" id="btn-switch-on-on" hidden>▸ On-on!</button>
-                <button class="btn muted" type="button" data-action="rsvp" data-status="not_this_time">↶ Can't make it after all</button>
+              <div id="guests-section" hidden>
+                <p class="note" style="margin-bottom: 6px;"><b>Bringing hash virgins?</b></p>
+                <div class="stepper">
+                  <button type="button" id="guests-minus" class="stepper-btn" aria-label="Fewer guests">−</button>
+                  <span class="stepper-val" id="guests-count" aria-live="polite">0</span>
+                  <button type="button" id="guests-plus" class="stepper-btn" aria-label="More guests">+</button>
+                </div>
+                <p class="profile-hint" style="text-align: center; margin-top: 4px;">
+                  Each hash virgin is on your tab — ~£<span id="amount-per-head">5</span> each, cash on the day, all to St Luke's.
+                </p>
               </div>
-              <div class="auth-msg" id="rsvp-msg-active"></div>
+
+              <div class="rsvp-actions" style="margin-top: 18px;">
+                <button class="btn orange" type="button" data-action="confirm" id="btn-confirm">▸ Confirm</button>
+                <button class="btn muted"  type="button" data-action="cancel">↶ Cancel</button>
+              </div>
+              <div class="auth-msg" id="rsvp-msg-editing"></div>
             </div>
 
-            <!-- State D: signed in, RSVP'd not_this_time -->
-            <div class="rsvp" id="rsvp-cant-make" hidden>
-              <h2>Marked yourself out for this one.</h2>
-              <p class="note">Change your mind?</p>
-              <div class="rsvp-actions" style="flex-direction: column; gap: 10px; align-items: stretch;">
-                <button class="btn orange" type="button" data-action="rsvp" data-status="on_on">▸ On-on!</button>
-                <button class="btn muted" type="button" data-action="rsvp" data-status="maybe">▸ Maybe</button>
+            <!-- State D: confirmed (any status) — read-only summary + Edit -->
+            <div class="rsvp" id="rsvp-confirmed" hidden>
+              <h2 id="rsvp-confirmed-headline">You're on-on for this one!</h2>
+              <p class="note" id="rsvp-confirmed-detail">—</p>
+              <div class="rsvp-actions">
+                <button class="btn orange" type="button" data-action="enter-edit">▸ Edit my on-on</button>
+                <button class="btn muted"  type="button" data-action="quick-cant-make" id="btn-quick-cant-make">↶ Can't make it after all</button>
               </div>
-              <div class="auth-msg" id="rsvp-msg-cant"></div>
+              <div class="auth-msg" id="rsvp-msg-confirmed"></div>
             </div>
 
           </aside>
@@ -141,14 +149,9 @@
           </section>
 
           <section id="maybe-section" hidden style="margin-top: 26px;">
-            <button type="button" id="maybe-toggle" class="attendee-toggle" aria-expanded="false">
-              <span id="maybe-heading">Might come</span>
-              <span class="caret" id="maybe-caret" aria-hidden="true">▸</span>
-            </button>
-            <div id="maybe-body" hidden>
-              <ul class="going-list" id="maybe-list" style="margin-top: 12px;"></ul>
-              <button class="btn muted" type="button" id="maybe-more" hidden style="margin-top: 12px;">▸ Show the rest</button>
-            </div>
+            <h2 id="maybe-heading" class="attendee-heading">Might come</h2>
+            <ul class="going-list" id="maybe-list"></ul>
+            <button class="btn muted" type="button" id="maybe-more" hidden style="margin-top: 12px;">▸ Show the rest</button>
           </section>
         </div>
 
@@ -328,24 +331,37 @@
   });
 
   // ===========================================================================
-  // RSVP panel logic — Phase 2
+  // RSVP panel logic — Phase 2 (two-step: draft, then confirm)
   // ===========================================================================
+  //
+  // State machine:
+  //   * signed-out  → "Sign in to on-on" CTA
+  //   * pristine    → no RSVP yet; click On-on / Maybe to enter editing,
+  //                   click "Can't make it" for a one-tap direct save
+  //   * editing     → draft state, NOTHING in the DB yet (or current row is
+  //                   unchanged); confirm to commit (fires email if
+  //                   transitioning into on_on), cancel to discard
+  //   * confirmed   → DB row exists; show summary; Edit re-enters editing,
+  //                   "Can't make it after all" is a one-tap direct save
+  //
+  // Critical: changing the status picker in editing mode and clicking the
+  // guest stepper +/- buttons modify a LOCAL draft only. The Edge Function
+  // fires off the DB upsert (via Database Webhook), so by gating commits
+  // behind Confirm we ensure emails only go out for deliberate RSVPs.
 
   let currentEvent = null;
-  let currentRsvp = null;  // null = no RSVP row; otherwise { id, status, guests_count, ... }
+  let currentRsvp = null;     // null = no DB row; otherwise {id, status, guests_count, ...}
   let currentSession = null;
+  let editingDraft = null;    // { status, guests_count } when in editing mode
 
   async function initRsvpPanel(ev, isPast) {
     currentEvent = ev;
     const card = $('#rsvp-card');
 
-    // Hide RSVP panel for past events entirely
     if (isPast) {
       card.hidden = true;
       return;
     }
-
-    // For cancelled (closed) events, show the cancelled banner and hide RSVP
     if (ev.status === 'closed') {
       $('#cancelled-banner').hidden = false;
       card.hidden = true;
@@ -355,82 +371,99 @@
     card.hidden = false;
     currentSession = await getSession();
 
-    // Update the cost hint with the actual per-head amount for this event
     const perHead = ev.amount_per_head ?? 5;
     $('#amount-per-head').textContent = Number(perHead).toFixed(perHead % 1 === 0 ? 0 : 2);
 
     if (!currentSession) {
-      // State A — signed out
       const thenPath = encodeURIComponent(location.pathname + location.search);
       $('#rsvp-signin-link').setAttribute('href', `/login.html?then=${thenPath}`);
       showRsvpState('signed-out');
       return;
     }
 
-    // Fetch the user's RSVP for this event (if any)
     const { data: rsvp, error: rsvpErr } = await supabase
       .from('rsvps')
       .select('*')
       .eq('user_id', currentSession.user.id)
       .eq('event_id', ev.id)
       .maybeSingle();
+    if (rsvpErr) console.warn('[event] rsvp fetch failed:', rsvpErr);
 
-    if (rsvpErr) {
-      console.warn('[event] rsvp fetch failed:', rsvpErr);
-    }
     currentRsvp = rsvp || null;
+    editingDraft = null;
     renderRsvpState();
 
-    // Wire up the buttons (event delegation on the card)
     card.addEventListener('click', onCardClick);
-    $('#guests-minus').addEventListener('click', () => changeGuests(-1));
-    $('#guests-plus').addEventListener('click',  () => changeGuests(+1));
+    $('#guests-minus').addEventListener('click', () => changeDraftGuests(-1));
+    $('#guests-plus').addEventListener('click',  () => changeDraftGuests(+1));
   }
 
   function showRsvpState(stateName) {
-    ['signed-out', 'pristine', 'active', 'cant-make'].forEach((s) => {
+    ['signed-out', 'pristine', 'editing', 'confirmed'].forEach((s) => {
       const el = document.getElementById('rsvp-' + s);
       if (el) el.hidden = (s !== stateName);
     });
   }
 
   function renderRsvpState() {
-    if (!currentSession) {
-      showRsvpState('signed-out');
-      return;
-    }
-    if (!currentRsvp) {
-      showRsvpState('pristine');
-      return;
-    }
-    if (currentRsvp.status === 'not_this_time') {
-      showRsvpState('cant-make');
-      return;
-    }
-    // on_on or maybe
-    showRsvpState('active');
-    if (currentRsvp.status === 'on_on') {
-      $('#rsvp-active-headline').textContent = "You're on-on for this one!";
-      $('#btn-switch-maybe').hidden = false;
-      $('#btn-switch-on-on').hidden  = true;
-    } else {
-      $('#rsvp-active-headline').textContent = "You said maybe — fingers crossed!";
-      $('#btn-switch-maybe').hidden = true;
-      $('#btn-switch-on-on').hidden  = false;
-    }
-    $('#guests-count').textContent = String(currentRsvp.guests_count ?? 0);
-    updateStepperButtons();
+    hideAllRsvpMessages();
+
+    if (!currentSession) { showRsvpState('signed-out'); return; }
+    if (editingDraft)    { showRsvpState('editing');    renderEditingForm(); return; }
+    if (!currentRsvp)    { showRsvpState('pristine');   return; }
+    showRsvpState('confirmed'); renderConfirmedSummary();
   }
 
-  function updateStepperButtons() {
-    const count = currentRsvp?.guests_count ?? 0;
-    $('#guests-minus').disabled = count <= 0;
-    $('#guests-plus').disabled  = count >= GUESTS_MAX;
+  function renderEditingForm() {
+    document.querySelectorAll('.status-pick-btn').forEach((btn) => {
+      btn.classList.toggle('selected', btn.dataset.status === editingDraft.status);
+    });
+
+    const showStepper = editingDraft.status === 'on_on' || editingDraft.status === 'maybe';
+    $('#guests-section').hidden = !showStepper;
+
+    if (showStepper) {
+      $('#guests-count').textContent = String(editingDraft.guests_count);
+      $('#guests-minus').disabled = editingDraft.guests_count <= 0;
+      $('#guests-plus').disabled  = editingDraft.guests_count >= GUESTS_MAX;
+    }
+
+    let headline;
+    if (editingDraft.status === 'on_on')        headline = "On-on?";
+    else if (editingDraft.status === 'maybe')   headline = "Saying maybe?";
+    else                                        headline = "Marking out?";
+    $('#rsvp-editing-headline').textContent = headline;
+  }
+
+  function renderConfirmedSummary() {
+    const r = currentRsvp;
+    const headline = $('#rsvp-confirmed-headline');
+    const detail   = $('#rsvp-confirmed-detail');
+    const quickBtn = $('#btn-quick-cant-make');
+
+    if (r.status === 'on_on') {
+      headline.textContent = "You're on-on for this one!";
+      const g = r.guests_count || 0;
+      detail.textContent = g > 0
+        ? `Bringing ${g} hash virgin${g === 1 ? '' : 's'}. See you Saturday.`
+        : "Just you. Tap Edit to add hash virgins if you're bringing any.";
+      quickBtn.hidden = false;
+    } else if (r.status === 'maybe') {
+      headline.textContent = "You said maybe — fingers crossed!";
+      const g = r.guests_count || 0;
+      detail.textContent = g > 0
+        ? `Pencilled in with ${g} hash virgin${g === 1 ? '' : 's'} if you make it.`
+        : "Pencilled in. Switch to on-on when you know for sure.";
+      quickBtn.hidden = false;
+    } else {
+      headline.textContent = "Marked yourself out.";
+      detail.textContent = "Tap Edit if you change your mind.";
+      quickBtn.hidden = true;
+    }
   }
 
   function showRsvpMessage(text, ok = false) {
-    // Find whichever rsvp-msg el is currently visible
-    const candidates = ['#rsvp-msg', '#rsvp-msg-active', '#rsvp-msg-cant'];
+    const candidates = ['#rsvp-msg-editing', '#rsvp-msg-confirmed'];
     for (const sel of candidates) {
       const el = document.querySelector(sel);
       if (el && el.closest('.rsvp') && !el.closest('.rsvp').hidden) {
@@ -443,29 +476,67 @@
   }
 
   function hideAllRsvpMessages() {
-    ['#rsvp-msg', '#rsvp-msg-active', '#rsvp-msg-cant'].forEach((sel) => {
+    ['#rsvp-msg-editing', '#rsvp-msg-confirmed'].forEach((sel) => {
       const el = document.querySelector(sel);
-      if (el) {
-        el.textContent = '';
-        el.classList.remove('show', 'ok');
-      }
+      if (el) { el.textContent = ''; el.classList.remove('show', 'ok'); }
     });
   }
 
-  async function onCardClick(e) {
-    const button = e.target.closest('button[data-action="rsvp"]');
-    if (!button) return;
-    const newStatus = button.dataset.status;
-    if (!newStatus) return;
-    await setRsvpStatus(newStatus, button);
+  function changeDraftGuests(delta) {
+    if (!editingDraft) return;
+    const newCount = Math.max(0, Math.min(GUESTS_MAX, (editingDraft.guests_count || 0) + delta));
+    if (newCount === editingDraft.guests_count) return;
+    editingDraft.guests_count = newCount;
+    renderEditingForm();
   }
 
-  async function setRsvpStatus(newStatus, sourceButton) {
-    hideAllRsvpMessages();
+  async function onCardClick(e) {
+    const button = e.target.closest('button[data-action]');
+    if (!button) return;
+    const action = button.dataset.action;
+    const status = button.dataset.status;
 
-    // Going to not_this_time silently resets guests_count to 0 — no confirm
-    // dialog. Adam's call, per Phase 2 feedback (overrides brief's warning).
-    const newGuests = newStatus === 'not_this_time' ? 0 : (currentRsvp?.guests_count ?? 0);
+    switch (action) {
+      case 'start-edit':
+        // From pristine — enter editing with the picked status, no guests yet
+        editingDraft = { status, guests_count: 0 };
+        renderRsvpState();
+        break;
+
+      case 'enter-edit':
+        // From confirmed — pre-fill draft with current values
+        editingDraft = {
+          status: currentRsvp.status,
+          guests_count: currentRsvp.guests_count || 0,
+        };
+        renderRsvpState();
+        break;
+
+      case 'pick-status':
+        if (!editingDraft) return;
+        editingDraft.status = status;
+        if (status === 'not_this_time') editingDraft.guests_count = 0;
+        renderEditingForm();
+        break;
+
+      case 'cancel':
+        editingDraft = null;
+        renderRsvpState();
+        break;
+
+      case 'confirm':
+        await commitDraft(button);
+        break;
+
+      case 'quick-cant-make':
+        await quickCantMake(button);
+        break;
+    }
+  }
+
+  async function commitDraft(sourceButton) {
+    if (!editingDraft) return;
+    hideAllRsvpMessages();
 
     if (sourceButton) {
       sourceButton.disabled = true;
@@ -476,8 +547,8 @@
     const payload = {
       user_id: currentSession.user.id,
       event_id: currentEvent.id,
-      status: newStatus,
-      guests_count: newGuests,
+      status: editingDraft.status,
+      guests_count: editingDraft.guests_count,
     };
 
     const { data, error } = await supabase
@@ -492,43 +563,53 @@
     }
 
     if (error) {
-      console.error('[event] rsvp upsert failed:', error);
+      console.error('[event] commitDraft failed:', error);
       showRsvpMessage(error.message || "Couldn't save that. Try again.");
       return;
     }
 
     currentRsvp = data;
+    editingDraft = null;
     renderRsvpState();
     refreshAttendeeList(currentEvent, false);
   }
 
-  async function changeGuests(delta) {
-    if (!currentRsvp) return;
+  async function quickCantMake(sourceButton) {
     hideAllRsvpMessages();
-    const oldCount = currentRsvp.guests_count ?? 0;
-    const newCount = Math.max(0, Math.min(GUESTS_MAX, oldCount + delta));
-    if (newCount === oldCount) return;  // already at limit
 
-    // Optimistic UI
-    $('#guests-count').textContent = String(newCount);
-    currentRsvp.guests_count = newCount;
-    updateStepperButtons();
+    if (sourceButton) {
+      sourceButton.disabled = true;
+      sourceButton.dataset.label = sourceButton.textContent;
+      sourceButton.textContent = '▸ Saving…';
+    }
 
-    const { error } = await supabase
+    const payload = {
+      user_id: currentSession.user.id,
+      event_id: currentEvent.id,
+      status: 'not_this_time',
+      guests_count: 0,
+    };
+
+    const { data, error } = await supabase
       .from('rsvps')
-      .update({ guests_count: newCount })
-      .eq('id', currentRsvp.id);
+      .upsert(payload, { onConflict: 'user_id,event_id' })
+      .select()
+      .single();
+
+    if (sourceButton) {
+      sourceButton.disabled = false;
+      sourceButton.textContent = sourceButton.dataset.label;
+    }
 
     if (error) {
-      console.error('[event] guests update failed:', error);
-      // Rollback
-      currentRsvp.guests_count = oldCount;
-      $('#guests-count').textContent = String(oldCount);
-      updateStepperButtons();
-      showRsvpMessage("Couldn't save that — try again.");
+      console.error('[event] quickCantMake failed:', error);
+      showRsvpMessage(error.message || "Couldn't save that. Try again.");
       return;
     }
 
+    currentRsvp = data;
+    editingDraft = null;
+    renderRsvpState();
     refreshAttendeeList(currentEvent, false);
   }
 
@@ -642,19 +723,8 @@
     }
   }
 
-  // Wire the Might-come collapse toggle once
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggle = document.getElementById('maybe-toggle');
-    if (!toggle) return;
-    toggle.addEventListener('click', () => {
-      const body = document.getElementById('maybe-body');
-      const caret = document.getElementById('maybe-caret');
-      const open = !body.hidden;
-      body.hidden = open;
-      toggle.setAttribute('aria-expanded', String(!open));
-      if (caret) caret.textContent = open ? '▸' : '▾';
-    });
-  });
+  // (Might-come collapse toggle removed — per UX feedback the attendee list
+  // stays fully expanded so members can see both sections at a glance.)
 </script>
 
 </body>
