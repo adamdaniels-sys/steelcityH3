@@ -1748,3 +1748,49 @@
   text-align: center;
 }
 
+/* Attendee list section headings + collapse toggle */
+.attendee-heading {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.attendee-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink);
+  text-align: left;
+}
+.attendee-toggle:hover { color: var(--orange); }
+.attendee-toggle .caret {
+  font-size: 1.1rem;
+  margin-left: 8px;
+  color: var(--orange);
+}
+
+/* "(you)" tag on your own attendee row */
+.going-list .you-tag {
+  margin-left: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--red);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.going-list .who {
+  flex: 1;
+}
+

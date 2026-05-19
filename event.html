@@ -132,6 +132,26 @@
           </aside>
         </div>
 
+        <!-- Attendee list — populated from get_attendee_list RPC. -->
+        <div id="attendee-list-wrap" hidden style="margin-top: 30px;">
+          <section id="on-on-section" hidden>
+            <h2 id="on-on-heading" class="attendee-heading">Who's coming</h2>
+            <ul class="going-list" id="on-on-list"></ul>
+            <button class="btn muted" type="button" id="on-on-more" hidden style="margin-top: 12px;">▸ Show the rest</button>
+          </section>
+
+          <section id="maybe-section" hidden style="margin-top: 26px;">
+            <button type="button" id="maybe-toggle" class="attendee-toggle" aria-expanded="false">
+              <span id="maybe-heading">Might come</span>
+              <span class="caret" id="maybe-caret" aria-hidden="true">▸</span>
+            </button>
+            <div id="maybe-body" hidden>
+              <ul class="going-list" id="maybe-list" style="margin-top: 12px;"></ul>
+              <button class="btn muted" type="button" id="maybe-more" hidden style="margin-top: 12px;">▸ Show the rest</button>
+            </div>
+          </section>
+        </div>
+
         <!-- Route placeholder for upcoming events -->
         <div class="route-box" id="route-box" hidden>
           <h2>The <span class="or">route</span></h2>
@@ -299,6 +319,9 @@
 
     // ---- RSVP panel (Phase 2) ----
     await initRsvpPanel(ev, isPast);
+
+    // ---- Attendee list (Phase 2 chunk 3) ----
+    await refreshAttendeeList(ev, isPast);
   })().catch((err) => {
     console.error('[event] unexpected error:', err);
     showNotFound();
@@ -440,14 +463,8 @@
   async function setRsvpStatus(newStatus, sourceButton) {
     hideAllRsvpMessages();
 
-    // Warn before dropping +N virgins on the way to not_this_time
-    if (newStatus === 'not_this_time' && (currentRsvp?.guests_count ?? 0) > 0) {
-      const n = currentRsvp.guests_count;
-      const plural = n === 1 ? 'hash virgin' : 'hash virgins';
-      const ok = window.confirm(`Sure? You're also dropping the ${n} ${plural} you were bringing.`);
-      if (!ok) return;
-    }
-
+    // Going to not_this_time silently resets guests_count to 0 — no confirm
+    // dialog. Adam's call, per Phase 2 feedback (overrides brief's warning).
     const newGuests = newStatus === 'not_this_time' ? 0 : (currentRsvp?.guests_count ?? 0);
 
     if (sourceButton) {
@@ -482,6 +499,7 @@
 
     currentRsvp = data;
     renderRsvpState();
+    refreshAttendeeList(currentEvent, false);
   }
 
   async function changeGuests(delta) {
@@ -508,8 +526,135 @@
       $('#guests-count').textContent = String(oldCount);
       updateStepperButtons();
       showRsvpMessage("Couldn't save that — try again.");
+      return;
+    }
+
+    refreshAttendeeList(currentEvent, false);
+  }
+
+  // ===========================================================================
+  // Attendee list — Phase 2 chunk 3
+  // ===========================================================================
+
+  const ATTENDEE_VISIBLE_MAX = 15;
+
+  function initialsFor(name) {
+    if (!name) return '?';
+    return name
+      .replace(/^Hash Virgin /i, '')
+      .split(/\s+|#/)
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?';
+  }
+
+  function attendeeLine(row, isYou) {
+    const name = row.display_name;
+    const guests = row.guests_count || 0;
+    const guestSuffix = guests === 0
+      ? ''
+      : (guests === 1 ? ' + 1 hash virgin' : ` + ${guests} hash virgins`);
+    return `
+      <li class="${isYou ? 'you' : ''}">
+        <span class="av">${escapeHtml(initialsFor(name))}</span>
+        <span class="who">${escapeHtml(name + guestSuffix)}</span>
+        ${isYou ? '<span class="you-tag">(you)</span>' : ''}
+      </li>
+    `;
+  }
+
+  function bodiesTotal(rows) {
+    // Sum of attendees + their guests
+    return rows.reduce((acc, r) => acc + 1 + (r.guests_count || 0), 0);
+  }
+
+  function renderAttendeeSection(rows, listEl, moreBtn) {
+    if (rows.length === 0) {
+      listEl.innerHTML = '';
+      moreBtn.hidden = true;
+      return;
+    }
+    const currentUserId = currentSession?.user?.id;
+    const visible = rows.slice(0, ATTENDEE_VISIBLE_MAX);
+    listEl.innerHTML = visible.map((r) => attendeeLine(r, r.user_id === currentUserId)).join('');
+
+    if (rows.length > ATTENDEE_VISIBLE_MAX) {
+      moreBtn.hidden = false;
+      moreBtn.textContent = `▸ Show the rest (${rows.length - ATTENDEE_VISIBLE_MAX})`;
+      moreBtn.onclick = () => {
+        listEl.innerHTML = rows.map((r) => attendeeLine(r, r.user_id === currentUserId)).join('');
+        moreBtn.hidden = true;
+      };
+    } else {
+      moreBtn.hidden = true;
     }
   }
+
+  async function refreshAttendeeList(ev, isPast) {
+    const wrap = $('#attendee-list-wrap');
+    const onOnSection = $('#on-on-section');
+    const maybeSection = $('#maybe-section');
+
+    // Cancelled events still show the attendee list (people who RSVP'd before
+    // it was cancelled), but past events do too — the brief leaves the
+    // attendee list visible on past events as a read-only record.
+    if (ev.status === 'closed' && isPast) {
+      wrap.hidden = true;
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('get_attendee_list', { p_event_id: ev.id });
+    if (error) {
+      console.warn('[event] attendee list fetch failed:', error);
+      wrap.hidden = true;
+      return;
+    }
+
+    const rows = data || [];
+    const onOnRows = rows.filter((r) => r.status === 'on_on');
+    const maybeRows = rows.filter((r) => r.status === 'maybe');
+
+    if (onOnRows.length === 0 && maybeRows.length === 0) {
+      wrap.hidden = true;
+      return;
+    }
+
+    wrap.hidden = false;
+
+    // On-on
+    if (onOnRows.length > 0) {
+      onOnSection.hidden = false;
+      $('#on-on-heading').textContent = `Who's coming (${bodiesTotal(onOnRows)})`;
+      renderAttendeeSection(onOnRows, $('#on-on-list'), $('#on-on-more'));
+    } else {
+      onOnSection.hidden = true;
+    }
+
+    // Might come (collapsed by default)
+    if (maybeRows.length > 0) {
+      maybeSection.hidden = false;
+      $('#maybe-heading').textContent = `Might come (${bodiesTotal(maybeRows)})`;
+      renderAttendeeSection(maybeRows, $('#maybe-list'), $('#maybe-more'));
+    } else {
+      maybeSection.hidden = true;
+    }
+  }
+
+  // Wire the Might-come collapse toggle once
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('maybe-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', () => {
+      const body = document.getElementById('maybe-body');
+      const caret = document.getElementById('maybe-caret');
+      const open = !body.hidden;
+      body.hidden = open;
+      toggle.setAttribute('aria-expanded', String(!open));
+      if (caret) caret.textContent = open ? '▸' : '▾';
+    });
+  });
 </script>
 
 </body>
