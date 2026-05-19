@@ -30,60 +30,66 @@
 
 <main id="main">
   <div class="auth-wrap">
-    <div class="auth-panel" id="step-1">
-      <h1 id="step1-title">Sign in</h1>
-      <p class="sub" id="step1-sub">Use your email to sign in. We'll send you a one-time code.</p>
 
-      <div class="auth-tabs" role="tablist">
-        <button type="button" class="on" id="tab-signin" role="tab" aria-selected="true">Sign in</button>
-        <button type="button" id="tab-signup" role="tab" aria-selected="false">Sign up</button>
-      </div>
+    <!-- Step 1: enter email -->
+    <div class="auth-panel" id="step-email">
+      <h1>Sign in</h1>
+      <p class="sub">
+        Pop your email in below. We'll send you a one-tap link — no password, no
+        hash-name shenanigans. New here? Same form. We'll set you up properly
+        on the other side.
+      </p>
 
-      <form id="form-1">
-        <div class="auth-field" id="field-name" style="display:none;">
-          <label for="hashname">Hash name</label>
-          <input type="text" id="hashname" name="hashname" autocomplete="nickname" placeholder="e.g. Trampy Pete" />
-        </div>
+      <form id="form-email">
         <div class="auth-field">
           <label for="email">Email address</label>
-          <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com" />
+          <input
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="email"
+            required
+            placeholder="you@example.com"
+            inputmode="email" />
         </div>
-        <button class="btn orange auth-submit" type="submit">▸ Send me a code</button>
-        <div class="auth-msg" id="msg-1"></div>
+        <button class="btn orange auth-submit" type="submit" id="submit-btn">
+          ▸ Send me the link
+        </button>
+        <div class="auth-msg" id="msg-email"></div>
       </form>
 
       <div class="auth-note">
-        <b>▸ Demo only.</b> This mockup stores everything in this browser only — no email is sent, any 6-digit code will work. On the real site, you'll get a real magic-link email from Smutley's admin.
+        <b>▸ First time?</b> Same form. After you click the link in your inbox
+        we'll grab a couple of details (hash name if you have one, phone for the
+        WhatsApp group) and you're in.
       </div>
     </div>
 
-    <!-- Step 2: enter OTP -->
-    <div class="auth-panel" id="step-2" style="display:none;">
+    <!-- Step 2: link sent confirmation -->
+    <div class="auth-panel" id="step-sent" hidden>
       <h1>Check your email!</h1>
-      <p class="sub">We sent a 6-digit code to <b id="sent-to"></b>. Pop it in below. (Demo: type any 6 digits.)</p>
-      <form id="form-2">
-        <div class="auth-field">
-          <label for="otp">6-digit code</label>
-          <input type="text" id="otp" name="otp" required pattern="[0-9]{6}" maxlength="6" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" />
-        </div>
-        <button class="btn orange auth-submit" type="submit">▸ Verify &amp; sign in</button>
-        <button class="btn muted" type="button" id="back-btn" style="width:100%; margin-top: 10px; justify-content: center;">↶ Back</button>
-        <div class="auth-msg" id="msg-2"></div>
-      </form>
+      <p class="sub">
+        We've fired a magic link off to <b id="sent-to">…</b>. Click it within
+        the next hour and you're sorted. <i>(Check spam if it hasn't shown up
+        in a minute or two — and let Smutley know so he can fix it.)</i>
+      </p>
+      <div style="display: grid; gap: 10px;">
+        <button class="btn muted" type="button" id="back-btn">↶ Use a different email</button>
+      </div>
     </div>
 
-    <!-- Step 3: logged in -->
-    <div class="auth-panel" id="step-3" style="display:none;">
-      <h1 id="welcome-title">You're in!</h1>
-      <p class="sub" id="welcome-sub">Signed in as <b id="who"></b>.</p>
-      <div id="admin-banner" style="display:none; margin-bottom: 18px; padding: 14px 16px; background: var(--orange); color: var(--ink); border: 3px solid var(--ink); font-family: 'Nunito', sans-serif; font-weight: 800;">
-        ▸ <b>Admin access detected.</b> You'll see edit buttons on event pages and the home admin panel.
-      </div>
+    <!-- Step 3: already signed in -->
+    <div class="auth-panel" id="step-already-in" hidden>
+      <h1>You're already in.</h1>
+      <p class="sub">
+        Signed in as <b id="who">…</b>. Heading back to the site.
+      </p>
       <div style="display: grid; gap: 10px;">
         <a class="btn orange" href="/" id="go-then">▸ Back to the site</a>
-        <button class="btn muted" type="button" id="signout-btn">↶ Sign out</button>
+        <button class="btn muted" type="button" id="signout-from-login">↶ Sign out</button>
       </div>
     </div>
+
   </div>
 </main>
 
@@ -94,149 +100,88 @@
   </div>
 </footer>
 
-<script>
-  // ----- helpers -----
-  function $(s) { return document.querySelector(s); }
-  function getUser() {
-    try { return JSON.parse(localStorage.getItem('sch3-user') || 'null'); } catch (e) { return null; }
+<script type="module">
+  import { supabase, getSession, rememberThen, consumeThen, signOut } from './auth.js';
+
+  const $ = (s) => document.querySelector(s);
+
+  // ---- Honour ?then=/some/path so we return there after sign-in ------------
+
+  const params = new URLSearchParams(location.search);
+  const thenParam = params.get('then');
+  if (thenParam && thenParam.startsWith('/') && !thenParam.startsWith('//')) {
+    rememberThen(thenParam);
   }
-  function setUser(u) { localStorage.setItem('sch3-user', JSON.stringify(u)); }
-  function clearUser() { localStorage.removeItem('sch3-user'); }
-  function getAccount(email) {
-    try { return JSON.parse(localStorage.getItem('sch3-account-' + email) || 'null'); } catch (e) { return null; }
-  }
-  function setAccount(email, acc) {
-    localStorage.setItem('sch3-account-' + email, JSON.stringify(acc));
-  }
-  function showMsg(el, text, ok) {
+
+  // ---- If already signed in, short-circuit straight back to the site -------
+
+  (async () => {
+    const session = await getSession();
+    if (!session) return;
+    $('#step-email').hidden = true;
+    $('#step-already-in').hidden = false;
+    $('#who').textContent = session.user.email;
+    $('#go-then').href = consumeThen();
+    $('#signout-from-login').addEventListener('click', signOut);
+  })();
+
+  // ---- Step 1 submit -------------------------------------------------------
+
+  function showMsg(text, ok = false) {
+    const el = $('#msg-email');
     el.textContent = text;
-    el.classList.toggle('ok', !!ok);
+    el.classList.toggle('ok', ok);
     el.classList.add('show');
   }
-  function hideMsg(el) {
+  function hideMsg() {
+    const el = $('#msg-email');
     el.textContent = '';
     el.classList.remove('show', 'ok');
   }
-  function getThen() {
-    const params = new URLSearchParams(location.search);
-    const t = params.get('then');
-    if (!t) return '/';
-    // sanity: only allow same-origin relative links
-    try {
-      const url = new URL(t, location.href);
-      if (url.origin === location.origin) return url.pathname + url.search + url.hash;
-    } catch (e) {}
-    return '/';
-  }
 
-  // ----- tabs -----
-  const tabSignin = $('#tab-signin');
-  const tabSignup = $('#tab-signup');
-  let mode = 'signin';
-  function setMode(m) {
-    mode = m;
-    tabSignin.classList.toggle('on', m === 'signin');
-    tabSignup.classList.toggle('on', m === 'signup');
-    tabSignin.setAttribute('aria-selected', m === 'signin');
-    tabSignup.setAttribute('aria-selected', m === 'signup');
-    $('#field-name').style.display = m === 'signup' ? 'flex' : 'none';
-    $('#step1-title').textContent = m === 'signup' ? 'Create your account' : 'Sign in';
-    $('#step1-sub').textContent = m === 'signup'
-      ? 'New here? Tell us your hash name and email. We\'ll send you a one-time code.'
-      : 'Use your email to sign in. We\'ll send you a one-time code.';
-  }
-  tabSignin.addEventListener('click', () => setMode('signin'));
-  tabSignup.addEventListener('click', () => setMode('signup'));
-
-  // ----- already signed in? -----
-  const existing = getUser();
-  if (existing) {
-    $('#step-1').style.display = 'none';
-    $('#step-3').style.display = 'block';
-    $('#who').textContent = existing.name + ' (' + existing.email + ')';
-    if (existing.isAdmin) $('#admin-banner').style.display = 'block';
-    $('#go-then').href = getThen();
-  }
-
-  // ----- Step 1: email + (maybe) hashname -----
-  let pendingEmail = null;
-  let pendingName = null;
-
-  $('#form-1').addEventListener('submit', (e) => {
+  $('#form-email').addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideMsg($('#msg-1'));
+    hideMsg();
+
     const email = $('#email').value.trim().toLowerCase();
-    const name = $('#hashname').value.trim();
-
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      showMsg($('#msg-1'), 'Please enter a valid email.');
-      return;
-    }
-    if (mode === 'signup' && !name) {
-      showMsg($('#msg-1'), 'Hash name required for sign-up.');
+      showMsg('That email doesn\'t look quite right.');
       return;
     }
 
-    const existingAcc = getAccount(email);
-    if (mode === 'signin' && !existingAcc) {
-      showMsg($('#msg-1'), 'No account for that email — try signing up instead.');
-      return;
-    }
-    if (mode === 'signup' && existingAcc) {
-      showMsg($('#msg-1'), 'You already have an account — sign in instead.');
+    const btn = $('#submit-btn');
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = '▸ Sending…';
+
+    const redirectTo = `${location.origin}/auth-callback.html`;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo,
+        shouldCreateUser: true,
+      },
+    });
+
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+
+    if (error) {
+      console.error('[login] signInWithOtp failed:', error);
+      showMsg(error.message || 'Something went wrong. Try again in a moment.');
       return;
     }
 
-    pendingEmail = email;
-    pendingName = name || (existingAcc && existingAcc.name) || email.split('@')[0];
-
-    $('#step-1').style.display = 'none';
-    $('#step-2').style.display = 'block';
     $('#sent-to').textContent = email;
-    setTimeout(() => $('#otp').focus(), 50);
-  });
-
-  // ----- Step 2: OTP -----
-  $('#form-2').addEventListener('submit', (e) => {
-    e.preventDefault();
-    hideMsg($('#msg-2'));
-    const code = $('#otp').value.trim();
-    if (!/^\d{6}$/.test(code)) {
-      showMsg($('#msg-2'), 'Code must be 6 digits.');
-      return;
-    }
-    // Mock acceptance: any 6-digit code works
-    const isAdmin = pendingEmail === 'smutley@hotmail.co.uk';
-    const account = {
-      email: pendingEmail,
-      name: pendingName,
-      isAdmin,
-      createdAt: getAccount(pendingEmail)?.createdAt || new Date().toISOString(),
-    };
-    setAccount(pendingEmail, account);
-    setUser(account);
-
-    $('#step-2').style.display = 'none';
-    $('#step-3').style.display = 'block';
-    $('#who').textContent = account.name + ' (' + account.email + ')';
-    if (isAdmin) $('#admin-banner').style.display = 'block';
-    $('#go-then').href = getThen();
-
-    // auto-redirect after a beat
-    setTimeout(() => { window.location.href = getThen(); }, 2200);
+    $('#step-email').hidden = true;
+    $('#step-sent').hidden = false;
   });
 
   $('#back-btn').addEventListener('click', () => {
-    $('#step-2').style.display = 'none';
-    $('#step-1').style.display = 'block';
-  });
-
-  // ----- Sign out -----
-  document.addEventListener('click', (e) => {
-    if (e.target && e.target.id === 'signout-btn') {
-      clearUser();
-      window.location.reload();
-    }
+    $('#step-sent').hidden = true;
+    $('#step-email').hidden = false;
+    hideMsg();
+    $('#email').focus();
   });
 </script>
 
