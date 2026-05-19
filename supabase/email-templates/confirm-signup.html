@@ -1,28 +1,3 @@
-<!--
-  Paste this into:
-    Supabase Dashboard → Authentication → Emails → Templates → "Confirm signup"
-
-  Subject line for that template:
-    On-on! Confirm your email and you're in
-
-  Adapted from the Claude-Design template at emails/registration.html.
-  Differences from the original:
-    * Primary CTA now points at {{ .ConfirmationURL }} (Supabase placeholder)
-      so clicking the button BOTH confirms the email AND signs the user in.
-      Single tap, no separate steps.
-    * {{ hash_name }} removed from greeting — Supabase Auth can't read
-      profiles.real_name at email-send time (the profile doesn't exist yet
-      anyway; they fill it in after confirming).
-    * {{ next_event_date }} and {{ next_event_url }} removed — Supabase
-      can't query the events table from the template engine. The "what
-      happens next" panels lean on generic copy instead.
-    * {{ email }}     → {{ .Email }}
-    * {{ home_url }}  → https://steelcityh3.org (hardcoded; Supabase
-                         doesn't expose a site URL placeholder)
-    * <img src="logo-original.jpg" …/> removed — Supabase emails can't
-      reach our static assets. To re-add a logo, upload to a public URL
-      (Supabase Storage works) and paste the full https:// URL in.
--->
 <!doctype html>
 <html lang="en-GB">
 <head>

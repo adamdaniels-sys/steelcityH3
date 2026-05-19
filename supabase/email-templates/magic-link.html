@@ -1,25 +1,3 @@
-<!--
-  Paste this into:
-    Supabase Dashboard → Authentication → Emails → Templates → "Magic Link"
-
-  Subject line for that template:
-    Your sign-in link for Steel City H3
-
-  Adapted from the Claude-Design template at emails/magic-link.html.
-  Differences from the original:
-    * {{ hash_name }} removed — Supabase Auth can't read profiles.real_name.
-      Greeting now reads "Right then — tap the big button below…".
-    * {{ magic_link }}  → {{ .ConfirmationURL }} (Supabase placeholder)
-    * OTP code block removed entirely — the website doesn't accept code
-      entry yet (only the magic-link button). Showing a code with no way
-      to use it would just confuse people. The flow can be re-enabled
-      later by adding {{ .Token }} back in plus an OTP input on
-      /login.html.
-    * <img src="logo-original.jpg" …/> removed — Supabase emails can't
-      reference our static assets. To re-add a logo, upload it to a
-      public URL (e.g. Supabase Storage) and paste the full https://
-      URL into the src attribute.
--->
 <!doctype html>
 <html lang="en-GB">
 <head>
