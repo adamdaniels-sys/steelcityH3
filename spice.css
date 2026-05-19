@@ -2257,12 +2257,12 @@
 /* Corner sticker stack at top-right of card — personal status + hare + virgins */
 .ev-personal-corner {
   position: absolute;
-  top: -14px;
-  right: 12px;
+  top: -18px;
+  right: 14px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 10px;
   z-index: 3;
   pointer-events: none;
 }
@@ -2276,10 +2276,10 @@
   border: 3px solid var(--ink);
 }
 .corner-stick-main {
-  font-size: 1.15rem;
-  box-shadow: 4px 4px 0 var(--ink);
+  font-size: 1.7rem;
+  box-shadow: 5px 5px 0 var(--ink);
   transform: rotate(2deg);
-  padding: 8px 14px;
+  padding: 12px 20px;
 }
 .corner-stick-on-on { background: var(--orange); color: var(--cream); }
 .corner-stick-maybe { background: var(--yellow); color: var(--ink);   }
