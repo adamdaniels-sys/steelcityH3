@@ -1,6 +1,47 @@
 # Admin guide — Steel City H3 site
 
-A short manual for **Queen Myrtle** and **Smutley** (and any future co-admins) covering everything you can do via the **Supabase Dashboard** until the proper admin UI ships in Phase 3.
+A short manual for **Queen Myrtle** and **Smutley** (and any future co-admins).
+
+**Phase 3 update:** The site itself now has a full admin UI. **For day-to-day management, sign in to https://steelcityh3.org and click "Admin" in your header dropdown.** Everything below describes the legacy Supabase Dashboard path, which still works as a fallback for anything the site UI doesn't expose yet (audit log queries, manual data fixes, raw SQL).
+
+---
+
+## The proper admin UI (use this first)
+
+Sign in to https://steelcityh3.org → click your name in the top-right → **Admin** → you're at the dashboard.
+
+| What you want to do | Where |
+|---|---|
+| **Schedule the next monthly hash** | Dashboard → "Schedule next hash" (smart-fills the 3rd Saturday and a sensible title) |
+| **Add an anniversary or one-off event** | Dashboard → "Add custom event" |
+| **Edit an event** | Admin → Events → click "Edit" on the row. Or from the live event page, click the small "▸ Edit this hash" link. |
+| **See who's coming to an event + their phones** | Open the event in Admin → Events → Edit → "Attendees" section at the bottom |
+| **Copy phones for the WhatsApp group** | On the event admin page → "Copy phones for WhatsApp" → paste into WhatsApp's New Group dialog |
+| **Export attendees as CSV** | Same page → "Export CSV" |
+| **Mark an event as completed and add the scribe report** | Edit event → change Status to "Completed" → fill in distance, on-on pub, scribe report fields that appear |
+| **Delete an event** | Edit event → bottom of page → "Danger zone" → "Delete this hash" |
+| **Find a member** | Admin → Members → search by hash name / real name / email |
+| **Edit a member's profile** | Members → click "Edit" on the row |
+| **Promote a member to admin** | Member edit page → "Admin status" section → "Promote to admin" |
+| **Demote an admin** | Member edit page → "Demote from admin" *(can't demote yourself or the last admin — site guards both)* |
+| **Delete a member** | Member edit page → "Danger zone" → "Delete this member" |
+
+Every admin action is audited automatically — the `admin_actions` table in Supabase records who did what, when, with before/after values. There's no UI for browsing it yet (Phase 6+ feature) but admins can query it directly in Supabase if a question ever needs answering.
+
+## Hare assignment
+
+There are two paths for assigning hares to an event:
+
+- **Member self-nominates**: when an event's status is "Hares wanted" and no hares are assigned yet, signed-in members see an "▸ I'll hare this one" button on the event page. Clicking it adds them as a volunteer hare. You can override or add to this from the admin UI any time.
+- **Admin assigns**: edit event → "Hares (members)" multi-select → type to search by hash or real name, click to add, click × on a pill to remove. When you add a hare to an event marked "Hares wanted", the site offers to flip status to "Open" for you.
+
+For visiting hares from other clubs (e.g. Manchester H3 visiting), use the **"Hares (other / visitors)"** free-text field — it's separate from the structured hare list.
+
+---
+
+## The legacy Supabase Dashboard path (fallback only)
+
+You shouldn't need this for normal management — the site UI above covers everything. Keep this section as a backup for the rare case where you need to touch raw data, query the audit log, or do something the admin UI doesn't yet support.
 
 You don't need to know any code. You don't need to install anything. Everything happens in the Supabase Dashboard in your web browser.
 
