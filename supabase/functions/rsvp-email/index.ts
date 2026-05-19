@@ -1,48 +1,41 @@
 // Steel City H3 — RSVP confirmation email
 //
-// Edge Function triggered by a Supabase Database Webhook on the public.rsvps
-// table. Sends a one-off confirmation email when a user TRANSITIONS INTO the
-// on_on status. Specifically:
+// Edge Function invoked directly from the frontend (event.html) after a user
+// CONFIRMS an RSVP that transitions them into the on_on status. The frontend
+// only invokes this function when:
 //
-//   * INSERT with status='on_on'                       → send
-//   * UPDATE where new.status='on_on' AND old.status != 'on_on' → send
-//   * Any other change (e.g. guests_count tweaks while already on_on, or
-//     transitions into maybe / not_this_time)         → skip
+//   * It's a brand new RSVP with status='on_on', OR
+//   * It's an UPDATE that changes status FROM something else TO on_on
+//
+// (Transitions into maybe / not_this_time, and guests_count tweaks while
+// already on_on, don't trigger the function — they're just plain DB writes.)
+//
+// Authentication: the frontend uses supabase.functions.invoke() which auto-
+// attaches the user's session JWT. The function then verifies the user
+// actually has an on_on RSVP for the eventId in the request body before
+// sending — no spoofing other users' emails.
 //
 // Sends via IONOS SMTP using the same on-on@steelcityh3.org mailbox that
 // Supabase Auth uses for magic links — no extra paid service needed.
 //
-// Required Edge Function secrets (set in Supabase Dashboard → Edge Functions
-// → rsvp-email → Manage secrets):
+// Required Edge Function secrets:
 //
 //   SMTP_HOST   = smtp.ionos.co.uk
 //   SMTP_PORT   = 587
 //   SMTP_USER   = on-on@steelcityh3.org
 //   SMTP_PASS   = <the mailbox password>
-//   SMTP_FROM   = Steel City H3 <on-on@steelcityh3.org>   (optional, defaults to SMTP_USER)
-//   SITE_URL    = https://steelcityh3.org                  (optional, used for "Update your RSVP" link)
+//   SMTP_FROM   = Steel City H3 <on-on@steelcityh3.org>   (optional)
+//   SITE_URL    = https://steelcityh3.org                  (optional)
 //
-// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are automatically injected by
-// the Edge Functions runtime — no need to set those manually.
+// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are auto-injected by the runtime.
+// Verify JWT MUST be ON for this function so the user's session is validated.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-interface RsvpRecord {
-  id: string;
-  user_id: string;
+interface InvokeBody {
   event_id: number;
-  status: "on_on" | "maybe" | "not_this_time";
-  guests_count: number;
-}
-
-interface WebhookPayload {
-  type: "INSERT" | "UPDATE" | "DELETE";
-  table: string;
-  schema: string;
-  record: RsvpRecord | null;
-  old_record: RsvpRecord | null;
 }
 
 function jsonResponse(status: number, body: Record<string, unknown>) {
@@ -50,24 +43,6 @@ function jsonResponse(status: number, body: Record<string, unknown>) {
     status,
     headers: { "content-type": "application/json" },
   });
-}
-
-function shouldSend(payload: WebhookPayload): boolean {
-  if (payload.table !== "rsvps") return false;
-  const rec = payload.record;
-  if (!rec) return false;
-  if (rec.status !== "on_on") return false;
-
-  if (payload.type === "INSERT") return true;
-
-  if (payload.type === "UPDATE") {
-    const old = payload.old_record;
-    // Only send if OLD was NOT already on_on (i.e. this is a transition into
-    // on_on, not a guests_count tweak while already on_on)
-    return !old || old.status !== "on_on";
-  }
-
-  return false;
 }
 
 function formatLongDate(iso: string): string {
@@ -276,42 +251,72 @@ serve(async (req) => {
     return jsonResponse(405, { error: "method_not_allowed" });
   }
 
-  let payload: WebhookPayload;
-  try {
-    payload = await req.json();
-  } catch (err) {
-    return jsonResponse(400, { error: "invalid_json", detail: String(err) });
-  }
-
-  if (!shouldSend(payload)) {
-    return jsonResponse(200, { skipped: true, reason: "not a transition into on_on" });
-  }
-
-  const rec = payload.record!;
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceKey) {
     return jsonResponse(500, { error: "missing_supabase_env" });
   }
+
+  // Identify the caller from their session JWT (supabase.functions.invoke
+  // attaches this automatically). Verify JWT must be ON for the function.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: userData, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !userData?.user) {
+    return jsonResponse(401, { error: "unauthorized", detail: userErr?.message });
+  }
+  const user = userData.user;
+
+  // Parse the request body — frontend passes just event_id
+  let body: InvokeBody;
+  try {
+    body = await req.json();
+  } catch (err) {
+    return jsonResponse(400, { error: "invalid_json", detail: String(err) });
+  }
+  if (!body?.event_id || typeof body.event_id !== "number") {
+    return jsonResponse(400, { error: "missing_event_id" });
+  }
+
+  // Use the service-role client for the actual data fetch so RLS doesn't
+  // get in the way of reading the user's own profile (it would normally,
+  // but service role bypasses).
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Fetch event + profile + user email in parallel
-  const [eventRes, profileRes, userRes] = await Promise.all([
-    supabase.from("events").select("*").eq("id", rec.event_id).single(),
-    supabase.from("profiles").select("real_name, hash_name").eq("id", rec.user_id).single(),
-    supabase.auth.admin.getUserById(rec.user_id),
+  // Verify the user actually has an on_on RSVP for this event — guards
+  // against someone calling the function with arbitrary event_ids
+  const rsvpRes = await supabase
+    .from("rsvps")
+    .select("status, guests_count")
+    .eq("user_id", user.id)
+    .eq("event_id", body.event_id)
+    .maybeSingle();
+
+  if (rsvpRes.error) {
+    return jsonResponse(500, { error: "rsvp_check_failed", detail: rsvpRes.error.message });
+  }
+  if (!rsvpRes.data) {
+    return jsonResponse(200, { skipped: true, reason: "no rsvp for this user+event" });
+  }
+  if (rsvpRes.data.status !== "on_on") {
+    return jsonResponse(200, { skipped: true, reason: "rsvp not on_on" });
+  }
+  const guestsCount = rsvpRes.data.guests_count || 0;
+
+  // Fetch event + profile in parallel
+  const [eventRes, profileRes] = await Promise.all([
+    supabase.from("events").select("*").eq("id", body.event_id).single(),
+    supabase.from("profiles").select("real_name, hash_name").eq("id", user.id).single(),
   ]);
 
   if (eventRes.error || !eventRes.data) {
     return jsonResponse(500, { error: "event_fetch_failed", detail: eventRes.error?.message });
   }
-  if (userRes.error || !userRes.data?.user) {
-    return jsonResponse(500, { error: "user_fetch_failed", detail: userRes.error?.message });
-  }
 
   const event = eventRes.data;
   const profile = profileRes.data || {};
-  const user = userRes.data.user;
 
   if (!user.email) {
     return jsonResponse(200, { skipped: true, reason: "user has no email" });
@@ -336,7 +341,7 @@ serve(async (req) => {
     locationSummary: event.location_summary || "TBC",
     hares:           event.hares || "TBC",
     onOnPub:         event.on_on_pub || "TBC — confirmed on the day",
-    guestsCount:     rec.guests_count || 0,
+    guestsCount,
     amountPerHead,
     eventUrl,
   };

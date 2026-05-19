@@ -544,6 +544,12 @@
       sourceButton.textContent = '▸ Saving…';
     }
 
+    // Track whether this is a NEW transition into on_on so we know whether
+    // to fire the confirmation email after the save lands.
+    const wasOnOn = currentRsvp?.status === 'on_on';
+    const isNowOnOn = editingDraft.status === 'on_on';
+    const shouldFireEmail = isNowOnOn && !wasOnOn;
+
     const payload = {
       user_id: currentSession.user.id,
       event_id: currentEvent.id,
@@ -572,6 +578,18 @@
     editingDraft = null;
     renderRsvpState();
     refreshAttendeeList(currentEvent, false);
+
+    // Fire-and-forget the confirmation email Edge Function. Don't await it
+    // or surface its errors — the RSVP is already saved, and if SMTP is
+    // having a bad day we shouldn't block the user.
+    if (shouldFireEmail) {
+      supabase.functions
+        .invoke('rapid-processor', { body: { event_id: currentEvent.id } })
+        .then((res) => {
+          if (res.error) console.warn('[event] rsvp email fn failed:', res.error);
+        })
+        .catch((err) => console.warn('[event] rsvp email fn threw:', err));
+    }
   }
 
   async function quickCantMake(sourceButton) {
