@@ -178,7 +178,35 @@
           <div class="auth-msg" id="form-msg"></div>
         </form>
 
-        <!-- Danger zone — only shown in edit mode (chunk 5 will populate the delete button) -->
+        <!-- Attendees section — only shown in edit mode and when event has RSVPs -->
+        <section id="attendees-section" hidden style="margin-top: 36px;">
+          <h3 class="admin-section-heading">Attendees</h3>
+
+          <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 16px;">—</div>
+
+          <div class="admin-quick-actions" style="margin-bottom: 14px;">
+            <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phones for WhatsApp</button>
+            <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="admin-table" id="attendees-table">
+              <thead>
+                <tr>
+                  <th>Hash name</th>
+                  <th>Real name</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Guests</th>
+                  <th>Total bodies</th>
+                </tr>
+              </thead>
+              <tbody id="attendees-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Danger zone — only shown in edit mode -->
         <div class="danger-zone" id="danger-zone" hidden>
           <h4>▸ Danger zone</h4>
           <p style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin-bottom: 14px;">
@@ -217,11 +245,13 @@
 <script type="module">
   import { supabase, requireAdmin, showToast } from './auth.js';
   import { HarePicker } from './hare-picker.js';
+  import { parsePhoneNumberFromString } from 'https://esm.sh/libphonenumber-js@1.11.4';
 
   const $ = (s) => document.querySelector(s);
 
   let harePicker = null;
   let initialHareIds = [];  // hare set as saved in DB, for diffing
+  let currentAttendees = [];
   function escapeHtml(s) {
     return String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -326,6 +356,9 @@
     initialHareIds = (hareRes.data || []).map((r) => r.user_id);
     if (harePicker) harePicker.setSelected(initialHareIds);
     originalEvent = data;
+
+    // Load attendees in the background; doesn't block the form
+    refreshAttendees(id);
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
     $('#event_date').value = data.event_date;
@@ -512,6 +545,130 @@
     window.location.replace('/admin-events.html');
   });
 
+  // ===========================================================================
+  // Attendees section (admin)
+  // ===========================================================================
+
+  async function refreshAttendees(id) {
+    const { data, error } = await supabase
+      .from('rsvps')
+      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone)')
+      .eq('event_id', id);
+
+    if (error) {
+      console.warn('[admin-event] attendees fetch failed:', error);
+      return;
+    }
+
+    currentAttendees = (data || []).filter((r) => r.profile);
+    if (currentAttendees.length === 0) {
+      $('#attendees-section').hidden = true;
+      return;
+    }
+
+    $('#attendees-section').hidden = false;
+
+    // Sort: on_on first, then maybe, then not_this_time; within each, by hash_name
+    const order = { on_on: 0, maybe: 1, not_this_time: 2 };
+    currentAttendees.sort((a, b) => {
+      const cmp = (order[a.status] ?? 9) - (order[b.status] ?? 9);
+      if (cmp !== 0) return cmp;
+      const aName = a.profile.hash_name || a.profile.real_name || '';
+      const bName = b.profile.hash_name || b.profile.real_name || '';
+      return aName.localeCompare(bName);
+    });
+
+    let onOnTotal = 0, maybeTotal = 0;
+    const rows = currentAttendees.map((r) => {
+      const p = r.profile;
+      const guests = r.guests_count || 0;
+      const total = 1 + guests;
+      if (r.status === 'on_on') onOnTotal += total;
+      if (r.status === 'maybe') maybeTotal += total;
+      return `
+        <tr>
+          <td>${escapeHtml(p.hash_name || '—')}</td>
+          <td>${escapeHtml(p.real_name || '—')}</td>
+          <td>${escapeHtml(p.phone || '—')}</td>
+          <td><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+          <td>${guests}</td>
+          <td>${total}</td>
+        </tr>
+      `;
+    }).join('');
+    $('#attendees-tbody').innerHTML = rows;
+
+    $('#attendees-summary').innerHTML =
+      `Total expected: <b>${onOnTotal}</b> confirmed (on-on), <b>${maybeTotal}</b> maybe`;
+  }
+
+  function copyPhonesForWhatsApp() {
+    const onOnAttendees = currentAttendees.filter((r) => r.status === 'on_on' && r.profile.phone);
+    if (onOnAttendees.length === 0) {
+      showToast("No on-on members with phone numbers to copy.", { kind: 'error' });
+      return;
+    }
+    const formatted = [];
+    let unparsed = 0;
+    let unparsedName = null;
+    for (const r of onOnAttendees) {
+      const raw = r.profile.phone;
+      const parsed = parsePhoneNumberFromString(raw, 'GB');
+      if (parsed && parsed.isValid()) {
+        formatted.push(parsed.formatInternational());
+      } else {
+        formatted.push(raw);
+        unparsed++;
+        if (!unparsedName) unparsedName = r.profile.hash_name || r.profile.real_name || 'a member';
+      }
+    }
+    const joined = formatted.join(', ');
+    navigator.clipboard.writeText(joined).then(() => {
+      let msg = `Copied ${formatted.length} number${formatted.length === 1 ? '' : 's'} to clipboard.`;
+      if (unparsed > 0) {
+        msg += ` ${unparsed} couldn't be parsed — check ${unparsedName}'s profile.`;
+      }
+      showToast(msg, { kind: unparsed > 0 ? 'error' : 'ok' });
+    }).catch((err) => {
+      console.error('[admin-event] clipboard write failed:', err);
+      showToast("Couldn't copy to clipboard — your browser blocked it.", { kind: 'error' });
+    });
+  }
+
+  function csvEscape(value) {
+    if (value == null) return '';
+    const s = String(value);
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  function exportAttendeesCsv() {
+    if (currentAttendees.length === 0) return;
+    const header = ['Hash name', 'Real name', 'Phone', 'Status', 'Guests', 'Total bodies'];
+    const rows = currentAttendees.map((r) => {
+      const p = r.profile;
+      const total = 1 + (r.guests_count || 0);
+      return [
+        p.hash_name || '',
+        p.real_name || '',
+        p.phone || '',
+        r.status,
+        r.guests_count || 0,
+        total,
+      ].map(csvEscape).join(',');
+    });
+    const csv = [header.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `steel-city-h3-run-${originalEvent?.run_number ?? eventId}-attendees.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function initHarePicker() {
     // Load all profiles — admin RLS lets us read every row including real names
     const { data: members, error } = await supabase
@@ -525,6 +682,10 @@
     const host = document.getElementById('hare-multiselect-host');
     harePicker = new HarePicker(host, members || []);
   }
+
+  // Wire up attendee buttons (no-op until attendees load)
+  document.getElementById('copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
+  document.getElementById('export-csv-btn').addEventListener('click', exportAttendeesCsv);
 
   (async () => {
     await requireAdmin();
