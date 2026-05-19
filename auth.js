@@ -54,10 +54,59 @@ export function isProfileComplete(profile) {
     && !!(profile.phone && profile.phone.trim());
 }
 
+// ---------------------------------------------------------------------------
+// Admin role
+// ---------------------------------------------------------------------------
+
+// Cached result so we don't query user_roles on every page render.
+let _adminCheckPromise = null;
+
+export async function isAdmin() {
+  const session = await getSession();
+  if (!session) return false;
+  if (!_adminCheckPromise) {
+    _adminCheckPromise = supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('[auth] isAdmin check failed:', error.message);
+          return false;
+        }
+        return !!data;
+      });
+  }
+  return _adminCheckPromise;
+}
+
+// Guard for /admin/* pages — bounces non-admins back to home with a toast hint.
+export async function requireAdmin() {
+  const session = await getSession();
+  if (!session) {
+    rememberThen(window.location.pathname + window.location.search);
+    window.location.replace('/login.html');
+    throw new Error('Not signed in');
+  }
+  const admin = await isAdmin();
+  if (!admin) {
+    try {
+      sessionStorage.setItem('sch3-toast', 'Nothing here for you, hound.');
+    } catch {}
+    window.location.replace('/');
+    throw new Error('Not admin');
+  }
+  return session;
+}
+
 export async function signOut() {
   await supabase.auth.signOut();
   // Clear the "redirect after sign-in" memo too, just in case.
   try { localStorage.removeItem('sch3-then'); } catch {}
+  // Reset cached admin check for next session
+  _adminCheckPromise = null;
   window.location.href = '/';
 }
 
@@ -99,10 +148,14 @@ function initials(text) {
     .toUpperCase() || '?';
 }
 
-function buildDropdown(displayName, av) {
+function buildDropdown(displayName, av, isAdminUser) {
   // Replace the static <a class="login-chip"> with a chip+dropdown component.
   const slot = document.getElementById('login-chip');
   if (!slot) return;
+
+  const adminItem = isAdminUser
+    ? `<a role="menuitem" href="/admin.html" class="dropdown-admin">▸ Admin</a>`
+    : '';
 
   const wrap = document.createElement('div');
   wrap.className = 'login-chip-wrap';
@@ -115,6 +168,7 @@ function buildDropdown(displayName, av) {
     <div class="login-dropdown" id="login-dropdown" role="menu" hidden>
       <a role="menuitem" href="/profile.html">▸ Your hash card</a>
       <a role="menuitem" href="/my-on-ons.html">▸ My On-Ons</a>
+      ${adminItem}
       <button type="button" role="menuitem" id="signout-btn">↶ Sign out</button>
     </div>
   `;
@@ -170,7 +224,7 @@ export async function renderLoginChip() {
   }
 
   // Signed in — replace the chip with a button+dropdown.
-  const profile = await getProfile();
+  const [profile, admin] = await Promise.all([getProfile(), isAdmin()]);
   const displayName =
     (profile?.hash_name && profile.hash_name.trim())
       ? profile.hash_name.trim()
@@ -179,7 +233,7 @@ export async function renderLoginChip() {
           : session.user.email.split('@')[0];
   const av = initials(profile?.hash_name || profile?.real_name || session.user.email);
 
-  buildDropdown(escapeHtml(displayName), escapeHtml(av));
+  buildDropdown(escapeHtml(displayName), escapeHtml(av), admin);
 }
 
 function escapeHtml(s) {
@@ -192,6 +246,45 @@ function escapeHtml(s) {
 }
 
 // ---------------------------------------------------------------------------
+// Toast — tiny reusable banner for confirmation / error messages.
+// Pages can call showToast() directly, OR set sessionStorage['sch3-toast']
+// before navigating (used by requireAdmin to surface the bounce reason).
+// ---------------------------------------------------------------------------
+
+export function showToast(message, opts = {}) {
+  if (typeof document === 'undefined') return;
+  const { kind = 'info', durationMs = 3500 } = opts;
+  let host = document.getElementById('sch3-toast-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'sch3-toast-host';
+    host.className = 'toast-host';
+    document.body.appendChild(host);
+  }
+  const el = document.createElement('div');
+  el.className = `toast toast-${kind}`;
+  el.textContent = message;
+  host.appendChild(el);
+  // Force reflow then animate in
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, durationMs);
+}
+
+function consumePendingToast() {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    const msg = sessionStorage.getItem('sch3-toast');
+    if (msg) {
+      sessionStorage.removeItem('sch3-toast');
+      showToast(msg);
+    }
+  } catch {}
+}
+
+// ---------------------------------------------------------------------------
 // Auto-render on DOM ready for any page that imports this module.
 // Pages that need finer control (auth-callback, login) can import without
 // caring — they don't have a #login-chip in their header to update anyway,
@@ -200,8 +293,12 @@ function escapeHtml(s) {
 
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { renderLoginChip(); });
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLoginChip();
+      consumePendingToast();
+    });
   } else {
     renderLoginChip();
+    consumePendingToast();
   }
 }
