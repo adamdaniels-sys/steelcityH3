@@ -13,6 +13,7 @@
     --steel-light: #c4cad3;
     --steel-bright: #e0e4ea;
     --yellow: #ffd23a;       /* POW yellow */
+    --green: #2f8f4e;        /* "paid" tick — the one green on the site */
     --rule: rgba(21, 17, 10, 0.18);
   }
 
@@ -2704,4 +2705,191 @@ a.onons-title:hover { color: var(--orange); }
   .corner-stick-sub { font-size: 0.72rem; padding: 3px 9px; }
   .ev-personal-corner { gap: 7px; right: 10px; }
 }
+
+/* ============================================================
+   Phase 4 — admin attendance roster (admin-attendance.html)
+   Mobile-critical: Smutley uses this on his phone in the pub.
+   Toggle / remove targets are >= 48px.
+   ============================================================ */
+.att-headstrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.att-stat {
+  background: var(--cream-2);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 14px 16px;
+}
+.att-stat .lbl {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange);
+  font-weight: 700;
+}
+.att-stat .val {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.att-finalised-banner {
+  background: var(--steel);
+  color: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.att-list { display: grid; gap: 10px; margin-bottom: 26px; }
+.att-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: var(--cream-2);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 12px 14px;
+}
+.att-row.is-paid { background: var(--cream); box-shadow: 4px 4px 0 var(--green); }
+.att-main { flex: 1 1 150px; min-width: 0; }
+.att-name {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.att-sub {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+  margin-top: 5px;
+}
+.att-controls { display: flex; align-items: center; gap: 8px; }
+.att-paid-toggle {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  font-family: "Bangers", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms, box-shadow 100ms;
+}
+.att-paid-toggle[aria-pressed="true"] {
+  background: var(--green);
+  color: var(--cream);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.att-amount-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+.att-amount {
+  width: 72px;
+  min-height: 48px;
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--ink);
+  padding: 0 8px;
+  text-align: right;
+}
+.att-amount:focus { outline: 3px solid var(--orange); outline-offset: 0; }
+.att-remove {
+  min-height: 48px;
+  min-width: 48px;
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  color: var(--red);
+  font-family: "Bangers", sans-serif;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.att-remove:hover { background: var(--red); color: var(--cream); }
+
+.att-add {
+  background: var(--cream);
+  border: 3px dashed var(--ink);
+  padding: 18px 20px;
+}
+.att-add h4 {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.att-add-group { margin-bottom: 18px; }
+.att-add-group:last-child { margin-bottom: 0; }
+.att-add-label {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.att-add-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+.att-add-select,
+.att-add-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 48px;
+  background: var(--cream-2);
+  border: 3px solid var(--ink);
+  padding: 0 14px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.att-add-select:focus,
+.att-add-input:focus { outline: 3px solid var(--orange); outline-offset: 0; }
+.att-add-controls .btn { flex: 0 0 auto; }
+.att-add-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+.att-add-check input { width: 20px; height: 20px; }
 
