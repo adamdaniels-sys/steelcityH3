@@ -78,6 +78,12 @@
           <div class="auth-field">
             <label for="hash_name">Hash name</label>
             <input type="text" id="hash_name" placeholder="Leave blank if not awarded yet" />
+            <div class="profile-hint">Admins award hash names. Setting one (and unticking "hash virgin") graduates them from virgin status.</div>
+          </div>
+
+          <div class="auth-field">
+            <label for="kennel_name">Kennel (home hash)</label>
+            <input type="text" id="kennel_name" placeholder="e.g. Yorkshire H3" />
           </div>
 
           <div class="auth-field">
@@ -257,6 +263,7 @@
     hideMsg();
     const real_name = $('#real_name').value.trim();
     const hash_name = $('#hash_name').value.trim() || null;
+    const kennel_name = $('#kennel_name').value.trim() || null;
     const phoneRaw  = $('#phone').value.trim();
     const is_hash_virgin    = $('#is_hash_virgin').checked;
     const newsletter_opt_in = $('#newsletter_opt_in').checked;
@@ -280,7 +287,7 @@
 
     const { error } = await supabase
       .from('profiles')
-      .update({ real_name, hash_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in })
+      .update({ real_name, hash_name, kennel_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in })
       .eq('id', userId);
 
     btn.disabled = false;
@@ -292,7 +299,7 @@
       return;
     }
     showToast('Profile saved.', { kind: 'ok' });
-    memberDetail.profile = { ...memberDetail.profile, real_name, hash_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in };
+    memberDetail.profile = { ...memberDetail.profile, real_name, hash_name, kennel_name, phone: phone_e164, is_hash_virgin, newsletter_opt_in };
   });
 
   // ---- Promote / Demote ---------------------------------------------------
@@ -411,6 +418,7 @@
     $('#email').value             = memberDetail.email || '';
     $('#real_name').value         = p.real_name || '';
     $('#hash_name').value         = p.hash_name || '';
+    $('#kennel_name').value       = p.kennel_name || '';
     $('#phone').value             = p.phone || '';
     $('#is_hash_virgin').checked    = !!p.is_hash_virgin;
     $('#newsletter_opt_in').checked = !!p.newsletter_opt_in;

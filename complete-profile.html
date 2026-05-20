@@ -39,10 +39,21 @@
           <div class="profile-hint">Just for the kennel records. Never shown publicly.</div>
         </div>
 
-        <div class="auth-field">
+        <div class="auth-field" id="hash-name-field" hidden>
           <label for="hash_name">Hash name <span class="profile-hint" style="display:inline; margin:0;">(optional)</span></label>
           <input type="text" id="hash_name" name="hash_name" autocomplete="nickname" placeholder="e.g. Trampy Pete" />
-          <div class="profile-hint">Awarded after a few runs. Leave blank if you're new — we'll sort one out.</div>
+          <div class="profile-hint">Only if you've already been given one at another hash.</div>
+        </div>
+
+        <div class="auth-field" id="hash-name-virgin-note">
+          <label>Hash name</label>
+          <div class="profile-hint" style="margin-top: 0;">You'll be given one after a few runs — you don't get to choose your own. For now, welcome, hash virgin!</div>
+        </div>
+
+        <div class="auth-field">
+          <label for="kennel_name">Kennel (home hash)</label>
+          <input type="text" id="kennel_name" name="kennel_name" placeholder="e.g. Yorkshire H3" />
+          <div class="profile-hint">The hashing group you call home, if you've got one. Optional.</div>
         </div>
 
         <div class="auth-field">
@@ -130,15 +141,25 @@
     if (profile) {
       if (profile.real_name)        $('#real_name').value = profile.real_name;
       if (profile.hash_name)        $('#hash_name').value = profile.hash_name;
+      if (profile.kennel_name)      $('#kennel_name').value = profile.kennel_name;
       if (profile.phone)            $('#phone').value = profile.phone;
       $('#is_hash_virgin').checked    = profile.is_hash_virgin !== false;
       $('#newsletter_opt_in').checked = profile.newsletter_opt_in !== false;
     }
+    applyVirginUI();
 
     $('#loading').hidden = true;
     $('#form-panel').hidden = false;
     $('#real_name').focus();
   })();
+
+  // Hash names are awarded, not chosen — hide the field while someone's a virgin
+  function applyVirginUI() {
+    const virgin = $('#is_hash_virgin').checked;
+    $('#hash-name-field').hidden = virgin;
+    $('#hash-name-virgin-note').hidden = !virgin;
+  }
+  $('#is_hash_virgin').addEventListener('change', applyVirginUI);
 
   // ---- Form submit: validate, normalise phone, UPSERT profile, redirect ----
 
@@ -147,9 +168,11 @@
     hideMsg();
 
     const real_name  = $('#real_name').value.trim();
-    const hash_name  = $('#hash_name').value.trim() || null;
-    const phoneRaw   = $('#phone').value.trim();
     const is_hash_virgin    = $('#is_hash_virgin').checked;
+    // Virgins don't have a hash name yet — never store one for them
+    const hash_name  = is_hash_virgin ? null : ($('#hash_name').value.trim() || null);
+    const kennel_name = $('#kennel_name').value.trim() || null;
+    const phoneRaw   = $('#phone').value.trim();
     const newsletter_opt_in = $('#newsletter_opt_in').checked;
 
     if (!real_name) {
@@ -201,6 +224,7 @@
         id: session.user.id,
         real_name,
         hash_name,
+        kennel_name,
         phone: phone_e164,
         is_hash_virgin,
         newsletter_opt_in,
