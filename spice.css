@@ -175,14 +175,14 @@
   /* Big crest badge poking off the hero panel's top-right corner */
   .hero-crest {
     position: absolute;
-    top: -28px;
-    right: -16px;
-    width: clamp(120px, 15vw, 200px);
+    top: -40px;
+    right: -24px;
+    width: clamp(260px, 30vw, 400px);
     aspect-ratio: 1;
     border-radius: 50%;
     background: var(--cream);
-    border: 5px solid var(--ink);
-    box-shadow: 0 0 0 5px var(--cream), 5px 7px 0 var(--ink);
+    border: 6px solid var(--ink);
+    box-shadow: 0 0 0 6px var(--cream), 7px 9px 0 var(--ink);
     object-fit: cover;
     transform: rotate(-4deg);
     z-index: 6;
@@ -2677,13 +2677,17 @@ a.onons-title:hover { color: var(--orange); }
   .rsvp { padding: 22px 20px; }
   .admin-form { padding: 24px 20px 28px; }
 
-  /* ---- Hero crest shrinks so it tucks into the corner without covering the title ---- */
+  /* ---- Hero crest: on a phone it becomes a big centred masthead above the
+          title (rather than a corner badge that would cover the text) ---- */
   .hero-crest {
-    width: 84px;
-    top: -16px;
-    right: -4px;
-    border-width: 4px;
-    box-shadow: 0 0 0 4px var(--cream), 4px 5px 0 var(--ink);
+    position: static;
+    display: block;
+    width: clamp(150px, 46vw, 230px);
+    margin: 0 auto 18px;
+    top: auto;
+    right: auto;
+    border-width: 5px;
+    box-shadow: 0 0 0 5px var(--cream), 6px 7px 0 var(--ink);
   }
 
   /* ---- Speech bubble: keep it on-screen, top-left of the photo frame ---- */
