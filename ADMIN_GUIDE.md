@@ -2,7 +2,7 @@
 
 A short manual for **Queen Myrtle** and **Smutley** (and any future co-admins).
 
-**Phase 3 update:** The site itself now has a full admin UI. **For day-to-day management, sign in to https://steelcityh3.org and click "Admin" in your header dropdown.** Everything below describes the legacy Supabase Dashboard path, which still works as a fallback for anything the site UI doesn't expose yet (audit log queries, manual data fixes, raw SQL).
+**The site has a full admin UI — use it for everything.** Sign in to https://steelcityh3.org and click **"Admin"** in your header dropdown. The Supabase Dashboard path further down is now only a fallback for raw data fixes or the audit log.
 
 ---
 
@@ -10,32 +10,54 @@ A short manual for **Queen Myrtle** and **Smutley** (and any future co-admins).
 
 Sign in to https://steelcityh3.org → click your name in the top-right → **Admin** → you're at the dashboard.
 
+The dashboard has two event lists:
+- **Still to wrap up** — hashes that have happened but you haven't finalised yet (attendance + money still to sort). They drop off here automatically once you finalise them.
+- **Next up** — the upcoming hashes.
+
 | What you want to do | Where |
 |---|---|
 | **Schedule the next monthly hash** | Dashboard → "Schedule next hash" (smart-fills the 3rd Saturday and a sensible title) |
 | **Add an anniversary or one-off event** | Dashboard → "Add custom event" |
-| **Edit an event** | Admin → Events → click "Edit" on the row. Or from the live event page, click the small "▸ Edit this hash" link. |
-| **See who's coming to an event + their phones** | Open the event in Admin → Events → Edit → "Attendees" section at the bottom |
-| **Copy phones for the WhatsApp group** | On the event admin page → "Copy phones for WhatsApp" → paste into WhatsApp's New Group dialog |
-| **Export attendees as CSV** | Same page → "Export CSV" |
-| **Mark an event as completed and add the scribe report** | Edit event → change Status to "Completed" → fill in distance, on-on pub, scribe report fields that appear |
-| **Delete an event** | Edit event → bottom of page → "Danger zone" → "Delete this hash" |
-| **Find a member** | Admin → Members → search by hash name / real name / email |
-| **Edit a member's profile** | Members → click "Edit" on the row |
-| **Promote a member to admin** | Member edit page → "Admin status" section → "Promote to admin" |
-| **Demote an admin** | Member edit page → "Demote from admin" *(can't demote yourself or the last admin — site guards both)* |
-| **Delete a member** | Member edit page → "Danger zone" → "Delete this member" |
+| **Edit an event** | Admin → Events → "Edit" on the row. Or from the live event page, the small "▸ Edit this hash" link. |
+| **See who's RSVP'd + their phones** | Open the event → **RSVPs & WhatsApp** section |
+| **Copy phones for the WhatsApp group** | Event page → RSVPs & WhatsApp → "Copy phones for WhatsApp" → paste into WhatsApp's New Group dialog |
+| **Take attendance + record who paid** | Mark the event **Completed** and Save → the **Attendance & money** section opens (see walkthrough below) |
+| **Add the scribe report / distance** | Edit event → set Status to "Completed" → the "After the event" fields appear |
+| **Delete an event** | Edit event → bottom → "Danger zone" → "Delete this hash" |
+| **Find / edit a member** | Admin → Members → search → "Edit" |
+| **Promote / demote an admin** | Member edit page → Admin status *(can't demote yourself or the last admin)* |
+| **Delete a member** | Member edit page → "Danger zone" |
 
-Every admin action is audited automatically — the `admin_actions` table in Supabase records who did what, when, with before/after values. There's no UI for browsing it yet (Phase 6+ feature) but admins can query it directly in Supabase if a question ever needs answering.
+Every admin action is audited automatically (`admin_actions` table in Supabase records who did what, when).
+
+## The event page: three sections
+
+When you open an event for editing, it's split into collapsible sections — click a heading to open/close it:
+
+1. **Event details** — date, location, hares, pub, status, etc. *Once you mark the event "Completed" these fields lock (to stop accidental edits while you're collecting money). To edit them again, set the status back to "Ready to On-On".*
+2. **RSVPs & WhatsApp** — who said they'd come, and the copy-phones / CSV tools.
+3. **Attendance & money** — only appears once the event is Completed. This is the take-attendance tool.
+
+### The status pipeline
+
+`Hares wanted` → `Ready to On-On` (once hares are sorted) → `Completed` (after the day). `Cancelled` is separate, for a hash that's called off.
+
+## Running a hash, start to finish
+
+1. **Schedule it** (Dashboard → Schedule next hash). New hashes usually start as **Hares wanted**.
+2. **Hares get sorted** — either you assign them (Event details → "Hares (members)") or a member offers on the event page. Set status to **Ready to On-On**. *(The site offers to flip this for you when hares are added.)*
+3. **The day happens.** It now appears under **Still to wrap up** on the dashboard.
+4. **Wrap it up:** open the event → set status to **Completed** → Save. The **Attendance & money** section opens, pre-filled from everyone who RSVP'd "on-on" (plus their plus-ones).
+5. **Take the register:** tick **Paid** next to each person who turned up and coughed up (the amount defaults to £5 — edit it if someone rounded up). Add walk-ups or plus-ones, remove no-shows. The "Raised so far" total updates as you go.
+6. **Finalise** when it all balances → confirm. The hash drops off "Still to wrap up", the charity total goes public, and members see an "Attended" badge on their My On-Ons page.
+
+You can still edit a finalised event's roster afterwards if you spot a mistake.
 
 ## Hare assignment
 
-There are two paths for assigning hares to an event:
-
-- **Member self-nominates**: when an event's status is "Hares wanted" and no hares are assigned yet, signed-in members see an "▸ I'll hare this one" button on the event page. Clicking it adds them as a volunteer hare. You can override or add to this from the admin UI any time.
-- **Admin assigns**: edit event → "Hares (members)" multi-select → type to search by hash or real name, click to add, click × on a pill to remove. When you add a hare to an event marked "Hares wanted", the site offers to flip status to "Open" for you.
-
-For visiting hares from other clubs (e.g. Manchester H3 visiting), use the **"Hares (other / visitors)"** free-text field — it's separate from the structured hare list.
+- **Member offers to hare**: once a signed-in member marks themselves **On-On** for an event, an "▸ I'll hare this one" offer appears on the event page (unless the trail's already covered). Members can also withdraw. Offers email on-on@steelcityh3.org.
+- **Admin assigns**: edit event → "Hares (members)" → type to search, click to add, × to remove. Adding a hare to a "Hares wanted" event offers to flip the status to "Ready to On-On".
+- **Visiting hares** from other clubs: use the **"Hares (other / visitors)"** free-text field.
 
 ---
 
@@ -93,9 +115,11 @@ This is the most common admin task. About 5 minutes per event.
 
 ### Status quick reference
 
-- `open` → "▸ Open!" badge, shown on homepage Up Next
-- `hares_wanted` → "▸ Hares wanted" badge in red, shown on Up Next
-- `closed` → "Closed" — won't show on homepage Up Next once the date passes
+*(These are the raw database values. On the site the dropdown shows friendlier labels.)*
+
+- `open` → shown as **"Ready to On-On"** — the normal "it's happening" state, on homepage Up Next
+- `hares_wanted` → **"Hares wanted"** badge in red, on Up Next
+- `closed` → shown as **"Cancelled"** — won't show on Up Next once the date passes
 - `completed` → moves to "Past Hashes" archive on the homepage
 
 ---
@@ -179,8 +203,8 @@ For anything else, screenshot it and email Adam.
 
 ---
 
-## When the proper admin UI ships (Phase 3)
+## The admin UI is live
 
-You'll be able to do all of the above from the actual website (steelcityh3.org), no dashboard required. This guide will still be here as a fallback. Until then — pin it somewhere handy.
+Everything above (events, members, hares, attendance, money) is now done from the website itself (steelcityh3.org → Admin), no dashboard required. The Supabase Dashboard sections in this guide are just a fallback for raw data fixes or the audit log. Pin the **"Running a hash, start to finish"** walkthrough near the top somewhere handy.
 
 **On-on.**
