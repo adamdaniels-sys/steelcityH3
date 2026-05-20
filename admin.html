@@ -103,6 +103,43 @@
           </div>
         </div>
 
+        <!-- Hall of fame leaderboards -->
+        <div style="margin-top: 50px;">
+          <h3 class="admin-section-heading">Hall of fame</h3>
+          <p class="sec-lede" style="margin-bottom: 4px;">
+            League tables from hashes that have already happened. The bragging rights, quantified.
+          </p>
+          <div class="leaderboard-grid">
+            <div class="leaderboard-card">
+              <div class="leaderboard-head">
+                <span class="leaderboard-title">Top Hounds</span>
+                <span class="leaderboard-sub">Most hashes hounded</span>
+              </div>
+              <ol class="leaderboard-list" id="lb-attenders">
+                <li class="is-empty">Loading…</li>
+              </ol>
+            </div>
+            <div class="leaderboard-card">
+              <div class="leaderboard-head">
+                <span class="leaderboard-title">Top Hares</span>
+                <span class="leaderboard-sub">Most trails laid</span>
+              </div>
+              <ol class="leaderboard-list" id="lb-hares">
+                <li class="is-empty">Loading…</li>
+              </ol>
+            </div>
+            <div class="leaderboard-card">
+              <div class="leaderboard-head">
+                <span class="leaderboard-title">Head Defiler</span>
+                <span class="leaderboard-sub">Most hash virgins brought</span>
+              </div>
+              <ol class="leaderboard-list" id="lb-defilers">
+                <li class="is-empty">Loading…</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -130,6 +167,22 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function renderLeaderboard(elId, rows) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!rows || rows.length === 0) {
+      el.innerHTML = '<li class="is-empty">No data yet — check back after a few hashes.</li>';
+      return;
+    }
+    el.innerHTML = rows.map((row, i) => `
+      <li>
+        <span class="leaderboard-rank">${i + 1}</span>
+        <span class="leaderboard-name">${escapeHtml(row.name)}</span>
+        <span class="leaderboard-value">${Number(row.value) || 0}</span>
+      </li>
+    `).join('');
+  }
+
   (async () => {
     await requireAdmin();  // throws + redirects on non-admin; we only continue if admin
 
@@ -139,11 +192,12 @@
     const todayISO = new Date().toISOString().slice(0, 10);
     const yearStartISO = `${new Date().getFullYear()}-01-01`;
 
-    const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes] = await Promise.all([
+    const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes, leaderboardRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('events').select('*').gte('event_date', todayISO).in('status', ['open','hares_wanted','closed']).order('event_date', { ascending: true }),
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'hares_wanted').gte('event_date', todayISO),
       supabase.from('events').select('id, charity_raised').eq('status', 'completed').gte('event_date', yearStartISO),
+      supabase.rpc('get_admin_leaderboards'),
     ]);
 
     if (membersRes.count != null) $('#stat-members').textContent = membersRes.count;
@@ -156,6 +210,13 @@
     $('#stat-events-done').textContent = doneThisYear.length || '—';
     const totalCharity = doneThisYear.reduce((sum, e) => sum + Number(e.charity_raised || 0), 0);
     $('#stat-charity').textContent = totalCharity > 0 ? totalCharity.toFixed(2) : '—';
+
+    // Hall of fame leaderboards
+    if (leaderboardRes?.error) console.error('[admin] leaderboards failed:', leaderboardRes.error);
+    const lb = leaderboardRes?.data || {};
+    renderLeaderboard('lb-attenders', lb.top_attenders);
+    renderLeaderboard('lb-hares',     lb.top_hares);
+    renderLeaderboard('lb-defilers',  lb.top_defilers);
 
     // Render next 3 events with on-on counts
     const next3 = upcoming.slice(0, 3);
