@@ -419,9 +419,9 @@
 
   function statusBadge(status) {
     switch (status) {
-      case 'open':         return { label: 'Open!',           warn: false };
+      case 'open':         return { label: 'Ready to On-On',  warn: false };
       case 'hares_wanted': return { label: 'Offer to hare!',  warn: true  };
-      case 'closed':       return { label: 'Closed',          warn: true  };
+      case 'closed':       return { label: 'Cancelled',       warn: true  };
       default:             return { label: 'TBC',             warn: false };
     }
   }

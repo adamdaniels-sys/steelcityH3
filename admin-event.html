@@ -94,9 +94,15 @@
           </div>
 
           <div class="auth-field">
-            <label for="location_full">Where (full address)</label>
+            <label for="location_full">Where it starts (full address)</label>
             <input type="text" id="location_full" name="location_full" placeholder="e.g. The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG" />
             <div class="profile-hint">Optional. Add the exact start point once it's known.</div>
+          </div>
+
+          <div class="auth-field">
+            <label for="on_on_pub">On-on pub (where it ends)</label>
+            <input type="text" id="on_on_pub" name="on_on_pub" placeholder="The Plough, Low Bradfield" />
+            <div class="profile-hint">Optional. The pub everyone reconvenes at after the trail.</div>
           </div>
 
           <!-- Hare selector slot — populated by chunk 4 -->
@@ -126,11 +132,12 @@
           <div class="auth-field">
             <label for="status">Status</label>
             <select id="status" name="status" required>
-              <option value="open">Open</option>
               <option value="hares_wanted">Hares wanted</option>
-              <option value="closed">Closed</option>
+              <option value="open">Ready to On-On</option>
               <option value="completed">Completed</option>
+              <option value="closed">Cancelled</option>
             </select>
+            <div class="profile-hint">Hares wanted → Ready to On-On (hares found) → Completed (after the day). Cancelled if it's off.</div>
           </div>
 
           <!-- Past-event fields, shown only when status = completed -->
@@ -146,10 +153,6 @@
                 <input type="number" id="charity_raised" name="charity_raised" step="0.01" min="0" disabled />
                 <div class="profile-hint">Auto-calculated from attendance payments. Take attendance to populate it.</div>
               </div>
-            </div>
-            <div class="auth-field">
-              <label for="on_on_pub">On-on pub</label>
-              <input type="text" id="on_on_pub" name="on_on_pub" placeholder="The Plough, Low Bradfield" />
             </div>
             <div class="auth-field">
               <label for="description">Description (shown on upcoming card)</label>
@@ -406,7 +409,7 @@
       amount_per_head:      parseFloat($('#amount_per_head').value) || 5.00,
       description:          (isCompleted ? $('#description').value : $('#description_upcoming').value).trim() || null,
       distance_miles:       isCompleted && $('#distance_miles').value !== '' ? parseFloat($('#distance_miles').value) : null,
-      on_on_pub:            isCompleted ? ($('#on_on_pub').value.trim() || null) : null,
+      on_on_pub:            $('#on_on_pub').value.trim() || null,
       scribe_report_by:     isCompleted ? ($('#scribe_report_by').value.trim() || null) : null,
       scribe_report:        isCompleted ? ($('#scribe_report').value.trim() || null) : null,
       // charity_raised is computed by trigger from attendance payments — never written here
@@ -435,7 +438,7 @@
     const hasAdditionalText = !!payload.additional_hares_text;
     const hasAnyHare = selectedHares.length > 0 || hasAdditionalText;
     if (payload.status === 'hares_wanted' && hasAnyHare) {
-      const ok = window.confirm("Hares are sorted now — flip status to 'Open'?");
+      const ok = window.confirm("Hares are sorted now — flip status to 'Ready to On-On'?");
       if (ok) {
         payload.status = 'open';
         $('#status').value = 'open';

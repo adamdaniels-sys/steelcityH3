@@ -139,10 +139,10 @@
 
   function statusBadgeHtml(status) {
     const labels = {
-      open:         { text: 'Open',         bg: 'var(--orange)', fg: 'var(--cream)' },
-      hares_wanted: { text: 'Hares wanted', bg: 'var(--red)',    fg: 'var(--cream)' },
-      closed:       { text: 'Closed',       bg: 'var(--steel)',  fg: 'var(--cream)' },
-      completed:    { text: 'Completed',    bg: 'var(--ink-3)',  fg: 'var(--cream)' },
+      open:         { text: 'Ready to On-On', bg: 'var(--orange)', fg: 'var(--cream)' },
+      hares_wanted: { text: 'Hares wanted',   bg: 'var(--red)',    fg: 'var(--cream)' },
+      closed:       { text: 'Cancelled',      bg: 'var(--steel)',  fg: 'var(--cream)' },
+      completed:    { text: 'Completed',      bg: 'var(--ink-3)',  fg: 'var(--cream)' },
     };
     const s = labels[status] || labels.open;
     return `<span style="display: inline-block; background: ${s.bg}; color: ${s.fg}; padding: 2px 8px; font-family: 'Bangers', sans-serif; font-size: 0.85rem; letter-spacing: 0.04em; line-height: 1.3; border: 2px solid var(--ink);">${s.text}</span>`;

@@ -93,6 +93,15 @@
           <a class="btn cream"  href="/admin-members.html?filter=admin">▸ Manage admins</a>
         </div>
 
+        <!-- Past hashes that have happened but aren't finalised yet -->
+        <div style="margin-top: 50px;" id="wrapup-section" hidden>
+          <h3 class="admin-section-heading">Still to wrap up</h3>
+          <p class="sec-lede" style="margin-bottom: 14px;">
+            These hashes have happened but aren't finalised — take attendance, collect the money, then finalise. They drop off this list once finalised.
+          </p>
+          <div id="wrapup-list" class="onons-list"></div>
+        </div>
+
         <!-- Next 3 events -->
         <div style="margin-top: 50px;">
           <h3 class="admin-section-heading">Next up</h3>
@@ -192,12 +201,13 @@
     const todayISO = new Date().toISOString().slice(0, 10);
     const yearStartISO = `${new Date().getFullYear()}-01-01`;
 
-    const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes, leaderboardRes] = await Promise.all([
+    const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes, leaderboardRes, wrapupRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('events').select('*').gte('event_date', todayISO).in('status', ['open','hares_wanted','closed']).order('event_date', { ascending: true }),
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'hares_wanted').gte('event_date', todayISO),
       supabase.from('events').select('id, charity_raised').eq('status', 'completed').gte('event_date', yearStartISO),
       supabase.rpc('get_admin_leaderboards'),
+      supabase.from('events').select('*').lt('event_date', todayISO).is('attendance_finalised_at', null).neq('status', 'closed').order('event_date', { ascending: false }),
     ]);
 
     if (membersRes.count != null) $('#stat-members').textContent = membersRes.count;
@@ -217,6 +227,31 @@
     renderLeaderboard('lb-attenders', lb.top_attenders);
     renderLeaderboard('lb-hares',     lb.top_hares);
     renderLeaderboard('lb-defilers',  lb.top_defilers);
+
+    // "Still to wrap up" — past hashes not yet finalised
+    const STATUS_LABELS = { open: 'Ready to On-On', hares_wanted: 'Hares wanted', completed: 'Completed' };
+    const wrapup = wrapupRes?.data || [];
+    if (wrapup.length > 0) {
+      $('#wrapup-section').hidden = false;
+      $('#wrapup-list').innerHTML = wrapup.map((ev) => {
+        const d = parseDate(ev.event_date);
+        const dateStr = `${d.getUTCDate()} ${MONTHS_FULL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+        const statusLabel = STATUS_LABELS[ev.status] || ev.status;
+        return `
+          <a class="onons-row" href="/admin-event.html?id=${ev.id}">
+            <div class="onons-date">
+              <div class="d">${d.getUTCDate()}</div>
+              <div class="m">${MONTHS_FULL[d.getUTCMonth()]}</div>
+            </div>
+            <div class="onons-body">
+              <span class="onons-title">Run #${ev.run_number} · ${escapeHtml(ev.title)}</span>
+              <div class="onons-meta">Happened ${dateStr} · take attendance ▸</div>
+            </div>
+            <span class="onons-readonly-status">${escapeHtml(statusLabel)}</span>
+          </a>
+        `;
+      }).join('');
+    }
 
     // Render next 3 events with on-on counts
     const next3 = upcoming.slice(0, 3);
