@@ -17,7 +17,10 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  /* overflow-x: clip kills any stray horizontal overflow at the document
+     level without breaking the sticky topbar (unlike overflow: hidden, clip
+     does not create a scroll container). Belt-and-braces against blowouts. */
+  html, body { margin: 0; padding: 0; overflow-x: clip; }
 
   /* Force the [hidden] attribute to always win. Various .btn / .panel /
      other rules set display: inline-flex / grid / etc, which override the
@@ -33,7 +36,7 @@
     color: var(--ink);
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* halftone dots overlay — the cartoon texture */
@@ -702,6 +705,12 @@
     display: grid;
     gap: 14px;
   }
+  .cast {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
   .cast-card {
     background: var(--cream);
     border: 4px solid var(--ink);
@@ -869,17 +878,31 @@
   .dir-switch a.current { background: var(--orange); }
   .dir-switch a:hover:not(.current) { background: rgba(255,255,255,0.1); }
 
-  /* skip link */
+  /* skip link — visually hidden until focused. Uses the clip pattern rather
+     than left: -9999px so it never contributes to horizontal overflow. */
   .skip-link {
     position: absolute;
-    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
     background: var(--ink);
     color: var(--cream);
-    padding: 12px 18px;
     font-weight: 800;
     z-index: 1000;
   }
-  .skip-link:focus { left: 16px; top: 16px; }
+  .skip-link:focus {
+    left: 16px;
+    top: 16px;
+    width: auto;
+    height: auto;
+    padding: 12px 18px;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+  }
 
 /* ===== Shared additions for multi-page site ===== */
 
@@ -2523,6 +2546,15 @@ a.onons-title:hover { color: var(--orange); }
   .admin-quick-actions .btn,
   .profile-actions .btn { min-width: 0; width: 100%; flex: 1 1 100%; }
   .filter-pill { padding: 10px 16px; }
+
+  /* ---- Utility: hide a link/element only on phones ---- */
+  .hide-mobile { display: none !important; }
+
+  /* ---- Cast cards: single column, email drops to its own full-width row
+          (long unbreakable emails were forcing the page ~2× wide) ---- */
+  .cast { grid-template-columns: 1fr; }
+  .cast-card { grid-template-columns: 56px 1fr; }
+  .cast-card .em { grid-column: 1 / -1; overflow-wrap: anywhere; }
 
   /* ---- Admin tables → labelled cards (no horizontal scroll) ---- */
   .admin-table,
