@@ -118,6 +118,20 @@
     not_this_time: "Can't make it",
   };
 
+  // event_id -> { paid } for the signed-in member's confirmed attendance
+  const attendanceByEventId = new Map();
+
+  function attendanceBadge(ev) {
+    if (!ev.attendance_finalised_at) return '';  // not locked yet — no verdict
+    const att = attendanceByEventId.get(ev.id);
+    if (att) {
+      return att.paid
+        ? `<span class="att-badge att-badge-paid">✅ Attended</span>`
+        : `<span class="att-badge att-badge-unpaid">✅ Attended · unpaid</span>`;
+    }
+    return `<span class="att-badge att-badge-missed">🤷 Didn't make it</span>`;
+  }
+
   function statusOptions(currentStatus) {
     return Object.entries(STATUS_LABELS)
       .map(([value, label]) =>
@@ -180,6 +194,7 @@
             ${formatShortDate(ev.event_date)} · ${escapeHtml(ev.location_summary || '')}${escapeHtml(guestSuffix(r.guests_count))}
             ${hareSticker}
           </div>
+          ${attendanceBadge(ev)}
         </div>
         <span class="onons-readonly-status">${escapeHtml(STATUS_LABELS[r.status] || r.status)}</span>
       </a>
@@ -227,17 +242,22 @@
       return;
     }
 
-    // Fetch RSVPs + the user's hare assignments in parallel
-    const [rsvpRes, hareRes] = await Promise.all([
+    // Fetch RSVPs + the user's hare assignments + their attendance in parallel
+    const [rsvpRes, hareRes, attRes] = await Promise.all([
       supabase
         .from('rsvps')
-        .select('id, status, guests_count, event:events(id, run_number, title, event_date, location_summary, status)')
+        .select('id, status, guests_count, event:events(id, run_number, title, event_date, location_summary, status, attendance_finalised_at)')
         .eq('user_id', session.user.id),
       supabase
         .from('event_hares')
         .select('event_id')
         .eq('user_id', session.user.id),
+      supabase
+        .from('event_attendances')
+        .select('event_id, paid')
+        .eq('user_id', session.user.id),
     ]);
+    (attRes.data || []).forEach((a) => attendanceByEventId.set(a.event_id, a));
 
     if (rsvpRes.error) {
       console.error('[my-on-ons] fetch failed:', rsvpRes.error);

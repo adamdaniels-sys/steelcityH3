@@ -73,6 +73,9 @@
             <button class="btn cream" type="button" id="add-to-cal" hidden style="margin-top: 22px;">
               ▸ Add to calendar
             </button>
+            <div class="charity-badge" id="charity-badge" hidden>
+              💷 Raised <b>£<span id="charity-badge-amt">0</span></b> for St Luke's Hospice on this hash. Thank you, hounds.
+            </div>
           </div>
 
           <!-- RSVP card — two-step flow: pick → edit draft → confirm.
@@ -321,6 +324,12 @@
       $('#dt-onon').hidden = false;
       $('#d-onon').hidden = false;
       $('#d-onon').textContent = ev.on_on_pub;
+    }
+
+    // ---- Charity raised badge (Phase 4) — finalised events only ----
+    if (ev.attendance_finalised_at && Number(ev.charity_raised) > 0) {
+      $('#charity-badge-amt').textContent = Number(ev.charity_raised).toFixed(2);
+      $('#charity-badge').hidden = false;
     }
 
     // ---- Upcoming events: route placeholder + add-to-calendar button ----
