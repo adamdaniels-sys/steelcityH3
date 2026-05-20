@@ -2965,6 +2965,107 @@ a.onons-title:hover { color: var(--orange); }
 }
 .att-add-check input { width: 20px; height: 20px; }
 
+/* ===== Tabbed event workflow (admin-event.html) ===== */
+.event-headline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.event-name-label {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  line-height: 1;
+}
+.status-chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 6px 12px;
+  border: 2px solid var(--ink);
+  background: var(--cream-3);
+  color: var(--ink);
+}
+.status-chip.status-planning     { background: var(--cream-3); color: var(--ink-2); }
+.status-chip.status-hares_wanted { background: var(--red);     color: var(--cream); }
+.status-chip.status-open         { background: var(--yellow);  color: var(--ink); }
+.status-chip.status-ready        { background: var(--orange);  color: var(--cream); }
+.status-chip.status-completed    { background: var(--green);   color: var(--cream); }
+.status-chip.status-closed       { background: var(--steel);   color: var(--cream); }
+
+.event-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 22px;
+  border-bottom: 4px solid var(--ink);
+}
+.event-tab {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+  background: var(--cream-2);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-bottom: none;
+  padding: 11px 16px;
+  cursor: pointer;
+  position: relative;
+  top: 4px;
+  white-space: nowrap;
+}
+.event-tab.active {
+  background: var(--orange);
+  color: var(--cream);
+  top: 0;
+  padding-bottom: 15px;
+}
+.event-tab.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.event-tab:hover:not(.active):not(.locked) { background: var(--cream-3); }
+
+.admin-subsection {
+  background: var(--cream-2);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  padding: 20px 22px;
+}
+.hare-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+.hare-status-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.upload-placeholder {
+  background: var(--cream);
+  border: 3px dashed var(--ink);
+  padding: 22px;
+  text-align: center;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+@media (max-width: 600px) {
+  .event-tab { font-size: 0.92rem; padding: 9px 11px; flex: 1 1 auto; text-align: center; }
+}
+
 /* Collapsible admin sections (Event details / RSVPs / Attendance) */
 .admin-collapse {
   border: 4px solid var(--ink);

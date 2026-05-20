@@ -54,153 +54,132 @@
 
       <div id="admin-content" hidden>
 
-        <div class="sec-head">
+        <div class="sec-head" style="margin-bottom: 20px;">
           <div>
             <span class="sec-num" id="page-num">/ Admin · New event</span>
-            <h2 class="sec-title" id="page-title">Schedule <span class="or">next hash</span></h2>
+            <h2 class="sec-title" id="page-title">New <span class="or">event</span></h2>
           </div>
-          <p class="sec-lede" id="page-lede">Dates and run number are pre-filled for the next 3rd Saturday. Edit anything before saving.</p>
         </div>
 
-        <details class="admin-collapse" id="details-collapse" open>
-          <summary>
-            <span>Event details</span>
-            <span class="admin-collapse-summary-note" id="details-lock-note" hidden>▸ Locked — set status to "Ready to On-On" to edit</span>
-          </summary>
-          <div class="admin-collapse-body">
-        <form class="admin-form" id="event-form" novalidate>
+        <!-- Event name + status chip -->
+        <div class="event-headline">
+          <span class="event-name-label" id="event-name-label">NEW EVENT</span>
+          <span class="status-chip" id="status-chip">In Planning</span>
+        </div>
 
-          <div class="auth-field">
-            <label for="run_number">Run number</label>
-            <input type="number" id="run_number" name="run_number" min="1" required />
-          </div>
+        <!-- Workflow tabs -->
+        <div class="event-tabs" id="event-tabs" role="tablist">
+          <button class="event-tab" type="button" data-tab="details" role="tab">1 · Event details</button>
+          <button class="event-tab" type="button" data-tab="whos"    role="tab">2 · Who's Cumming?</button>
+          <button class="event-tab" type="button" data-tab="ready"   role="tab">3 · Ready to On-On</button>
+          <button class="event-tab" type="button" data-tab="after"   role="tab">4 · After the event</button>
+        </div>
 
-          <div class="auth-field">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" required placeholder="e.g. October Hash" />
-          </div>
+        <!-- ============================== TAB 1: EVENT DETAILS ============================== -->
+        <section class="tab-panel" data-panel="details">
+          <form class="admin-form" id="event-form" novalidate>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="auth-field">
-              <label for="event_date">Date</label>
-              <input type="date" id="event_date" name="event_date" required />
+              <label for="event_type">Event type</label>
+              <select id="event_type" name="event_type" required>
+                <option value="hash">Hash (a trail)</option>
+                <option value="meetup">Meet-up (social)</option>
+              </select>
             </div>
+
             <div class="auth-field">
-              <label for="start_time">Start time</label>
-              <input type="time" id="start_time" name="start_time" required value="12:00" />
+              <label for="run_number" id="run_number_label">Run number</label>
+              <input type="number" id="run_number" name="run_number" min="1" required />
             </div>
-          </div>
 
-          <div class="auth-field">
-            <label for="location_summary">Where (short)</label>
-            <input type="text" id="location_summary" name="location_summary" required placeholder="Sheffield centre — TBC" />
-            <div class="profile-hint">Shows on the homepage event card. Keep it short.</div>
-          </div>
-
-          <div class="auth-field">
-            <label for="location_full">Where it starts (full address)</label>
-            <input type="text" id="location_full" name="location_full" placeholder="e.g. The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG" />
-            <div class="profile-hint">Optional. Add the exact start point once it's known.</div>
-          </div>
-
-          <div class="auth-field">
-            <label for="on_on_pub">On-on pub (where it ends)</label>
-            <input type="text" id="on_on_pub" name="on_on_pub" placeholder="The Plough, Low Bradfield" />
-            <div class="profile-hint">Optional. The pub everyone reconvenes at after the trail.</div>
-          </div>
-
-          <!-- Hare selector slot — populated by chunk 4 -->
-          <div class="auth-field" id="hare-selector-slot">
-            <label>Hares (members)</label>
-            <div id="hare-multiselect-host"></div>
-            <div class="profile-hint">Pick zero or more members. They'll appear as hares on the event page.</div>
-          </div>
-
-          <div class="auth-field">
-            <label for="additional_hares_text">Hares (other / visitors)</label>
-            <input type="text" id="additional_hares_text" name="additional_hares_text" placeholder="e.g. Manchester H3 visiting" />
-            <div class="profile-hint">Free text for hares from other clubs who don't have a Steel City profile.</div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="auth-field">
-              <label for="pace">Pace</label>
-              <input type="text" id="pace" name="pace" value="Walk or run" required />
+              <label for="title">Title</label>
+              <input type="text" id="title" name="title" required placeholder="e.g. October Hash" />
             </div>
-            <div class="auth-field">
-              <label for="amount_per_head">Amount per head (£)</label>
-              <input type="number" id="amount_per_head" name="amount_per_head" step="0.01" min="0" value="5.00" required />
-            </div>
-          </div>
 
-          <div class="auth-field">
-            <label for="status">Status</label>
-            <select id="status" name="status" required>
-              <option value="hares_wanted">Hares wanted</option>
-              <option value="open">Ready to On-On</option>
-              <option value="completed">Completed</option>
-              <option value="closed">Cancelled</option>
-            </select>
-            <div class="profile-hint">Hares wanted → Ready to On-On (hares found) → Completed (after the day). Cancelled if it's off.</div>
-          </div>
-
-          <!-- Past-event fields, shown only when status = completed -->
-          <div id="past-fields" hidden>
-            <h3 style="margin-top: 24px;">After the event</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <div class="auth-field">
-                <label for="distance_miles">Distance (miles)</label>
-                <input type="number" id="distance_miles" name="distance_miles" step="0.1" min="0" />
+                <label for="event_date">Date</label>
+                <input type="date" id="event_date" name="event_date" required />
               </div>
               <div class="auth-field">
-                <label for="charity_raised">Charity raised (£)</label>
-                <input type="number" id="charity_raised" name="charity_raised" step="0.01" min="0" disabled />
-                <div class="profile-hint">Auto-calculated from attendance payments. Take attendance to populate it.</div>
+                <label for="start_time">Start time</label>
+                <input type="time" id="start_time" name="start_time" required value="12:00" />
               </div>
             </div>
+
             <div class="auth-field">
-              <label for="description">Description (shown on upcoming card)</label>
-              <input type="text" id="description" name="description" placeholder="Short blurb shown on the event page route box" />
+              <label for="location_summary">Where (short)</label>
+              <input type="text" id="location_summary" name="location_summary" required placeholder="Sheffield centre — TBC" />
+              <div class="profile-hint">Shows on the homepage event card. Keep it short.</div>
             </div>
+
             <div class="auth-field">
-              <label for="scribe_report_by">Scribe</label>
-              <input type="text" id="scribe_report_by" name="scribe_report_by" placeholder="Hash name of the scribe (e.g. Smutley)" />
+              <label for="location_full">Where it starts (full address)</label>
+              <input type="text" id="location_full" name="location_full" placeholder="e.g. The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG" />
+              <div class="profile-hint">Optional. The start point.</div>
             </div>
+
             <div class="auth-field">
-              <label for="scribe_report">Scribe report</label>
-              <textarea id="scribe_report" name="scribe_report" rows="10" placeholder="Plain text. Separate paragraphs with a blank line. Rich editor comes in Phase 4."></textarea>
+              <label for="pace">Pace</label>
+              <input type="text" id="pace" name="pace" value="Walk or run" required placeholder="Walk or run, two pints an hour…" />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="auth-field">
+                <label for="amount_per_head">Amount per head (£)</label>
+                <input type="number" id="amount_per_head" name="amount_per_head" step="0.01" min="0" value="3.50" required />
+                <div class="profile-hint">The basic sub (covers expenses, down-downs, a drink for newcomers).</div>
+              </div>
+              <div class="profile-toggle" style="align-self: start; margin-top: 26px;">
+                <label class="label" for="is_charity_event">
+                  Charity event?
+                  <span class="hint">Tick if you're collecting a donation for St Luke's on top.</span>
+                </label>
+                <input type="checkbox" id="is_charity_event" name="is_charity_event" />
+              </div>
+            </div>
+
+            <div class="auth-field" id="charity-amount-wrap" hidden>
+              <label for="charity_amount_per_head">Charity donation per head (£)</label>
+              <input type="number" id="charity_amount_per_head" name="charity_amount_per_head" step="0.01" min="0" value="5.00" />
+              <div class="profile-hint">On top of the sub. e.g. £3.50 sub + £5 donation = £8.50 a head.</div>
+            </div>
+
+            <div class="auth-field">
+              <label for="description">Description / blurb</label>
+              <input type="text" id="description" name="description" placeholder='e.g. "Sheffield month — Loxley pub crawl."' />
+              <div class="profile-hint">Shows on the public event page. Optional.</div>
+            </div>
+
+            <div class="profile-actions" style="margin-top: 22px;">
+              <button class="btn orange" type="submit" id="save-details-btn">▸ Save &amp; invite</button>
+              <a class="btn muted" href="/admin-events.html">↶ Cancel</a>
+            </div>
+            <div class="auth-msg" id="form-msg"></div>
+          </form>
+        </section>
+
+        <!-- ============================== TAB 2: WHO'S CUMMING ============================== -->
+        <section class="tab-panel" data-panel="whos" hidden>
+
+          <div class="admin-subsection">
+            <h3 class="admin-section-heading">Hares</h3>
+            <div class="auth-field" id="hare-selector-slot">
+              <label>Hares (members)</label>
+              <div id="hare-multiselect-host"></div>
+              <div class="profile-hint">Type to search. Anyone added here is automatically marked On-On.</div>
+            </div>
+            <div class="hare-status-row">
+              <span class="hare-status-label">Hare status:</span>
+              <button class="btn cream" type="button" id="hare-toggle-btn">▸ Mark "Enough hares"</button>
             </div>
           </div>
 
-          <!-- Description for upcoming events too -->
-          <div class="auth-field" id="description-upcoming-wrap">
-            <label for="description_upcoming">Description / blurb</label>
-            <input type="text" id="description_upcoming" name="description_upcoming" placeholder="Optional blurb shown on the event page route box" />
-            <div class="profile-hint">Shows on the public event page. Use it to hint at what's planned, e.g. "Sheffield month — Loxley pub crawl." Optional.</div>
-          </div>
-
-          <div class="profile-actions" style="margin-top: 22px;">
-            <button class="btn orange" type="submit" id="submit-btn">▸ Save</button>
-            <a class="btn muted" href="/admin-events.html">↶ Cancel</a>
-          </div>
-          <div class="auth-msg" id="form-msg"></div>
-        </form>
-          </div>
-        </details>
-
-        <!-- RSVPs & WhatsApp (collapsible) — who said they'd come -->
-        <details class="admin-collapse" id="rsvps-collapse" hidden>
-          <summary>
-            <span>RSVPs &amp; WhatsApp</span>
-            <span class="admin-collapse-summary-note" id="rsvps-summary-note"></span>
-          </summary>
-          <div class="admin-collapse-body">
-            <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 16px;">—</div>
-            <div class="admin-quick-actions" style="margin-bottom: 14px;">
-              <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phones for WhatsApp</button>
-              <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
-            </div>
-            <table class="admin-table" id="attendees-table">
+          <div class="admin-subsection" style="margin-top: 26px;">
+            <h3 class="admin-section-heading">Who's planning to come</h3>
+            <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 14px;">No RSVPs yet.</div>
+            <table class="admin-table" id="attendees-table" hidden>
               <thead>
                 <tr>
                   <th>Hash name</th><th>Real name</th><th>Phone</th>
@@ -210,26 +189,41 @@
               <tbody id="attendees-tbody"></tbody>
             </table>
           </div>
-        </details>
 
-        <!-- Attendance & money (collapsible) — shown once the event is Completed -->
-        <details class="admin-collapse" id="attendance-collapse" hidden>
-          <summary>
-            <span>Attendance &amp; money</span>
-            <span class="admin-collapse-summary-note" id="attendance-summary-note"></span>
-          </summary>
-          <div class="admin-collapse-body">
+          <div class="profile-actions" style="margin-top: 26px;">
+            <button class="btn orange" type="button" id="save-onon-btn">▸ Save &amp; On-On</button>
+          </div>
+        </section>
 
-            <div class="att-finalised-banner" id="finalised-banner" hidden></div>
+        <!-- ============================== TAB 3: READY TO ON-ON ============================== -->
+        <section class="tab-panel" data-panel="ready" hidden>
 
+          <div class="admin-subsection">
+            <h3 class="admin-section-heading">Spread the word</h3>
+            <div class="auth-field">
+              <label for="whatsapp_group_link">WhatsApp group invite link</label>
+              <input type="url" id="whatsapp_group_link" name="whatsapp_group_link" placeholder="https://chat.whatsapp.com/…" />
+              <div class="profile-hint">Make the group once in WhatsApp, tap the group → Invite via link → Copy, paste it here. On-on members get a "Join the WhatsApp group" button on the event page.</div>
+            </div>
+            <div class="admin-quick-actions" style="margin-bottom: 4px;">
+              <button class="btn cream" type="button" id="save-whatsapp-btn">▸ Save link</button>
+              <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phone numbers</button>
+              <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
+            </div>
+            <div class="profile-hint">WhatsApp can't add numbers from a paste — use the invite link above. Copy is handy for saving contacts.</div>
+          </div>
+
+          <div class="admin-subsection" style="margin-top: 26px;">
+            <h3 class="admin-section-heading">Attendance &amp; money</h3>
             <p class="profile-hint" style="margin-bottom: 16px;">
-              Tick everyone who actually turned up and whether they paid. Add walk-ups or plus-ones, remove no-shows, then finalise once it all balances.
+              Tick everyone who actually turned up and paid. Add walk-ups or plus-ones, remove no-shows.
             </p>
 
             <div class="att-headstrip">
               <div class="att-stat"><div class="lbl">Expected</div><div class="val" id="stat-expected">—</div></div>
               <div class="att-stat"><div class="lbl">On the roster</div><div class="val" id="stat-roster">0</div></div>
-              <div class="att-stat"><div class="lbl">Raised so far</div><div class="val">£<span id="stat-raised">0.00</span></div></div>
+              <div class="att-stat"><div class="lbl">Collected</div><div class="val">£<span id="stat-collected">0.00</span></div></div>
+              <div class="att-stat" id="stat-charity-card" hidden><div class="lbl">Charity</div><div class="val">£<span id="stat-charity">0.00</span></div></div>
             </div>
 
             <div class="att-list" id="roster-list"></div>
@@ -263,20 +257,77 @@
                 </div>
               </div>
             </div>
-
-            <div class="profile-actions" style="margin-top: 24px;">
-              <button class="btn orange" type="button" id="finalise-btn">▸ Finalise this hash</button>
-            </div>
           </div>
-        </details>
 
-        <!-- Danger zone — only shown in edit mode -->
-        <div class="danger-zone" id="danger-zone" hidden>
+          <div class="profile-actions" style="margin-top: 26px;">
+            <button class="btn orange" type="button" id="save-complete-btn">▸ Save &amp; complete</button>
+          </div>
+        </section>
+
+        <!-- ============================== TAB 4: AFTER THE EVENT ============================== -->
+        <section class="tab-panel" data-panel="after" hidden>
+          <div class="admin-subsection">
+            <h3 class="admin-section-heading">After the event</h3>
+            <p class="profile-hint" style="margin-bottom: 16px;">
+              The write-up. Optional — it doesn't hold anything else up. Marking it "written up" just flags it as done in the events list.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+              <div class="auth-field">
+                <label for="distance_miles">Distance (miles)</label>
+                <input type="number" id="distance_miles" name="distance_miles" step="0.1" min="0" />
+              </div>
+              <div class="auth-field">
+                <label>Money collected</label>
+                <input type="text" id="money-collected-display" disabled value="—" />
+                <div class="profile-hint">From the roster.</div>
+              </div>
+              <div class="auth-field">
+                <label>Charity collected</label>
+                <input type="text" id="charity-collected-display" disabled value="—" />
+                <div class="profile-hint">From the roster.</div>
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="scribe_report_by">Scribe</label>
+              <input type="text" id="scribe_report_by" name="scribe_report_by" placeholder="Hash name of the scribe (e.g. Smutley)" />
+            </div>
+            <div class="auth-field">
+              <label for="scribe_report">Scribe report</label>
+              <textarea id="scribe_report" name="scribe_report" rows="10" placeholder="Plain text. Separate paragraphs with a blank line."></textarea>
+            </div>
+
+            <div class="auth-field">
+              <label>Route &amp; photos</label>
+              <div class="upload-placeholder">▸ Route map &amp; photo uploads land here in a future update.</div>
+            </div>
+
+            <div class="profile-toggle" style="margin-top: 4px;">
+              <label class="label" for="written_up">
+                Mark as written up
+                <span class="hint">Flags it as done in the events list. Doesn't change the event status.</span>
+              </label>
+              <input type="checkbox" id="written_up" name="written_up" />
+            </div>
+
+            <div class="profile-actions" style="margin-top: 22px;">
+              <button class="btn orange" type="button" id="save-after-btn">▸ Save write-up</button>
+            </div>
+            <div class="auth-msg" id="after-msg"></div>
+          </div>
+        </section>
+
+        <!-- Danger zone (edit mode) -->
+        <div class="danger-zone" id="danger-zone" hidden style="margin-top: 30px;">
           <h4>▸ Danger zone</h4>
           <p style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin-bottom: 14px;">
-            Deleting a hash also wipes all its RSVPs. Cannot be undone.
+            Cancel marks the hash as off (it shows "Cancelled"). Delete wipes it and all its RSVPs — cannot be undone.
           </p>
-          <button class="btn" type="button" id="delete-event-btn">▸ Delete this hash</button>
+          <div class="admin-quick-actions">
+            <button class="btn cream" type="button" id="cancel-event-btn">▸ Cancel this event</button>
+            <button class="btn" type="button" id="delete-event-btn">▸ Delete this event</button>
+          </div>
         </div>
 
       </div>
@@ -285,29 +336,13 @@
   </section>
 </main>
 
-<!-- Finalise-confirm modal -->
-<div class="modal-overlay" id="finalise-modal" hidden>
-  <div class="modal">
-    <h3>Lock this hash in?</h3>
-    <p>
-      You'll still be able to edit rows afterwards, but the "in progress" state
-      ends, it counts towards the charity total + metrics, and it drops off the
-      dashboard's "still to wrap up" list.
-    </p>
-    <div class="modal-actions">
-      <button class="btn muted" type="button" id="finalise-cancel-btn">↶ Not yet</button>
-      <button class="btn orange" type="button" id="finalise-confirm-btn">▸ Finalise</button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete-confirm modal (chunk 5 wires it up) -->
+<!-- Delete-confirm modal -->
 <div class="modal-overlay" id="delete-modal" hidden>
   <div class="modal">
-    <h3>Delete this hash?</h3>
-    <p id="delete-modal-detail">All RSVPs for this event will be wiped too. Cannot be undone.</p>
+    <h3>Delete this event?</h3>
+    <p id="delete-modal-detail">All RSVPs and attendance for this event will be wiped too. Cannot be undone.</p>
     <p style="font-family: 'Nunito'; font-weight: 700;">Type <code>DELETE</code> to confirm:</p>
-    <input type="text" id="delete-confirm-input" class="auth-field input" style="background: var(--cream); border: 3px solid var(--ink); padding: 12px 14px; width: 100%; font-family: 'Nunito', sans-serif; font-weight: 700;" />
+    <input type="text" id="delete-confirm-input" style="background: var(--cream); border: 3px solid var(--ink); padding: 12px 14px; width: 100%; font-family: 'Nunito', sans-serif; font-weight: 700;" />
     <div class="modal-actions">
       <button class="btn muted" type="button" id="delete-cancel-btn">↶ Cancel</button>
       <button class="btn" type="button" id="delete-confirm-btn" style="background: var(--red); color: var(--cream); border-color: var(--cream);" disabled>▸ Delete</button>
@@ -329,123 +364,113 @@
 
   const $ = (s) => document.querySelector(s);
   const money = (n) => (Number(n) || 0).toFixed(2);
-
-  let harePicker = null;
-  let initialHareIds = [];  // hare set as saved in DB, for diffing
-  let currentAttendees = [];
-
-  // Attendance roster state (folded in from the old admin-attendance page)
-  let me = null;            // current admin's user id
-  let roster = [];          // event_attendances rows (via get_event_attendance_roster)
-  let allMembers = [];      // every profile (for the add-member dropdown)
-  let amountPerHead = 5;
   function escapeHtml(s) {
     return String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  const STATUS_LABEL = {
+    planning: 'In Planning', hares_wanted: 'Hares Needed', open: 'Open',
+    ready: 'Ready to On-On', completed: 'Completed', closed: 'Cancelled',
+  };
+  // Which tabs are reachable at each status
+  function tabsForStatus(s) {
+    if (s === 'planning') return ['details'];
+    if (s === 'ready' || s === 'completed') return ['details', 'whos', 'ready', 'after'];
+    return ['details', 'whos']; // hares_wanted, open, closed
+  }
+
   const params = new URLSearchParams(location.search);
   const idParam = params.get('id');
   const isNew = idParam === 'new';
   const isBlank = params.get('blank') === '1';
-  const eventId = !isNew ? parseInt(idParam, 10) : null;
+  let eventId = !isNew ? parseInt(idParam, 10) : null;
 
-  let originalEvent = null;  // for diffing on update if we want it later
+  let harePicker = null;
+  let initialHareIds = [];
+  let originalEvent = null;
+  let currentAttendees = [];
+  let me = null;
+  let roster = [];
+  let allMembers = [];
+  let amountPerHead = 3.5;
+  let charityPerHead = 0;
+  let isCharity = false;
 
-  function setMode(mode) {
-    if (mode === 'new-smart') {
-      $('#page-num').textContent  = '/ Admin · Schedule next hash';
-      $('#page-title').innerHTML  = 'Schedule <span class="or">next hash</span>';
-      $('#page-lede').textContent = 'Date and run number pre-filled for the next 3rd Saturday. Edit anything before saving.';
-    } else if (mode === 'new-blank') {
-      $('#page-num').textContent  = '/ Admin · New custom event';
-      $('#page-title').innerHTML  = 'Add a <span class="or">custom event</span>';
-      $('#page-lede').textContent = 'For anniversary specials, themed runs, anything outside the monthly cadence. Fill in what you know — leave the rest until later.';
-    } else if (mode === 'edit') {
-      $('#page-num').textContent  = '/ Admin · Edit event';
-      $('#page-title').innerHTML  = 'Edit <span class="or">event</span>';
-      $('#page-lede').textContent = 'Update the details. Audit log records every change.';
-      $('#danger-zone').hidden    = false;
-    }
+  function status() { return originalEvent?.status || 'planning'; }
+
+  // ---- Tabs -------------------------------------------------------------
+
+  function showTab(key) {
+    document.querySelectorAll('.event-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
+    document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== key; });
   }
+
+  function applyStatusUI() {
+    const s = status();
+    $('#status-chip').textContent = STATUS_LABEL[s] || s;
+    $('#status-chip').className = 'status-chip status-' + s;
+    $('#event-name-label').textContent = originalEvent?.title ? originalEvent.title : 'NEW EVENT';
+
+    const available = tabsForStatus(s);
+    document.querySelectorAll('.event-tab').forEach((t) => {
+      const ok = available.includes(t.dataset.tab);
+      t.disabled = !ok;
+      t.classList.toggle('locked', !ok);
+    });
+
+    // Tab 1 button label: invite (new/planning) vs save details
+    $('#save-details-btn').innerHTML = (isNew || s === 'planning') ? '▸ Save &amp; invite' : '▸ Save details';
+
+    // Hare toggle label reflects current status
+    $('#hare-toggle-btn').innerHTML = (s === 'open')
+      ? '↶ Back to "Hares needed"'
+      : '▸ Mark "Enough hares"';
+
+    $('#danger-zone').hidden = isNew;
+  }
+
+  function gotoCurrentTab() {
+    const s = status();
+    const map = { planning: 'details', hares_wanted: 'whos', open: 'whos', closed: 'whos', ready: 'ready', completed: 'ready' };
+    showTab(map[s] || 'details');
+  }
+
+  // ---- Event-type + charity field toggles -------------------------------
+
+  function applyEventTypeUI() {
+    const t = $('#event_type').value;
+    $('#run_number_label').textContent = t === 'meetup' ? 'Meet-up number' : 'Run number';
+  }
+  function applyCharityUI() {
+    const on = $('#is_charity_event').checked;
+    $('#charity-amount-wrap').hidden = !on;
+  }
+
+  // ---- Defaults / load --------------------------------------------------
 
   function showMsg(text, ok = false) {
-    const el = $('#form-msg');
-    el.textContent = text;
-    el.classList.toggle('ok', ok);
-    el.classList.add('show');
+    const el = $('#form-msg'); el.textContent = text; el.classList.toggle('ok', ok); el.classList.add('show');
   }
-  function hideMsg() {
-    const el = $('#form-msg');
-    el.textContent = '';
-    el.classList.remove('show', 'ok');
-  }
-
-  function applyStatusToggle() {
-    const status = $('#status').value;
-    $('#past-fields').hidden = status !== 'completed';
-    $('#description-upcoming-wrap').hidden = status === 'completed';
-    applyLockState();
-  }
-
-  // Lock the event-detail fields whenever the status is Completed. To edit,
-  // Smutley switches the status back to "Ready to On-On" (which re-enables them).
-  function applyLockState() {
-    const locked = $('#status').value === 'completed';
-    const collapse = document.getElementById('details-collapse');
-    if (!collapse) return;
-    const note = document.getElementById('details-lock-note');
-    if (note) note.hidden = !locked;
-    collapse.classList.toggle('is-locked', locked);
-    document.querySelectorAll('#event-form input, #event-form textarea, #event-form select')
-      .forEach((el) => {
-        if (el.id === 'status') return;            // keep the dropdown usable
-        if (el.id === 'charity_raised') return;    // always read-only anyway
-        el.disabled = locked;
-      });
-    const hareHost = document.getElementById('hare-multiselect-host');
-    if (hareHost) {
-      hareHost.style.pointerEvents = locked ? 'none' : '';
-      hareHost.style.opacity = locked ? '0.55' : '';
-    }
-  }
+  function hideMsg() { const el = $('#form-msg'); el.textContent = ''; el.classList.remove('show', 'ok'); }
 
   async function smartDefaults() {
-    // Run number — latest + 1
-    const { data: latest } = await supabase
-      .from('events')
-      .select('run_number')
-      .order('run_number', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: latest } = await supabase.from('events').select('run_number')
+      .order('run_number', { ascending: false }).limit(1).maybeSingle();
     $('#run_number').value = latest ? (latest.run_number + 1) : 1;
-
-    // Next 3rd Saturday via RPC
-    const { data: nextDate, error } = await supabase.rpc('get_next_third_saturday');
-    if (error) {
-      console.warn('[admin-event] get_next_third_saturday failed:', error);
-    } else if (nextDate) {
+    const { data: nextDate } = await supabase.rpc('get_next_third_saturday');
+    if (nextDate) {
       $('#event_date').value = nextDate;
-      // Default title to "{Month} Hash" of that date
       const d = new Date(nextDate + 'T12:00:00Z');
-      const monthName = d.toLocaleDateString('en-GB', { month: 'long' });
-      $('#title').value = `${monthName} Hash`;
+      $('#title').value = `${d.toLocaleDateString('en-GB', { month: 'long' })} Hash`;
     }
-
     $('#start_time').value = '12:00';
-    $('#status').value = 'hares_wanted';
-    $('#pace').value = 'Walk or run';
-    $('#amount_per_head').value = '5.00';
-    applyStatusToggle();
+    applyEventTypeUI(); applyCharityUI();
   }
-
   function blankDefaults() {
     $('#start_time').value = '12:00';
-    $('#status').value = 'open';
-    $('#pace').value = 'Walk or run';
-    $('#amount_per_head').value = '5.00';
-    applyStatusToggle();
+    applyEventTypeUI(); applyCharityUI();
   }
 
   async function loadForEdit(id) {
@@ -456,276 +481,266 @@
     if (evRes.error || !evRes.data) {
       $('#admin-content').innerHTML = `
         <div class="panel" style="padding: 30px;">
-          <h2 style="font-family: 'Bangers', sans-serif; font-size: 2rem;">Hash not found</h2>
+          <h2 style="font-family: 'Bangers', sans-serif; font-size: 2rem;">Event not found</h2>
           <p style="margin-top: 12px;"><a href="/admin-events.html" class="btn cream">↶ Back to events</a></p>
-        </div>
-      `;
+        </div>`;
       return;
     }
     const data = evRes.data;
+    originalEvent = data;
     initialHareIds = (hareRes.data || []).map((r) => r.user_id);
     if (harePicker) harePicker.setSelected(initialHareIds);
-    originalEvent = data;
 
+    $('#event_type').value = data.event_type || 'hash';
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
     $('#event_date').value = data.event_date;
     $('#start_time').value = data.start_time || '12:00';
     $('#location_summary').value = data.location_summary || '';
     $('#location_full').value = data.location_full || '';
-    $('#additional_hares_text').value = data.additional_hares_text || '';
     $('#pace').value = data.pace || 'Walk or run';
-    $('#amount_per_head').value = data.amount_per_head ?? '5.00';
-    $('#status').value = data.status || 'open';
+    $('#amount_per_head').value = data.amount_per_head ?? '3.50';
+    $('#is_charity_event').checked = !!data.is_charity_event;
+    $('#charity_amount_per_head').value = data.charity_amount_per_head ?? '5.00';
+    $('#description').value = data.description || '';
+    $('#whatsapp_group_link').value = data.whatsapp_group_link || '';
     $('#distance_miles').value = data.distance_miles ?? '';
-    $('#on_on_pub').value = data.on_on_pub || '';
     $('#scribe_report_by').value = data.scribe_report_by || '';
     $('#scribe_report').value = data.scribe_report || '';
-    $('#charity_raised').value = data.charity_raised ?? '';
-    $('#description_upcoming').value = data.description || '';
-    $('#description').value = data.description || '';  // mirrored
-    applyStatusToggle();
+    $('#written_up').checked = !!data.written_up;
+    applyEventTypeUI(); applyCharityUI();
+
     $('#crumb-title').textContent = `Run #${data.run_number}`;
     document.title = `Admin — Run #${data.run_number} — Steel City H3`;
 
-    await refreshAttendees(id);   // RSVPs (also feeds the attendance "expected" line)
-    await setupAttendance();      // attendance roster, shown when Completed
+    await refreshAttendees(id);
+    await setupAttendance();
+    applyStatusUI();
+    gotoCurrentTab();
   }
 
-  function gatherPayload() {
-    const status = $('#status').value;
-    const isCompleted = status === 'completed';
-    const payload = {
-      run_number:           parseInt($('#run_number').value, 10),
-      title:                $('#title').value.trim(),
-      event_date:           $('#event_date').value,
-      start_time:           $('#start_time').value || '12:00',
-      location_summary:     $('#location_summary').value.trim(),
-      location_full:        $('#location_full').value.trim() || null,
-      additional_hares_text: $('#additional_hares_text').value.trim() || null,
-      pace:                 $('#pace').value.trim() || 'Walk or run',
-      status,
-      amount_per_head:      parseFloat($('#amount_per_head').value) || 5.00,
-      description:          (isCompleted ? $('#description').value : $('#description_upcoming').value).trim() || null,
-      distance_miles:       isCompleted && $('#distance_miles').value !== '' ? parseFloat($('#distance_miles').value) : null,
-      on_on_pub:            $('#on_on_pub').value.trim() || null,
-      scribe_report_by:     isCompleted ? ($('#scribe_report_by').value.trim() || null) : null,
-      scribe_report:        isCompleted ? ($('#scribe_report').value.trim() || null) : null,
-      // charity_raised is computed by trigger from attendance payments — never written here
+  // ---- Payloads ---------------------------------------------------------
+
+  function detailsPayload() {
+    return {
+      event_type:       $('#event_type').value,
+      run_number:       parseInt($('#run_number').value, 10),
+      title:            $('#title').value.trim(),
+      event_date:       $('#event_date').value,
+      start_time:       $('#start_time').value || '12:00',
+      location_summary: $('#location_summary').value.trim(),
+      location_full:    $('#location_full').value.trim() || null,
+      pace:             $('#pace').value.trim() || 'Walk or run',
+      amount_per_head:  parseFloat($('#amount_per_head').value) || 0,
+      is_charity_event: $('#is_charity_event').checked,
+      charity_amount_per_head: $('#is_charity_event').checked ? (parseFloat($('#charity_amount_per_head').value) || 0) : 0,
+      description:      $('#description').value.trim() || null,
     };
-    // Reverting out of Completed un-finalises it (re-appears on the worklist)
-    if (status !== 'completed') payload.attendance_finalised_at = null;
-    return payload;
   }
-
-  function validatePayload(p) {
-    if (!p.run_number || p.run_number < 1) return 'Run number must be 1 or greater.';
+  function validateDetails(p) {
+    if (!p.run_number || p.run_number < 1) return 'Number must be 1 or greater.';
     if (!p.title) return 'Title is required.';
     if (!p.event_date) return 'Date is required.';
     if (!p.location_summary) return 'Location summary is required.';
     return null;
   }
 
-  $('#status').addEventListener('change', applyStatusToggle);
+  // ---- Save handlers ----------------------------------------------------
 
-  $('#event-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function saveDetails() {
     hideMsg();
-    const payload = gatherPayload();
-    const errMsg = validatePayload(payload);
-    if (errMsg) { showMsg(errMsg); return; }
+    const payload = detailsPayload();
+    const err = validateDetails(payload);
+    if (err) { showMsg(err); return; }
 
-    // Status auto-flip suggestion based on hare set vs current status
-    const selectedHares = harePicker ? harePicker.getSelected() : [];
-    const hasAdditionalText = !!payload.additional_hares_text;
-    const hasAnyHare = selectedHares.length > 0 || hasAdditionalText;
-    if (payload.status === 'hares_wanted' && hasAnyHare) {
-      const ok = window.confirm("Hares are sorted now — flip status to 'Ready to On-On'?");
-      if (ok) {
-        payload.status = 'open';
-        $('#status').value = 'open';
-      }
-    } else if (payload.status === 'open' && !hasAnyHare) {
-      const ok = window.confirm("No hares set — flip status to 'Hares wanted'?");
-      if (ok) {
-        payload.status = 'hares_wanted';
-        $('#status').value = 'hares_wanted';
-      }
-    }
-
-    const btn = $('#submit-btn');
-    btn.disabled = true;
-    const originalLabel = btn.textContent;
-    btn.textContent = '▸ Saving…';
+    const btn = $('#save-details-btn');
+    const orig = btn.innerHTML;
+    btn.disabled = true; btn.textContent = '▸ Saving…';
 
     let res;
     if (isNew) {
-      res = await supabase.from('events').insert(payload).select().single();
+      res = await supabase.from('events').insert({ ...payload, status: 'hares_wanted' }).select().single();
     } else {
-      res = await supabase.from('events').update(payload).eq('id', eventId).select().single();
+      const advance = status() === 'planning';
+      const body = advance ? { ...payload, status: 'hares_wanted' } : payload;
+      res = await supabase.from('events').update(body).eq('id', eventId).select().single();
     }
+    btn.disabled = false; btn.innerHTML = orig;
 
-    if (res.error) {
-      btn.disabled = false;
-      btn.textContent = originalLabel;
-      console.error('[admin-event] save failed:', res.error);
-      showMsg(res.error.message || "Couldn't save. Try again.");
-      return;
-    }
+    if (res.error) { console.error('[admin-event] save failed:', res.error); showMsg(res.error.message || "Couldn't save."); return; }
 
-    const savedEventId = res.data.id;
-
-    // Sync structured hares: diff initialHareIds vs selectedHares, do
-    // adds/removes against event_hares. New events come in with empty
-    // initialHareIds so this turns into pure inserts.
-    if (harePicker) {
-      const current = new Set(selectedHares);
-      const before = new Set(initialHareIds);
-      const toAdd = [...current].filter((id) => !before.has(id));
-      const toRemove = [...before].filter((id) => !current.has(id));
-
-      const ops = [];
-      if (toAdd.length > 0) {
-        ops.push(
-          supabase.from('event_hares').insert(
-            toAdd.map((uid) => ({ event_id: savedEventId, user_id: uid, volunteered: false })),
-          ),
-        );
-      }
-      if (toRemove.length > 0) {
-        ops.push(
-          supabase.from('event_hares')
-            .delete()
-            .eq('event_id', savedEventId)
-            .in('user_id', toRemove),
-        );
-      }
-      if (ops.length > 0) {
-        const results = await Promise.all(ops);
-        for (const r of results) {
-          if (r.error) {
-            console.error('[admin-event] hare sync failed:', r.error);
-            btn.disabled = false;
-            btn.textContent = originalLabel;
-            showMsg('Saved event but couldn\'t sync hares: ' + r.error.message);
-            return;
-          }
-        }
-      }
-      initialHareIds = [...current];
-    }
-
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-
-    try {
-      sessionStorage.setItem('sch3-toast', isNew ? `Created Run #${res.data.run_number}.` : `Saved Run #${res.data.run_number}.`);
-    } catch {}
     if (isNew) {
+      try { sessionStorage.setItem('sch3-toast', `Created Run #${res.data.run_number}.`); } catch {}
       window.location.replace(`/admin-event.html?id=${res.data.id}`);
-    } else {
-      originalEvent = res.data;
-      applyStatusToggle();            // re-apply the lock for the saved status
+      return;
+    }
+    originalEvent = res.data;
+    applyStatusUI();
+    showToast('Saved.', { kind: 'ok' });
+    if (tabsForStatus(status()).includes('whos')) showTab('whos');
+  }
+
+  async function syncHares() {
+    if (!harePicker) return true;
+    const selected = harePicker.getSelected();
+    const before = new Set(initialHareIds);
+    const current = new Set(selected);
+    const toAdd = [...current].filter((id) => !before.has(id));
+    const toRemove = [...before].filter((id) => !current.has(id));
+    const ops = [];
+    if (toAdd.length) ops.push(supabase.from('event_hares').insert(toAdd.map((uid) => ({ event_id: eventId, user_id: uid, volunteered: false }))));
+    if (toRemove.length) ops.push(supabase.from('event_hares').delete().eq('event_id', eventId).in('user_id', toRemove));
+    for (const r of await Promise.all(ops)) {
+      if (r.error) { console.error('[admin-event] hare sync failed:', r.error); showToast('Saved, but hare sync failed: ' + r.error.message, { kind: 'error' }); return false; }
+    }
+    initialHareIds = [...current];
+    return true;
+  }
+
+  async function setEventStatus(newStatus, extra = {}) {
+    const { data, error } = await supabase.from('events').update({ status: newStatus, ...extra }).eq('id', eventId).select().single();
+    if (error) { showToast("Couldn't update status — try again.", { kind: 'error' }); console.error('[admin-event] status update failed:', error); return false; }
+    originalEvent = data;
+    return true;
+  }
+
+  async function toggleHareStatus() {
+    if (!(await syncHares())) return;
+    const next = status() === 'open' ? 'hares_wanted' : 'open';
+    if (await setEventStatus(next)) { applyStatusUI(); showToast(next === 'open' ? 'Hares sorted — marked Open.' : 'Back to hares needed.', { kind: 'ok' }); }
+  }
+
+  async function saveOnOn() {
+    const btn = $('#save-onon-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Saving…';
+    const ok = await syncHares();
+    if (ok && await setEventStatus('ready')) {
+      applyStatusUI();
       await refreshAttendees(eventId);
-      await setupAttendance();        // reveal attendance if now Completed
-      showToast('Saved.', { kind: 'ok' });
+      await setupAttendance();
+      showToast("Locked in — ready to on-on!", { kind: 'ok' });
+      showTab('ready');
     }
-  });
+    btn.disabled = false; btn.textContent = o;
+  }
 
-  // Delete modal wiring (chunk 5 functional)
-  $('#delete-event-btn').addEventListener('click', () => {
-    $('#delete-confirm-input').value = '';
-    $('#delete-confirm-btn').disabled = true;
-    $('#delete-modal').hidden = false;
-    setTimeout(() => $('#delete-confirm-input').focus(), 50);
-  });
-  $('#delete-cancel-btn').addEventListener('click', () => {
-    $('#delete-modal').hidden = true;
-  });
-  $('#delete-confirm-input').addEventListener('input', (e) => {
-    $('#delete-confirm-btn').disabled = e.target.value.trim() !== 'DELETE';
-  });
-  $('#delete-confirm-btn').addEventListener('click', async () => {
-    if (!eventId) return;
-    const btn = $('#delete-confirm-btn');
-    btn.disabled = true;
-    btn.textContent = '▸ Deleting…';
-    const { error } = await supabase.from('events').delete().eq('id', eventId);
-    if (error) {
-      console.error('[admin-event] delete failed:', error);
-      btn.textContent = '▸ Delete';
-      btn.disabled = false;
-      showToast(error.message || "Couldn't delete.", { kind: 'error' });
-      return;
+  async function saveComplete() {
+    const btn = $('#save-complete-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Completing…';
+    // Completing also finalises (locks in the charity total, drops it off the worklist)
+    const ok = await setEventStatus('completed', { attendance_finalised_at: new Date().toISOString() });
+    btn.disabled = false; btn.textContent = o;
+    if (ok) { applyStatusUI(); renderAfterTotals(); showToast("Completed. On-on!", { kind: 'ok' }); showTab('after'); }
+  }
+
+  async function saveAfter() {
+    const btn = $('#save-after-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Saving…';
+    const body = {
+      distance_miles: $('#distance_miles').value !== '' ? parseFloat($('#distance_miles').value) : null,
+      scribe_report_by: $('#scribe_report_by').value.trim() || null,
+      scribe_report: $('#scribe_report').value.trim() || null,
+      written_up: $('#written_up').checked,
+    };
+    const { data, error } = await supabase.from('events').update(body).eq('id', eventId).select().single();
+    btn.disabled = false; btn.textContent = o;
+    if (error) { $('#after-msg').textContent = error.message || "Couldn't save."; $('#after-msg').classList.add('show'); return; }
+    originalEvent = data;
+    showToast('Write-up saved.', { kind: 'ok' });
+  }
+
+  async function saveWhatsapp() {
+    const link = $('#whatsapp_group_link').value.trim() || null;
+    const { data, error } = await supabase.from('events').update({ whatsapp_group_link: link }).eq('id', eventId).select().single();
+    if (error) { showToast("Couldn't save the link.", { kind: 'error' }); return; }
+    originalEvent = data;
+    showToast('WhatsApp link saved.', { kind: 'ok' });
+  }
+
+  // ---- RSVPs (who's planning to come) -----------------------------------
+
+  async function refreshAttendees(id) {
+    const { data, error } = await supabase.from('rsvps')
+      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone)')
+      .eq('event_id', id);
+    if (error) { console.warn('[admin-event] rsvp fetch failed:', error); return; }
+    currentAttendees = (data || []).filter((r) => r.profile);
+    const table = $('#attendees-table');
+    if (currentAttendees.length === 0) { table.hidden = true; $('#attendees-summary').textContent = 'No RSVPs yet.'; return; }
+    table.hidden = false;
+    const order = { on_on: 0, maybe: 1, not_this_time: 2 };
+    currentAttendees.sort((a, b) => {
+      const c = (order[a.status] ?? 9) - (order[b.status] ?? 9);
+      if (c !== 0) return c;
+      return (a.profile.hash_name || a.profile.real_name || '').localeCompare(b.profile.hash_name || b.profile.real_name || '');
+    });
+    let onOnTotal = 0, maybeTotal = 0;
+    $('#attendees-tbody').innerHTML = currentAttendees.map((r) => {
+      const p = r.profile, guests = r.guests_count || 0, total = 1 + guests;
+      if (r.status === 'on_on') onOnTotal += total;
+      if (r.status === 'maybe') maybeTotal += total;
+      return `<tr>
+        <td data-label="Hash name">${escapeHtml(p.hash_name || '—')}</td>
+        <td data-label="Real name">${escapeHtml(p.real_name || '—')}</td>
+        <td data-label="Phone">${escapeHtml(p.phone || '—')}</td>
+        <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+        <td data-label="Guests">${guests}</td>
+        <td data-label="Total bodies">${total}</td>
+      </tr>`;
+    }).join('');
+    $('#attendees-summary').innerHTML = `Expecting <b>${onOnTotal}</b> on-on, <b>${maybeTotal}</b> maybe.`;
+  }
+
+  function copyPhonesForWhatsApp() {
+    const onOn = currentAttendees.filter((r) => r.status === 'on_on' && r.profile.phone);
+    if (onOn.length === 0) { showToast('No on-on members with phone numbers.', { kind: 'error' }); return; }
+    const formatted = [];
+    for (const r of onOn) {
+      const parsed = parsePhoneNumberFromString(r.profile.phone, 'GB');
+      formatted.push(parsed && parsed.isValid() ? parsed.formatInternational() : r.profile.phone);
     }
-    try { sessionStorage.setItem('sch3-toast', `Deleted Run #${originalEvent?.run_number ?? eventId}.`); } catch {}
-    window.location.replace('/admin-events.html');
-  });
+    navigator.clipboard.writeText(formatted.join('\n')).then(
+      () => showToast(`Copied ${formatted.length} number${formatted.length === 1 ? '' : 's'} (one per line).`, { kind: 'ok' }),
+      () => showToast("Couldn't copy — your browser blocked it.", { kind: 'error' }),
+    );
+  }
 
-  // ===========================================================================
-  // Attendance roster (admin) — folded in from the old attendance page
-  // ===========================================================================
+  function csvEscape(v) { if (v == null) return ''; const s = String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
+  function exportCsv() {
+    if (currentAttendees.length === 0) return;
+    const header = ['Hash name', 'Real name', 'Phone', 'Status', 'Guests', 'Total bodies'];
+    const rows = currentAttendees.map((r) => {
+      const p = r.profile, total = 1 + (r.guests_count || 0);
+      return [p.hash_name || '', p.real_name || '', p.phone || '', r.status, r.guests_count || 0, total].map(csvEscape).join(',');
+    });
+    const blob = new Blob([[header.join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `steel-city-h3-run-${originalEvent?.run_number ?? eventId}-rsvps.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
 
-  // Reveals the Attendance section when the event is Completed, auto-populates
-  // the roster from on-on RSVPs (idempotent server-side), and loads it.
+  // ---- Attendance roster ------------------------------------------------
+
   async function setupAttendance() {
-    const collapse = document.getElementById('attendance-collapse');
-    const detailsCollapse = document.getElementById('details-collapse');
-    const isCompleted = originalEvent?.status === 'completed';
-
-    if (!isCompleted || !eventId) {
-      collapse.hidden = true;
-      detailsCollapse.open = true;
-      return;
-    }
-
-    // Completed → attendance becomes the focus
-    collapse.hidden = false;
-    collapse.open = true;
-    detailsCollapse.open = false;
-    document.getElementById('rsvps-collapse').open = false;
-
+    if (!eventId || !['ready', 'completed'].includes(status())) return;
     if (!me) { const s = await getSession(); me = s?.user?.id || null; }
-    amountPerHead = Number(originalEvent.amount_per_head) || 5;
+    amountPerHead = Number(originalEvent.amount_per_head) || 0;
+    isCharity = !!originalEvent.is_charity_event;
+    charityPerHead = isCharity ? (Number(originalEvent.charity_amount_per_head) || 0) : 0;
+    $('#stat-charity-card').hidden = !isCharity;
 
     if (allMembers.length === 0) {
-      const { data: mem } = await supabase
-        .from('profiles').select('id, hash_name, real_name')
+      const { data: mem } = await supabase.from('profiles').select('id, hash_name, real_name')
         .order('hash_name', { ascending: true, nullsFirst: false });
       allMembers = mem || [];
     }
 
-    // "Expected" line from RSVPs (currentAttendees loaded by refreshAttendees)
-    const onOn  = currentAttendees.filter((r) => r.status === 'on_on').length;
+    const onOn = currentAttendees.filter((r) => r.status === 'on_on').length;
     const maybe = currentAttendees.filter((r) => r.status === 'maybe').length;
-    const guests = currentAttendees.filter((r) => r.status === 'on_on')
-      .reduce((s, r) => s + (r.guests_count || 0), 0);
-    $('#stat-expected').innerHTML =
-      `${onOn} on-on<span style="font-size:0.85rem;color:var(--ink-3);"> · ${maybe} maybe · +${guests} guests</span>`;
+    const guests = currentAttendees.filter((r) => r.status === 'on_on').reduce((s, r) => s + (r.guests_count || 0), 0);
+    $('#stat-expected').innerHTML = `${onOn} on-on<span style="font-size:0.85rem;color:var(--ink-3);"> · ${maybe} maybe · +${guests} guests</span>`;
 
     const { error: popErr } = await supabase.rpc('populate_attendance_from_rsvps', { p_event_id: eventId });
     if (popErr) console.warn('[admin-event] auto-populate skipped:', popErr);
-
     await reloadRoster();
-    renderFinalisedState();
-  }
-
-  function renderFinalisedState() {
-    const finalised = !!originalEvent?.attendance_finalised_at;
-    const banner = $('#finalised-banner');
-    const note = $('#attendance-summary-note');
-    if (finalised) {
-      const d = new Date(originalEvent.attendance_finalised_at);
-      const when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-      banner.hidden = false;
-      banner.textContent = `Finalised on ${when}. Edits are still possible, but it's off the dashboard worklist.`;
-      $('#finalise-btn').hidden = true;
-      note.textContent = 'Finalised';
-    } else {
-      banner.hidden = true;
-      $('#finalise-btn').hidden = false;
-      note.textContent = 'In progress';
-    }
   }
 
   function rosterSubtext(row) {
@@ -742,52 +757,59 @@
 
   function renderRoster() {
     const list = $('#roster-list');
-    if (roster.length === 0) {
-      list.innerHTML = '';
-      $('#roster-empty').hidden = false;
-    } else {
+    if (roster.length === 0) { list.innerHTML = ''; $('#roster-empty').hidden = false; }
+    else {
       $('#roster-empty').hidden = true;
-      list.innerHTML = roster.map((row) => `
+      list.innerHTML = roster.map((row) => {
+        const charityField = isCharity
+          ? `<span class="att-amount-wrap" title="Charity portion">♥£<input class="att-charity" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.charity_amount)}" data-id="${row.id}" aria-label="Charity amount" /></span>`
+          : '';
+        return `
         <div class="att-row ${row.paid ? 'is-paid' : ''}" data-id="${row.id}">
           <div class="att-main">
             <div class="att-name">${escapeHtml(row.display_name)}</div>
             <div class="att-sub">${escapeHtml(rosterSubtext(row))}</div>
           </div>
           <div class="att-controls">
-            <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">
-              ${row.paid ? '✓ Paid' : '✗ Unpaid'}
-            </button>
-            <span class="att-amount-wrap">£<input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" /></span>
+            <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">${row.paid ? '✓ Paid' : '✗ Unpaid'}</button>
+            <span class="att-amount-wrap" title="Total paid">£<input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" /></span>
+            ${charityField}
             <button class="att-remove" type="button" title="Remove from roster" data-id="${row.id}">✕</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
     $('#stat-roster').textContent = roster.length;
-    recomputeRaised();
+    recomputeTotals();
     refreshAddControls();
   }
 
-  function recomputeRaised() {
-    const total = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
-    $('#stat-raised').textContent = money(total);
-    // Keep the form's read-only "Charity raised" field in step with the roster
-    // (the DB trigger computes the same sum). Don't zero a legacy/manual total
-    // when the roster simply hasn't been reconstructed yet.
-    if (roster.length > 0) $('#charity_raised').value = money(total);
+  function recomputeTotals() {
+    const collected = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
+    const charity = roster.reduce((s, r) => s + (r.paid ? Number(r.charity_amount) || 0 : 0), 0);
+    $('#stat-collected').textContent = money(collected);
+    $('#stat-charity').textContent = money(charity);
+    renderAfterTotals(collected, charity);
+  }
+
+  function renderAfterTotals(collected, charity) {
+    if (collected === undefined) {
+      collected = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
+      charity = roster.reduce((s, r) => s + (r.paid ? Number(r.charity_amount) || 0 : 0), 0);
+    }
+    $('#money-collected-display').value = '£' + money(collected);
+    $('#charity-collected-display').value = '£' + money(charity);
   }
 
   function refreshAddControls() {
     const onRoster = new Set(roster.filter((r) => r.user_id).map((r) => r.user_id));
     const available = allMembers.filter((m) => !onRoster.has(m.id));
-    const memberName = (m) => (m.hash_name && m.hash_name.trim()) ? m.hash_name : (m.real_name || 'Unnamed member');
+    const nm = (m) => (m.hash_name && m.hash_name.trim()) ? m.hash_name : (m.real_name || 'Unnamed member');
     $('#add-member-select').innerHTML = available.length
-      ? available.map((m) => `<option value="${m.id}">${escapeHtml(memberName(m))}</option>`).join('')
+      ? available.map((m) => `<option value="${m.id}">${escapeHtml(nm(m))}</option>`).join('')
       : '<option value="">Everyone\'s on the roster</option>';
-    const hosts = roster.filter((r) => r.user_id);
-    $('#add-plusone-host').innerHTML =
-      '<option value="">Brought by… (optional)</option>' +
-      hosts.map((r) => `<option value="${r.user_id}">${escapeHtml(r.display_name)}</option>`).join('');
+    $('#add-plusone-host').innerHTML = '<option value="">Brought by… (optional)</option>' +
+      roster.filter((r) => r.user_id).map((r) => `<option value="${r.user_id}">${escapeHtml(r.display_name)}</option>`).join('');
   }
 
   async function reloadRoster() {
@@ -798,47 +820,33 @@
   }
 
   async function togglePaid(id) {
-    const row = roster.find((r) => r.id === id);
-    if (!row) return;
+    const row = roster.find((r) => r.id === id); if (!row) return;
     const btn = document.querySelector(`.att-paid-toggle[data-id="${id}"]`);
     const next = !row.paid;
     row.paid = next;
-    if (btn) {
-      btn.setAttribute('aria-pressed', next ? 'true' : 'false');
-      btn.textContent = next ? '✓ Paid' : '✗ Unpaid';
-      btn.closest('.att-row')?.classList.toggle('is-paid', next);
-    }
-    recomputeRaised();
-    const patch = next
-      ? { paid: true, marked_paid_by: me, marked_paid_at: new Date().toISOString() }
-      : { paid: false, marked_paid_by: null, marked_paid_at: null };
+    if (btn) { btn.setAttribute('aria-pressed', next ? 'true' : 'false'); btn.textContent = next ? '✓ Paid' : '✗ Unpaid'; btn.closest('.att-row')?.classList.toggle('is-paid', next); }
+    recomputeTotals();
+    const patch = next ? { paid: true, marked_paid_by: me, marked_paid_at: new Date().toISOString() } : { paid: false, marked_paid_by: null, marked_paid_at: null };
     const { error } = await supabase.from('event_attendances').update(patch).eq('id', id);
     if (error) {
       row.paid = !next;
-      if (btn) {
-        btn.setAttribute('aria-pressed', row.paid ? 'true' : 'false');
-        btn.textContent = row.paid ? '✓ Paid' : '✗ Unpaid';
-        btn.closest('.att-row')?.classList.toggle('is-paid', row.paid);
-      }
-      recomputeRaised();
-      showToast("Couldn't save that — try again.", { kind: 'error' });
+      if (btn) { btn.setAttribute('aria-pressed', row.paid ? 'true' : 'false'); btn.textContent = row.paid ? '✓ Paid' : '✗ Unpaid'; btn.closest('.att-row')?.classList.toggle('is-paid', row.paid); }
+      recomputeTotals(); showToast("Couldn't save that — try again.", { kind: 'error' });
     }
   }
 
-  async function saveAmount(id, value) {
-    const row = roster.find((r) => r.id === id);
-    if (!row) return;
+  async function saveField(id, field, value) {
+    const row = roster.find((r) => r.id === id); if (!row) return;
     const amount = Math.max(0, Number(value) || 0);
-    const prev = row.amount_paid;
-    row.amount_paid = amount;
-    recomputeRaised();
-    const { error } = await supabase.from('event_attendances').update({ amount_paid: amount }).eq('id', id);
-    if (error) { row.amount_paid = prev; recomputeRaised(); showToast("Couldn't save the amount.", { kind: 'error' }); }
+    const prev = row[field];
+    row[field] = amount;
+    recomputeTotals();
+    const { error } = await supabase.from('event_attendances').update({ [field]: amount }).eq('id', id);
+    if (error) { row[field] = prev; recomputeTotals(); showToast("Couldn't save the amount.", { kind: 'error' }); }
   }
 
   async function removeRosterRow(id) {
-    const row = roster.find((r) => r.id === id);
-    if (!row) return;
+    const row = roster.find((r) => r.id === id); if (!row) return;
     if (!window.confirm(`Remove ${row.display_name} from the roster?`)) return;
     const { error } = await supabase.from('event_attendances').delete().eq('id', id);
     if (error) { showToast("Couldn't remove that row.", { kind: 'error' }); return; }
@@ -846,236 +854,103 @@
   }
 
   async function addRosterMember() {
-    const uid = $('#add-member-select').value;
-    if (!uid) return;
-    const { error } = await supabase.from('event_attendances').insert({
-      event_id: eventId, user_id: uid, amount_paid: amountPerHead, paid: false,
-    });
+    const uid = $('#add-member-select').value; if (!uid) return;
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
     if (error) { showToast(error.message || "Couldn't add that member.", { kind: 'error' }); return; }
     await reloadRoster();
   }
-
   async function addRosterPlusOne() {
     const label = $('#add-plusone-label').value.trim() || 'Plus-one';
-    const host = $('#add-plusone-host').value || null;
-    const virgin = $('#add-plusone-virgin').checked;
-    const { error } = await supabase.from('event_attendances').insert({
-      event_id: eventId, user_id: null, attendee_label: label,
-      is_virgin_guest: virgin, host_user_id: host, amount_paid: amountPerHead, paid: false,
-    });
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: $('#add-plusone-virgin').checked, host_user_id: $('#add-plusone-host').value || null, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
     if (error) { showToast(error.message || "Couldn't add that plus-one.", { kind: 'error' }); return; }
-    $('#add-plusone-label').value = '';
-    $('#add-plusone-virgin').checked = true;
+    $('#add-plusone-label').value = ''; $('#add-plusone-virgin').checked = true;
     await reloadRoster();
   }
-
   async function addRosterWalkup() {
     const label = $('#add-walkup-label').value.trim();
     if (!label) { showToast('Give the walk-up a label first.', { kind: 'error' }); return; }
-    const { error } = await supabase.from('event_attendances').insert({
-      event_id: eventId, user_id: null, attendee_label: label,
-      is_virgin_guest: false, amount_paid: amountPerHead, paid: false,
-    });
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: false, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
     if (error) { showToast(error.message || "Couldn't add that walk-up.", { kind: 'error' }); return; }
     $('#add-walkup-label').value = '';
     await reloadRoster();
   }
 
-  async function finaliseEvent() {
-    const btn = $('#finalise-confirm-btn');
-    btn.disabled = true; btn.textContent = '▸ Finalising…';
-    const { data, error } = await supabase.from('events')
-      .update({ attendance_finalised_at: new Date().toISOString() })
-      .eq('id', eventId).select().single();
-    btn.disabled = false; btn.textContent = '▸ Finalise';
-    if (error) { showToast("Couldn't finalise — try again.", { kind: 'error' }); return; }
-    originalEvent = data;
-    $('#finalise-modal').hidden = true;
-    renderFinalisedState();
-    showToast("Finalised. It's off the worklist now. On-on.", { kind: 'ok' });
+  // ---- Cancel / delete --------------------------------------------------
+
+  async function cancelEvent() {
+    if (!window.confirm('Mark this event as Cancelled? It will show "Cancelled" publicly.')) return;
+    if (await setEventStatus('closed')) { applyStatusUI(); showToast('Event cancelled.', { kind: 'ok' }); }
   }
 
-  // ===========================================================================
-  // RSVPs section (admin)
-  // ===========================================================================
+  // ---- Wiring -----------------------------------------------------------
 
-  async function refreshAttendees(id) {
-    const { data, error } = await supabase
-      .from('rsvps')
-      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone)')
-      .eq('event_id', id);
+  $('#event-tabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.event-tab');
+    if (tab && !tab.disabled) showTab(tab.dataset.tab);
+  });
+  $('#event_type').addEventListener('change', applyEventTypeUI);
+  $('#is_charity_event').addEventListener('change', applyCharityUI);
+  $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
+  $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
+  $('#save-onon-btn').addEventListener('click', saveOnOn);
+  $('#save-complete-btn').addEventListener('click', saveComplete);
+  $('#save-after-btn').addEventListener('click', saveAfter);
+  $('#save-whatsapp-btn').addEventListener('click', saveWhatsapp);
+  $('#copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
+  $('#export-csv-btn').addEventListener('click', exportCsv);
+  $('#cancel-event-btn').addEventListener('click', cancelEvent);
 
-    if (error) {
-      console.warn('[admin-event] attendees fetch failed:', error);
-      return;
-    }
-
-    currentAttendees = (data || []).filter((r) => r.profile);
-    if (currentAttendees.length === 0) {
-      $('#rsvps-collapse').hidden = true;
-      return;
-    }
-
-    $('#rsvps-collapse').hidden = false;
-
-    // Sort: on_on first, then maybe, then not_this_time; within each, by hash_name
-    const order = { on_on: 0, maybe: 1, not_this_time: 2 };
-    currentAttendees.sort((a, b) => {
-      const cmp = (order[a.status] ?? 9) - (order[b.status] ?? 9);
-      if (cmp !== 0) return cmp;
-      const aName = a.profile.hash_name || a.profile.real_name || '';
-      const bName = b.profile.hash_name || b.profile.real_name || '';
-      return aName.localeCompare(bName);
-    });
-
-    let onOnTotal = 0, maybeTotal = 0;
-    const rows = currentAttendees.map((r) => {
-      const p = r.profile;
-      const guests = r.guests_count || 0;
-      const total = 1 + guests;
-      if (r.status === 'on_on') onOnTotal += total;
-      if (r.status === 'maybe') maybeTotal += total;
-      return `
-        <tr>
-          <td data-label="Hash name">${escapeHtml(p.hash_name || '—')}</td>
-          <td data-label="Real name">${escapeHtml(p.real_name || '—')}</td>
-          <td data-label="Phone">${escapeHtml(p.phone || '—')}</td>
-          <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
-          <td data-label="Guests">${guests}</td>
-          <td data-label="Total bodies">${total}</td>
-        </tr>
-      `;
-    }).join('');
-    $('#attendees-tbody').innerHTML = rows;
-
-    $('#attendees-summary').innerHTML =
-      `Total expected: <b>${onOnTotal}</b> confirmed (on-on), <b>${maybeTotal}</b> maybe`;
-    $('#rsvps-summary-note').textContent = `${onOnTotal} on-on`;
-  }
-
-  function copyPhonesForWhatsApp() {
-    const onOnAttendees = currentAttendees.filter((r) => r.status === 'on_on' && r.profile.phone);
-    if (onOnAttendees.length === 0) {
-      showToast("No on-on members with phone numbers to copy.", { kind: 'error' });
-      return;
-    }
-    const formatted = [];
-    let unparsed = 0;
-    let unparsedName = null;
-    for (const r of onOnAttendees) {
-      const raw = r.profile.phone;
-      const parsed = parsePhoneNumberFromString(raw, 'GB');
-      if (parsed && parsed.isValid()) {
-        formatted.push(parsed.formatInternational());
-      } else {
-        formatted.push(raw);
-        unparsed++;
-        if (!unparsedName) unparsedName = r.profile.hash_name || r.profile.real_name || 'a member';
-      }
-    }
-    const joined = formatted.join(', ');
-    navigator.clipboard.writeText(joined).then(() => {
-      let msg = `Copied ${formatted.length} number${formatted.length === 1 ? '' : 's'} to clipboard.`;
-      if (unparsed > 0) {
-        msg += ` ${unparsed} couldn't be parsed — check ${unparsedName}'s profile.`;
-      }
-      showToast(msg, { kind: unparsed > 0 ? 'error' : 'ok' });
-    }).catch((err) => {
-      console.error('[admin-event] clipboard write failed:', err);
-      showToast("Couldn't copy to clipboard — your browser blocked it.", { kind: 'error' });
-    });
-  }
-
-  function csvEscape(value) {
-    if (value == null) return '';
-    const s = String(value);
-    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-  }
-
-  function exportAttendeesCsv() {
-    if (currentAttendees.length === 0) return;
-    const header = ['Hash name', 'Real name', 'Phone', 'Status', 'Guests', 'Total bodies'];
-    const rows = currentAttendees.map((r) => {
-      const p = r.profile;
-      const total = 1 + (r.guests_count || 0);
-      return [
-        p.hash_name || '',
-        p.real_name || '',
-        p.phone || '',
-        r.status,
-        r.guests_count || 0,
-        total,
-      ].map(csvEscape).join(',');
-    });
-    const csv = [header.join(','), ...rows].join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `steel-city-h3-run-${originalEvent?.run_number ?? eventId}-attendees.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  async function initHarePicker() {
-    // Load all profiles — admin RLS lets us read every row including real names
-    const { data: members, error } = await supabase
-      .from('profiles')
-      .select('id, hash_name, real_name')
-      .order('hash_name', { ascending: true, nullsFirst: false });
-    if (error) {
-      console.warn('[admin-event] members load failed:', error);
-      return;
-    }
-    const host = document.getElementById('hare-multiselect-host');
-    harePicker = new HarePicker(host, members || []);
-  }
-
-  // Wire up attendee buttons (no-op until attendees load)
-  document.getElementById('copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
-  document.getElementById('export-csv-btn').addEventListener('click', exportAttendeesCsv);
-
-  // Attendance roster interactions (elements always in DOM; section just hidden)
   $('#roster-list').addEventListener('click', (e) => {
-    const toggle = e.target.closest('.att-paid-toggle');
-    if (toggle) { togglePaid(toggle.dataset.id); return; }
-    const remove = e.target.closest('.att-remove');
-    if (remove) { removeRosterRow(remove.dataset.id); return; }
+    const t = e.target.closest('.att-paid-toggle'); if (t) { togglePaid(t.dataset.id); return; }
+    const r = e.target.closest('.att-remove'); if (r) { removeRosterRow(r.dataset.id); return; }
   });
   $('#roster-list').addEventListener('change', (e) => {
-    const amount = e.target.closest('.att-amount');
-    if (amount) saveAmount(amount.dataset.id, amount.value);
+    const a = e.target.closest('.att-amount'); if (a) { saveField(a.dataset.id, 'amount_paid', a.value); return; }
+    const c = e.target.closest('.att-charity'); if (c) { saveField(c.dataset.id, 'charity_amount', c.value); return; }
   });
   $('#add-member-btn').addEventListener('click', addRosterMember);
   $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
   $('#add-walkup-btn').addEventListener('click', addRosterWalkup);
-  $('#finalise-btn').addEventListener('click', () => { $('#finalise-modal').hidden = false; });
-  $('#finalise-cancel-btn').addEventListener('click', () => { $('#finalise-modal').hidden = true; });
-  $('#finalise-confirm-btn').addEventListener('click', finaliseEvent);
+
+  // Delete modal
+  $('#delete-event-btn').addEventListener('click', () => { $('#delete-confirm-input').value = ''; $('#delete-confirm-btn').disabled = true; $('#delete-modal').hidden = false; setTimeout(() => $('#delete-confirm-input').focus(), 50); });
+  $('#delete-cancel-btn').addEventListener('click', () => { $('#delete-modal').hidden = true; });
+  $('#delete-confirm-input').addEventListener('input', (e) => { $('#delete-confirm-btn').disabled = e.target.value.trim() !== 'DELETE'; });
+  $('#delete-confirm-btn').addEventListener('click', async () => {
+    if (!eventId) return;
+    const btn = $('#delete-confirm-btn'); btn.disabled = true; btn.textContent = '▸ Deleting…';
+    const { error } = await supabase.from('events').delete().eq('id', eventId);
+    if (error) { btn.textContent = '▸ Delete'; btn.disabled = false; showToast(error.message || "Couldn't delete.", { kind: 'error' }); return; }
+    try { sessionStorage.setItem('sch3-toast', `Deleted Run #${originalEvent?.run_number ?? eventId}.`); } catch {}
+    window.location.replace('/admin-events.html');
+  });
+
+  // ---- Init -------------------------------------------------------------
+
+  async function initHarePicker() {
+    const { data: members } = await supabase.from('profiles').select('id, hash_name, real_name')
+      .order('hash_name', { ascending: true, nullsFirst: false });
+    harePicker = new HarePicker(document.getElementById('hare-multiselect-host'), members || []);
+  }
 
   (async () => {
     await requireAdmin();
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;
-
     await initHarePicker();
 
     if (isNew) {
-      setMode(isBlank ? 'new-blank' : 'new-smart');
+      $('#page-num').textContent = isBlank ? '/ Admin · New custom event' : '/ Admin · Schedule next hash';
       $('#crumb-title').textContent = 'New';
-      if (isBlank) blankDefaults();
-      else         await smartDefaults();
+      if (isBlank) blankDefaults(); else await smartDefaults();
+      applyStatusUI();        // planning → only tab 1
+      showTab('details');
     } else {
-      setMode('edit');
+      $('#page-title').innerHTML = 'Edit <span class="or">event</span>';
       await loadForEdit(eventId);
     }
   })().catch((err) => {
-    if (err?.message !== 'Not admin' && err?.message !== 'Not signed in') {
-      console.error('[admin-event] error:', err);
-    }
+    if (err?.message !== 'Not admin' && err?.message !== 'Not signed in') console.error('[admin-event] error:', err);
   });
 </script>
 
