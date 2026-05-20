@@ -395,7 +395,8 @@
     const locked = $('#status').value === 'completed';
     const collapse = document.getElementById('details-collapse');
     if (!collapse) return;
-    document.getElementById('details-lock-note').hidden = !locked;
+    const note = document.getElementById('details-lock-note');
+    if (note) note.hidden = !locked;
     collapse.classList.toggle('is-locked', locked);
     document.querySelectorAll('#event-form input, #event-form textarea, #event-form select')
       .forEach((el) => {
@@ -770,6 +771,10 @@
   function recomputeRaised() {
     const total = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
     $('#stat-raised').textContent = money(total);
+    // Keep the form's read-only "Charity raised" field in step with the roster
+    // (the DB trigger computes the same sum). Don't zero a legacy/manual total
+    // when the roster simply hasn't been reconstructed yet.
+    if (roster.length > 0) $('#charity_raised').value = money(total);
   }
 
   function refreshAddControls() {
