@@ -143,8 +143,8 @@
     <h3>Lock the roster for this hash?</h3>
     <p>
       You'll still be able to edit individual rows afterwards, but the
-      "in progress" state ends and this event starts counting towards the
-      charity total and the metrics.
+      "in progress" state ends, the hash is marked completed (so it shows in
+      Past Hashes), and it starts counting towards the charity total and metrics.
     </p>
     <div class="modal-actions">
       <button class="btn muted" type="button" id="finalise-cancel-btn">↶ Not yet</button>
@@ -384,8 +384,10 @@
     const btn = $('#finalise-confirm-btn');
     btn.disabled = true;
     btn.textContent = '▸ Finalising…';
+    // Finalising means the hash happened — mark it completed too so it shows
+    // in the public "Past Hashes" list and counts towards the lifetime total.
     const { data, error } = await supabase.from('events')
-      .update({ attendance_finalised_at: new Date().toISOString() })
+      .update({ attendance_finalised_at: new Date().toISOString(), status: 'completed' })
       .eq('id', eventId)
       .select()
       .single();
