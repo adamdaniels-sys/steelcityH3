@@ -621,6 +621,7 @@
     editingDraft = null;
     renderRsvpState();
     refreshAttendeeList(currentEvent, false);
+    refreshHarePanel(currentEvent, false);  // surface "offer to hare" once on-on
 
     // Fire-and-forget the confirmation email Edge Function. Don't await it
     // or surface its errors — the RSVP is already saved, and if SMTP is
@@ -672,6 +673,7 @@
     editingDraft = null;
     renderRsvpState();
     refreshAttendeeList(currentEvent, false);
+    refreshHarePanel(currentEvent, false);  // hide the hare offer now they're out
   }
 
   // ===========================================================================
@@ -820,6 +822,7 @@
 
   async function refreshHarePanel(ev, isPast) {
     const panel = $('#hare-panel');
+    panel.hidden = true;  // hidden by default; shown below when applicable
     if (isPast || ev.status === 'closed') return;
 
     const session = await getSession();
@@ -829,7 +832,7 @@
     const admin = await isAdmin();
     if (admin) return;
 
-    // Find if THIS user is already a volunteer hare for this event
+    // Already volunteered? Offer the withdrawal option.
     const { data: myHare } = await supabase
       .from('event_hares')
       .select('user_id, volunteered')
@@ -837,33 +840,37 @@
       .eq('user_id', session.user.id)
       .maybeSingle();
 
-    // Find if there are any hares at all
-    const { data: allHares } = await supabase
-      .from('event_hares')
-      .select('user_id')
-      .eq('event_id', ev.id);
-
-    const hareCount = (allHares || []).length;
-    const isAdditional = ev.additional_hares_text && ev.additional_hares_text.trim();
-
     if (myHare) {
-      // User has volunteered — show withdrawal option
       panel.hidden = false;
-      $('#hare-panel-headline').textContent = 'You\'re down to hare this one.';
-      $('#hare-panel-detail').textContent = 'Smutley\'ll be in touch nearer the date. Need to bow out? No drama.';
+      $('#hare-panel-headline').textContent = "You're down to hare this one.";
+      $('#hare-panel-detail').textContent = "Smutley'll be in touch nearer the date. Need to bow out? No drama.";
       $('#volunteer-btn').hidden = true;
       $('#withdraw-btn').hidden = false;
       return;
     }
 
-    // Show "I'll hare" only if event is hares_wanted AND no hares assigned yet
-    // (the brief says: if event already has hares, this UI hides)
-    if (ev.status === 'hares_wanted' && hareCount === 0 && !isAdditional) {
-      panel.hidden = false;
+    // The offer to hare appears once you've put yourself down as on-on —
+    // you're coming anyway, so why not lay the trail too?
+    if (currentRsvp?.status !== 'on_on') return;
+
+    // Don't nag once the trail's clearly covered (2+ hares, or 1 + visitors).
+    const { data: allHares } = await supabase
+      .from('event_hares')
+      .select('user_id')
+      .eq('event_id', ev.id);
+    const hareCount = (allHares || []).length;
+    const hasAdditional = ev.additional_hares_text && ev.additional_hares_text.trim();
+    if (hareCount >= 2 || (hareCount >= 1 && hasAdditional)) return;
+
+    panel.hidden = false;
+    $('#volunteer-btn').hidden = false;
+    $('#withdraw-btn').hidden = true;
+    if (ev.status === 'hares_wanted' && hareCount === 0 && !hasAdditional) {
       $('#hare-panel-headline').textContent = 'No hares yet for this one.';
-      $('#hare-panel-detail').textContent = 'Fancy laying the trail? Smutley\'ll talk you through it if it\'s your first time.';
-      $('#volunteer-btn').hidden = false;
-      $('#withdraw-btn').hidden = true;
+      $('#hare-panel-detail').textContent = "You're on-on — fancy laying the trail too? First time? Smutley'll talk you through it.";
+    } else {
+      $('#hare-panel-headline').textContent = 'Fancy haring this one too?';
+      $('#hare-panel-detail').textContent = "You're on-on already — want to help lay the trail? Smutley'll sort the details.";
     }
   }
 
