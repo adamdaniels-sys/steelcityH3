@@ -143,7 +143,8 @@
               </div>
               <div class="auth-field">
                 <label for="charity_raised">Charity raised (£)</label>
-                <input type="number" id="charity_raised" name="charity_raised" step="0.01" min="0" placeholder="Phase 5 will populate" />
+                <input type="number" id="charity_raised" name="charity_raised" step="0.01" min="0" disabled />
+                <div class="profile-hint">Auto-calculated from attendance payments. Take attendance to populate it.</div>
               </div>
             </div>
             <div class="auth-field">
@@ -178,9 +179,16 @@
           <div class="auth-msg" id="form-msg"></div>
         </form>
 
-        <!-- Attendees section — only shown in edit mode and when event has RSVPs -->
+        <!-- On-the-day attendance status + link (edit mode, once the date has passed) -->
+        <section id="attendance-block" hidden style="margin-top: 36px;">
+          <h3 class="admin-section-heading">On-the-day attendance</h3>
+          <div id="attendance-status-line" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 14px;">—</div>
+          <a id="take-attendance-link" class="btn orange" href="#">▸ Take attendance</a>
+        </section>
+
+        <!-- RSVPs section — who said they'd come (edit mode, when event has RSVPs) -->
         <section id="attendees-section" hidden style="margin-top: 36px;">
-          <h3 class="admin-section-heading">Attendees</h3>
+          <h3 class="admin-section-heading">RSVPs</h3>
 
           <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 16px;">—</div>
 
@@ -357,8 +365,9 @@
     if (harePicker) harePicker.setSelected(initialHareIds);
     originalEvent = data;
 
-    // Load attendees in the background; doesn't block the form
+    // Load attendees + attendance status in the background; don't block the form
     refreshAttendees(id);
+    refreshAttendanceStatus(id, data);
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
     $('#event_date').value = data.event_date;
@@ -400,7 +409,7 @@
       on_on_pub:            isCompleted ? ($('#on_on_pub').value.trim() || null) : null,
       scribe_report_by:     isCompleted ? ($('#scribe_report_by').value.trim() || null) : null,
       scribe_report:        isCompleted ? ($('#scribe_report').value.trim() || null) : null,
-      charity_raised:       isCompleted && $('#charity_raised').value !== '' ? parseFloat($('#charity_raised').value) : null,
+      // charity_raised is computed by trigger from attendance payments — never written here
     };
   }
 
@@ -546,7 +555,43 @@
   });
 
   // ===========================================================================
-  // Attendees section (admin)
+  // On-the-day attendance status (admin)
+  // ===========================================================================
+
+  async function refreshAttendanceStatus(id, ev) {
+    const block = document.getElementById('attendance-block');
+    const todayISO = new Date().toISOString().slice(0, 10);
+    // Attendance only makes sense once the hash has happened
+    if (ev.event_date > todayISO) { block.hidden = true; return; }
+    block.hidden = false;
+
+    const link = document.getElementById('take-attendance-link');
+    const line = document.getElementById('attendance-status-line');
+    link.href = `/admin-attendance.html?id=${id}`;
+
+    const { count } = await supabase
+      .from('event_attendances')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', id);
+    const n = count || 0;
+
+    if (ev.attendance_finalised_at) {
+      const d = new Date(ev.attendance_finalised_at);
+      const when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      const raised = ev.charity_raised != null ? Number(ev.charity_raised).toFixed(2) : '0.00';
+      line.innerHTML = `Finalised on <b>${when}</b> — £${raised} raised.`;
+      link.textContent = '▸ Edit attendance';
+    } else if (n > 0) {
+      line.innerHTML = `Attendance in progress — <b>${n}</b> on the roster.`;
+      link.textContent = '▸ Continue taking attendance';
+    } else {
+      line.textContent = 'Roster not yet started.';
+      link.textContent = '▸ Take attendance';
+    }
+  }
+
+  // ===========================================================================
+  // RSVPs section (admin)
   // ===========================================================================
 
   async function refreshAttendees(id) {
