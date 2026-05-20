@@ -203,7 +203,7 @@
 
     const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes, leaderboardRes, wrapupRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('events').select('*').gte('event_date', todayISO).in('status', ['planning','hares_wanted','open','ready','closed']).order('event_date', { ascending: true }),
+      supabase.from('events').select('*').gte('event_date', todayISO).neq('status', 'completed').order('event_date', { ascending: true }),
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'hares_wanted').gte('event_date', todayISO),
       supabase.from('events').select('id, charity_raised').eq('status', 'completed').gte('event_date', yearStartISO),
       supabase.rpc('get_admin_leaderboards'),

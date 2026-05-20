@@ -558,7 +558,7 @@
         .from('events')
         .select('*')
         .gte('event_date', todayISO)
-        .in('status', ['hares_wanted', 'open', 'ready', 'closed'])
+        .neq('status', 'completed')
         .order('event_date', { ascending: true }),
       supabase
         .from('events')
@@ -573,7 +573,8 @@
       const grid = document.getElementById('events-grid');
       const empty = document.getElementById('events-empty');
       const heroVal = document.getElementById('next-on-on-val');
-      const evs = upcomingResult.data || [];
+      // Hide drafts (status 'planning') from the public homepage
+      const evs = (upcomingResult.data || []).filter((e) => e.status !== 'planning');
       if (evs.length === 0) {
         empty.hidden = false;
         if (heroVal) heroVal.textContent = 'TBC';
