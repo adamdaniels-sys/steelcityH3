@@ -204,6 +204,11 @@ grant execute on function public.populate_attendance_from_rsvps(integer) to auth
 -- ============================================================================
 -- 8. get_event_attendance_roster — include charity_amount
 -- ============================================================================
+-- Must DROP first: adding the charity_amount output column changes the return
+-- type, which CREATE OR REPLACE can't do. Safe — nothing else depends on it,
+-- and the grant is re-applied below.
+
+drop function if exists public.get_event_attendance_roster(integer);
 
 create or replace function public.get_event_attendance_roster(p_event_id integer)
 returns table (
