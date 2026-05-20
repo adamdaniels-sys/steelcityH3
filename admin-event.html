@@ -62,9 +62,13 @@
           <p class="sec-lede" id="page-lede">Dates and run number are pre-filled for the next 3rd Saturday. Edit anything before saving.</p>
         </div>
 
+        <details class="admin-collapse" id="details-collapse" open>
+          <summary>
+            <span>Event details</span>
+            <span class="admin-collapse-summary-note" id="details-lock-note" hidden>▸ Locked — set status to "Ready to On-On" to edit</span>
+          </summary>
+          <div class="admin-collapse-body">
         <form class="admin-form" id="event-form" novalidate>
-
-          <h3>Event details</h3>
 
           <div class="auth-field">
             <label for="run_number">Run number</label>
@@ -181,41 +185,90 @@
           </div>
           <div class="auth-msg" id="form-msg"></div>
         </form>
-
-        <!-- On-the-day attendance status + link (edit mode, once the date has passed) -->
-        <section id="attendance-block" hidden style="margin-top: 36px;">
-          <h3 class="admin-section-heading">On-the-day attendance</h3>
-          <div id="attendance-status-line" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 14px;">—</div>
-          <a id="take-attendance-link" class="btn orange" href="#">▸ Take attendance</a>
-        </section>
-
-        <!-- RSVPs section — who said they'd come (edit mode, when event has RSVPs) -->
-        <section id="attendees-section" hidden style="margin-top: 36px;">
-          <h3 class="admin-section-heading">RSVPs</h3>
-
-          <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 16px;">—</div>
-
-          <div class="admin-quick-actions" style="margin-bottom: 14px;">
-            <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phones for WhatsApp</button>
-            <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
           </div>
+        </details>
 
-          <div style="overflow-x: auto;">
+        <!-- RSVPs & WhatsApp (collapsible) — who said they'd come -->
+        <details class="admin-collapse" id="rsvps-collapse" hidden>
+          <summary>
+            <span>RSVPs &amp; WhatsApp</span>
+            <span class="admin-collapse-summary-note" id="rsvps-summary-note"></span>
+          </summary>
+          <div class="admin-collapse-body">
+            <div id="attendees-summary" style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-2); margin-bottom: 16px;">—</div>
+            <div class="admin-quick-actions" style="margin-bottom: 14px;">
+              <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phones for WhatsApp</button>
+              <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
+            </div>
             <table class="admin-table" id="attendees-table">
               <thead>
                 <tr>
-                  <th>Hash name</th>
-                  <th>Real name</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  <th>Guests</th>
-                  <th>Total bodies</th>
+                  <th>Hash name</th><th>Real name</th><th>Phone</th>
+                  <th>Status</th><th>Guests</th><th>Total bodies</th>
                 </tr>
               </thead>
               <tbody id="attendees-tbody"></tbody>
             </table>
           </div>
-        </section>
+        </details>
+
+        <!-- Attendance & money (collapsible) — shown once the event is Completed -->
+        <details class="admin-collapse" id="attendance-collapse" hidden>
+          <summary>
+            <span>Attendance &amp; money</span>
+            <span class="admin-collapse-summary-note" id="attendance-summary-note"></span>
+          </summary>
+          <div class="admin-collapse-body">
+
+            <div class="att-finalised-banner" id="finalised-banner" hidden></div>
+
+            <p class="profile-hint" style="margin-bottom: 16px;">
+              Tick everyone who actually turned up and whether they paid. Add walk-ups or plus-ones, remove no-shows, then finalise once it all balances.
+            </p>
+
+            <div class="att-headstrip">
+              <div class="att-stat"><div class="lbl">Expected</div><div class="val" id="stat-expected">—</div></div>
+              <div class="att-stat"><div class="lbl">On the roster</div><div class="val" id="stat-roster">0</div></div>
+              <div class="att-stat"><div class="lbl">Raised so far</div><div class="val">£<span id="stat-raised">0.00</span></div></div>
+            </div>
+
+            <div class="att-list" id="roster-list"></div>
+            <div id="roster-empty" hidden style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-3); margin-bottom: 24px;">
+              Nobody on the roster yet. Add members, plus-ones or walk-ups below.
+            </div>
+
+            <div class="att-add">
+              <h4>▸ Add to the roster</h4>
+              <div class="att-add-group">
+                <label class="att-add-label" for="add-member-select">Add a member</label>
+                <div class="att-add-controls">
+                  <select id="add-member-select" class="att-add-select"></select>
+                  <button class="btn cream" type="button" id="add-member-btn">▸ Add</button>
+                </div>
+              </div>
+              <div class="att-add-group">
+                <label class="att-add-label" for="add-plusone-label">Add a plus-one</label>
+                <div class="att-add-controls">
+                  <input type="text" id="add-plusone-label" class="att-add-input" placeholder="Plus-one (or a name)" />
+                  <select id="add-plusone-host" class="att-add-select" aria-label="Brought by"></select>
+                  <button class="btn cream" type="button" id="add-plusone-btn">▸ Add</button>
+                </div>
+                <label class="att-add-check"><input type="checkbox" id="add-plusone-virgin" checked /> Hash virgin?</label>
+              </div>
+              <div class="att-add-group">
+                <label class="att-add-label" for="add-walkup-label">Add a walk-up</label>
+                <div class="att-add-controls">
+                  <input type="text" id="add-walkup-label" class="att-add-input" placeholder="e.g. Visiting Manchester H3" />
+                  <button class="btn cream" type="button" id="add-walkup-btn">▸ Add</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-actions" style="margin-top: 24px;">
+              <button class="btn orange" type="button" id="finalise-btn">▸ Finalise this hash</button>
+            </div>
+          </div>
+        </details>
 
         <!-- Danger zone — only shown in edit mode -->
         <div class="danger-zone" id="danger-zone" hidden>
@@ -231,6 +284,22 @@
     </div>
   </section>
 </main>
+
+<!-- Finalise-confirm modal -->
+<div class="modal-overlay" id="finalise-modal" hidden>
+  <div class="modal">
+    <h3>Lock this hash in?</h3>
+    <p>
+      You'll still be able to edit rows afterwards, but the "in progress" state
+      ends, it counts towards the charity total + metrics, and it drops off the
+      dashboard's "still to wrap up" list.
+    </p>
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="finalise-cancel-btn">↶ Not yet</button>
+      <button class="btn orange" type="button" id="finalise-confirm-btn">▸ Finalise</button>
+    </div>
+  </div>
+</div>
 
 <!-- Delete-confirm modal (chunk 5 wires it up) -->
 <div class="modal-overlay" id="delete-modal" hidden>
@@ -254,15 +323,22 @@
 </footer>
 
 <script type="module">
-  import { supabase, requireAdmin, showToast } from './auth.js';
+  import { supabase, requireAdmin, showToast, getSession } from './auth.js';
   import { HarePicker } from './hare-picker.js';
   import { parsePhoneNumberFromString } from 'https://esm.sh/libphonenumber-js@1.11.4';
 
   const $ = (s) => document.querySelector(s);
+  const money = (n) => (Number(n) || 0).toFixed(2);
 
   let harePicker = null;
   let initialHareIds = [];  // hare set as saved in DB, for diffing
   let currentAttendees = [];
+
+  // Attendance roster state (folded in from the old admin-attendance page)
+  let me = null;            // current admin's user id
+  let roster = [];          // event_attendances rows (via get_event_attendance_roster)
+  let allMembers = [];      // every profile (for the add-member dropdown)
+  let amountPerHead = 5;
   function escapeHtml(s) {
     return String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -310,6 +386,28 @@
     const status = $('#status').value;
     $('#past-fields').hidden = status !== 'completed';
     $('#description-upcoming-wrap').hidden = status === 'completed';
+    applyLockState();
+  }
+
+  // Lock the event-detail fields whenever the status is Completed. To edit,
+  // Smutley switches the status back to "Ready to On-On" (which re-enables them).
+  function applyLockState() {
+    const locked = $('#status').value === 'completed';
+    const collapse = document.getElementById('details-collapse');
+    if (!collapse) return;
+    document.getElementById('details-lock-note').hidden = !locked;
+    collapse.classList.toggle('is-locked', locked);
+    document.querySelectorAll('#event-form input, #event-form textarea, #event-form select')
+      .forEach((el) => {
+        if (el.id === 'status') return;            // keep the dropdown usable
+        if (el.id === 'charity_raised') return;    // always read-only anyway
+        el.disabled = locked;
+      });
+    const hareHost = document.getElementById('hare-multiselect-host');
+    if (hareHost) {
+      hareHost.style.pointerEvents = locked ? 'none' : '';
+      hareHost.style.opacity = locked ? '0.55' : '';
+    }
   }
 
   async function smartDefaults() {
@@ -368,9 +466,6 @@
     if (harePicker) harePicker.setSelected(initialHareIds);
     originalEvent = data;
 
-    // Load attendees + attendance status in the background; don't block the form
-    refreshAttendees(id);
-    refreshAttendanceStatus(id, data);
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
     $('#event_date').value = data.event_date;
@@ -391,12 +486,15 @@
     applyStatusToggle();
     $('#crumb-title').textContent = `Run #${data.run_number}`;
     document.title = `Admin — Run #${data.run_number} — Steel City H3`;
+
+    await refreshAttendees(id);   // RSVPs (also feeds the attendance "expected" line)
+    await setupAttendance();      // attendance roster, shown when Completed
   }
 
   function gatherPayload() {
     const status = $('#status').value;
     const isCompleted = status === 'completed';
-    return {
+    const payload = {
       run_number:           parseInt($('#run_number').value, 10),
       title:                $('#title').value.trim(),
       event_date:           $('#event_date').value,
@@ -414,6 +512,9 @@
       scribe_report:        isCompleted ? ($('#scribe_report').value.trim() || null) : null,
       // charity_raised is computed by trigger from attendance payments — never written here
     };
+    // Reverting out of Completed un-finalises it (re-appears on the worklist)
+    if (status !== 'completed') payload.attendance_finalised_at = null;
+    return payload;
   }
 
   function validatePayload(p) {
@@ -523,6 +624,9 @@
       window.location.replace(`/admin-event.html?id=${res.data.id}`);
     } else {
       originalEvent = res.data;
+      applyStatusToggle();            // re-apply the lock for the saved status
+      await refreshAttendees(eventId);
+      await setupAttendance();        // reveal attendance if now Completed
       showToast('Saved.', { kind: 'ok' });
     }
   });
@@ -558,39 +662,232 @@
   });
 
   // ===========================================================================
-  // On-the-day attendance status (admin)
+  // Attendance roster (admin) — folded in from the old attendance page
   // ===========================================================================
 
-  async function refreshAttendanceStatus(id, ev) {
-    const block = document.getElementById('attendance-block');
-    const todayISO = new Date().toISOString().slice(0, 10);
-    // Attendance only makes sense once the hash has happened
-    if (ev.event_date > todayISO) { block.hidden = true; return; }
-    block.hidden = false;
+  // Reveals the Attendance section when the event is Completed, auto-populates
+  // the roster from on-on RSVPs (idempotent server-side), and loads it.
+  async function setupAttendance() {
+    const collapse = document.getElementById('attendance-collapse');
+    const detailsCollapse = document.getElementById('details-collapse');
+    const isCompleted = originalEvent?.status === 'completed';
 
-    const link = document.getElementById('take-attendance-link');
-    const line = document.getElementById('attendance-status-line');
-    link.href = `/admin-attendance.html?id=${id}`;
-
-    const { count } = await supabase
-      .from('event_attendances')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', id);
-    const n = count || 0;
-
-    if (ev.attendance_finalised_at) {
-      const d = new Date(ev.attendance_finalised_at);
-      const when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-      const raised = ev.charity_raised != null ? Number(ev.charity_raised).toFixed(2) : '0.00';
-      line.innerHTML = `Finalised on <b>${when}</b> — £${raised} raised.`;
-      link.textContent = '▸ Edit attendance';
-    } else if (n > 0) {
-      line.innerHTML = `Attendance in progress — <b>${n}</b> on the roster.`;
-      link.textContent = '▸ Continue taking attendance';
-    } else {
-      line.textContent = 'Roster not yet started.';
-      link.textContent = '▸ Take attendance';
+    if (!isCompleted || !eventId) {
+      collapse.hidden = true;
+      detailsCollapse.open = true;
+      return;
     }
+
+    // Completed → attendance becomes the focus
+    collapse.hidden = false;
+    collapse.open = true;
+    detailsCollapse.open = false;
+    document.getElementById('rsvps-collapse').open = false;
+
+    if (!me) { const s = await getSession(); me = s?.user?.id || null; }
+    amountPerHead = Number(originalEvent.amount_per_head) || 5;
+
+    if (allMembers.length === 0) {
+      const { data: mem } = await supabase
+        .from('profiles').select('id, hash_name, real_name')
+        .order('hash_name', { ascending: true, nullsFirst: false });
+      allMembers = mem || [];
+    }
+
+    // "Expected" line from RSVPs (currentAttendees loaded by refreshAttendees)
+    const onOn  = currentAttendees.filter((r) => r.status === 'on_on').length;
+    const maybe = currentAttendees.filter((r) => r.status === 'maybe').length;
+    const guests = currentAttendees.filter((r) => r.status === 'on_on')
+      .reduce((s, r) => s + (r.guests_count || 0), 0);
+    $('#stat-expected').innerHTML =
+      `${onOn} on-on<span style="font-size:0.85rem;color:var(--ink-3);"> · ${maybe} maybe · +${guests} guests</span>`;
+
+    const { error: popErr } = await supabase.rpc('populate_attendance_from_rsvps', { p_event_id: eventId });
+    if (popErr) console.warn('[admin-event] auto-populate skipped:', popErr);
+
+    await reloadRoster();
+    renderFinalisedState();
+  }
+
+  function renderFinalisedState() {
+    const finalised = !!originalEvent?.attendance_finalised_at;
+    const banner = $('#finalised-banner');
+    const note = $('#attendance-summary-note');
+    if (finalised) {
+      const d = new Date(originalEvent.attendance_finalised_at);
+      const when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      banner.hidden = false;
+      banner.textContent = `Finalised on ${when}. Edits are still possible, but it's off the dashboard worklist.`;
+      $('#finalise-btn').hidden = true;
+      note.textContent = 'Finalised';
+    } else {
+      banner.hidden = true;
+      $('#finalise-btn').hidden = false;
+      note.textContent = 'In progress';
+    }
+  }
+
+  function rosterSubtext(row) {
+    if (row.user_id) {
+      if (row.rsvp_status === 'on_on') return "RSVP'd on-on";
+      if (row.rsvp_status === 'maybe') return "RSVP'd maybe";
+      if (row.rsvp_status === 'not_this_time') return "RSVP'd: can't make it";
+      return 'Walk-up';
+    }
+    if (row.host_name) return `Plus-one of ${row.host_name}`;
+    if (row.is_virgin_guest) return 'Plus-one (hash virgin)';
+    return 'Walk-up';
+  }
+
+  function renderRoster() {
+    const list = $('#roster-list');
+    if (roster.length === 0) {
+      list.innerHTML = '';
+      $('#roster-empty').hidden = false;
+    } else {
+      $('#roster-empty').hidden = true;
+      list.innerHTML = roster.map((row) => `
+        <div class="att-row ${row.paid ? 'is-paid' : ''}" data-id="${row.id}">
+          <div class="att-main">
+            <div class="att-name">${escapeHtml(row.display_name)}</div>
+            <div class="att-sub">${escapeHtml(rosterSubtext(row))}</div>
+          </div>
+          <div class="att-controls">
+            <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">
+              ${row.paid ? '✓ Paid' : '✗ Unpaid'}
+            </button>
+            <span class="att-amount-wrap">£<input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" /></span>
+            <button class="att-remove" type="button" title="Remove from roster" data-id="${row.id}">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    $('#stat-roster').textContent = roster.length;
+    recomputeRaised();
+    refreshAddControls();
+  }
+
+  function recomputeRaised() {
+    const total = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
+    $('#stat-raised').textContent = money(total);
+  }
+
+  function refreshAddControls() {
+    const onRoster = new Set(roster.filter((r) => r.user_id).map((r) => r.user_id));
+    const available = allMembers.filter((m) => !onRoster.has(m.id));
+    const memberName = (m) => (m.hash_name && m.hash_name.trim()) ? m.hash_name : (m.real_name || 'Unnamed member');
+    $('#add-member-select').innerHTML = available.length
+      ? available.map((m) => `<option value="${m.id}">${escapeHtml(memberName(m))}</option>`).join('')
+      : '<option value="">Everyone\'s on the roster</option>';
+    const hosts = roster.filter((r) => r.user_id);
+    $('#add-plusone-host').innerHTML =
+      '<option value="">Brought by… (optional)</option>' +
+      hosts.map((r) => `<option value="${r.user_id}">${escapeHtml(r.display_name)}</option>`).join('');
+  }
+
+  async function reloadRoster() {
+    const { data, error } = await supabase.rpc('get_event_attendance_roster', { p_event_id: eventId });
+    if (error) { console.error('[admin-event] roster fetch failed:', error); return; }
+    roster = data || [];
+    renderRoster();
+  }
+
+  async function togglePaid(id) {
+    const row = roster.find((r) => r.id === id);
+    if (!row) return;
+    const btn = document.querySelector(`.att-paid-toggle[data-id="${id}"]`);
+    const next = !row.paid;
+    row.paid = next;
+    if (btn) {
+      btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+      btn.textContent = next ? '✓ Paid' : '✗ Unpaid';
+      btn.closest('.att-row')?.classList.toggle('is-paid', next);
+    }
+    recomputeRaised();
+    const patch = next
+      ? { paid: true, marked_paid_by: me, marked_paid_at: new Date().toISOString() }
+      : { paid: false, marked_paid_by: null, marked_paid_at: null };
+    const { error } = await supabase.from('event_attendances').update(patch).eq('id', id);
+    if (error) {
+      row.paid = !next;
+      if (btn) {
+        btn.setAttribute('aria-pressed', row.paid ? 'true' : 'false');
+        btn.textContent = row.paid ? '✓ Paid' : '✗ Unpaid';
+        btn.closest('.att-row')?.classList.toggle('is-paid', row.paid);
+      }
+      recomputeRaised();
+      showToast("Couldn't save that — try again.", { kind: 'error' });
+    }
+  }
+
+  async function saveAmount(id, value) {
+    const row = roster.find((r) => r.id === id);
+    if (!row) return;
+    const amount = Math.max(0, Number(value) || 0);
+    const prev = row.amount_paid;
+    row.amount_paid = amount;
+    recomputeRaised();
+    const { error } = await supabase.from('event_attendances').update({ amount_paid: amount }).eq('id', id);
+    if (error) { row.amount_paid = prev; recomputeRaised(); showToast("Couldn't save the amount.", { kind: 'error' }); }
+  }
+
+  async function removeRosterRow(id) {
+    const row = roster.find((r) => r.id === id);
+    if (!row) return;
+    if (!window.confirm(`Remove ${row.display_name} from the roster?`)) return;
+    const { error } = await supabase.from('event_attendances').delete().eq('id', id);
+    if (error) { showToast("Couldn't remove that row.", { kind: 'error' }); return; }
+    await reloadRoster();
+  }
+
+  async function addRosterMember() {
+    const uid = $('#add-member-select').value;
+    if (!uid) return;
+    const { error } = await supabase.from('event_attendances').insert({
+      event_id: eventId, user_id: uid, amount_paid: amountPerHead, paid: false,
+    });
+    if (error) { showToast(error.message || "Couldn't add that member.", { kind: 'error' }); return; }
+    await reloadRoster();
+  }
+
+  async function addRosterPlusOne() {
+    const label = $('#add-plusone-label').value.trim() || 'Plus-one';
+    const host = $('#add-plusone-host').value || null;
+    const virgin = $('#add-plusone-virgin').checked;
+    const { error } = await supabase.from('event_attendances').insert({
+      event_id: eventId, user_id: null, attendee_label: label,
+      is_virgin_guest: virgin, host_user_id: host, amount_paid: amountPerHead, paid: false,
+    });
+    if (error) { showToast(error.message || "Couldn't add that plus-one.", { kind: 'error' }); return; }
+    $('#add-plusone-label').value = '';
+    $('#add-plusone-virgin').checked = true;
+    await reloadRoster();
+  }
+
+  async function addRosterWalkup() {
+    const label = $('#add-walkup-label').value.trim();
+    if (!label) { showToast('Give the walk-up a label first.', { kind: 'error' }); return; }
+    const { error } = await supabase.from('event_attendances').insert({
+      event_id: eventId, user_id: null, attendee_label: label,
+      is_virgin_guest: false, amount_paid: amountPerHead, paid: false,
+    });
+    if (error) { showToast(error.message || "Couldn't add that walk-up.", { kind: 'error' }); return; }
+    $('#add-walkup-label').value = '';
+    await reloadRoster();
+  }
+
+  async function finaliseEvent() {
+    const btn = $('#finalise-confirm-btn');
+    btn.disabled = true; btn.textContent = '▸ Finalising…';
+    const { data, error } = await supabase.from('events')
+      .update({ attendance_finalised_at: new Date().toISOString() })
+      .eq('id', eventId).select().single();
+    btn.disabled = false; btn.textContent = '▸ Finalise';
+    if (error) { showToast("Couldn't finalise — try again.", { kind: 'error' }); return; }
+    originalEvent = data;
+    $('#finalise-modal').hidden = true;
+    renderFinalisedState();
+    showToast("Finalised. It's off the worklist now. On-on.", { kind: 'ok' });
   }
 
   // ===========================================================================
@@ -610,11 +907,11 @@
 
     currentAttendees = (data || []).filter((r) => r.profile);
     if (currentAttendees.length === 0) {
-      $('#attendees-section').hidden = true;
+      $('#rsvps-collapse').hidden = true;
       return;
     }
 
-    $('#attendees-section').hidden = false;
+    $('#rsvps-collapse').hidden = false;
 
     // Sort: on_on first, then maybe, then not_this_time; within each, by hash_name
     const order = { on_on: 0, maybe: 1, not_this_time: 2 };
@@ -648,6 +945,7 @@
 
     $('#attendees-summary').innerHTML =
       `Total expected: <b>${onOnTotal}</b> confirmed (on-on), <b>${maybeTotal}</b> maybe`;
+    $('#rsvps-summary-note').textContent = `${onOnTotal} on-on`;
   }
 
   function copyPhonesForWhatsApp() {
@@ -734,6 +1032,24 @@
   // Wire up attendee buttons (no-op until attendees load)
   document.getElementById('copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
   document.getElementById('export-csv-btn').addEventListener('click', exportAttendeesCsv);
+
+  // Attendance roster interactions (elements always in DOM; section just hidden)
+  $('#roster-list').addEventListener('click', (e) => {
+    const toggle = e.target.closest('.att-paid-toggle');
+    if (toggle) { togglePaid(toggle.dataset.id); return; }
+    const remove = e.target.closest('.att-remove');
+    if (remove) { removeRosterRow(remove.dataset.id); return; }
+  });
+  $('#roster-list').addEventListener('change', (e) => {
+    const amount = e.target.closest('.att-amount');
+    if (amount) saveAmount(amount.dataset.id, amount.value);
+  });
+  $('#add-member-btn').addEventListener('click', addRosterMember);
+  $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
+  $('#add-walkup-btn').addEventListener('click', addRosterWalkup);
+  $('#finalise-btn').addEventListener('click', () => { $('#finalise-modal').hidden = false; });
+  $('#finalise-cancel-btn').addEventListener('click', () => { $('#finalise-modal').hidden = true; });
+  $('#finalise-confirm-btn').addEventListener('click', finaliseEvent);
 
   (async () => {
     await requireAdmin();

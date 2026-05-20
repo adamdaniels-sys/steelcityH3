@@ -2965,6 +2965,61 @@ a.onons-title:hover { color: var(--orange); }
 }
 .att-add-check input { width: 20px; height: 20px; }
 
+/* Collapsible admin sections (Event details / RSVPs / Attendance) */
+.admin-collapse {
+  border: 4px solid var(--ink);
+  background: var(--cream-2);
+  box-shadow: 8px 8px 0 var(--ink);
+  margin-bottom: 22px;
+}
+.admin-collapse > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 18px 24px;
+  font-family: "Bangers", sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+.admin-collapse > summary::-webkit-details-marker { display: none; }
+.admin-collapse > summary::after {
+  content: "▸";
+  color: var(--orange);
+  margin-left: auto;
+  transition: transform 150ms;
+}
+.admin-collapse[open] > summary::after { transform: rotate(90deg); }
+.admin-collapse > summary:hover { color: var(--orange); }
+.admin-collapse-summary-note {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+.admin-collapse-body { padding: 4px 24px 26px; }
+/* The form sits inside the collapse panel, so drop its own panel chrome */
+.admin-collapse .admin-form {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+}
+/* Locked detail fields when an event is Completed */
+.admin-collapse.is-locked .admin-form {
+  opacity: 0.7;
+}
+@media (max-width: 720px) {
+  .admin-collapse > summary { padding: 14px 16px; font-size: 1.35rem; }
+  .admin-collapse-body { padding: 4px 16px 20px; }
+}
+
 /* Public charity-raised badge on a finalised event page */
 .charity-badge {
   margin-top: 22px;
