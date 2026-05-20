@@ -419,10 +419,11 @@
 
   function statusBadge(status) {
     switch (status) {
-      case 'open':         return { label: 'Ready to On-On',  warn: false };
-      case 'hares_wanted': return { label: 'Offer to hare!',  warn: true  };
-      case 'closed':       return { label: 'Cancelled',       warn: true  };
-      default:             return { label: 'TBC',             warn: false };
+      case 'hares_wanted': return { label: 'Offer to hare!', warn: true  };
+      case 'open':         return { label: 'On-on!',         warn: false };
+      case 'ready':        return { label: 'On-on!',         warn: false };
+      case 'closed':       return { label: 'Cancelled',      warn: true  };
+      default:             return { label: 'On-on!',         warn: false };
     }
   }
 
@@ -557,7 +558,7 @@
         .from('events')
         .select('*')
         .gte('event_date', todayISO)
-        .in('status', ['open', 'hares_wanted', 'closed'])
+        .in('status', ['hares_wanted', 'open', 'ready', 'closed'])
         .order('event_date', { ascending: true }),
       supabase
         .from('events')

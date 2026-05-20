@@ -203,7 +203,7 @@
 
     const [membersRes, upcomingRes, haresWantedRes, doneThisYearRes, leaderboardRes, wrapupRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('events').select('*').gte('event_date', todayISO).in('status', ['open','hares_wanted','closed']).order('event_date', { ascending: true }),
+      supabase.from('events').select('*').gte('event_date', todayISO).in('status', ['planning','hares_wanted','open','ready','closed']).order('event_date', { ascending: true }),
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'hares_wanted').gte('event_date', todayISO),
       supabase.from('events').select('id, charity_raised').eq('status', 'completed').gte('event_date', yearStartISO),
       supabase.rpc('get_admin_leaderboards'),
@@ -229,7 +229,7 @@
     renderLeaderboard('lb-defilers',  lb.top_defilers);
 
     // "Still to wrap up" — past hashes not yet finalised
-    const STATUS_LABELS = { open: 'Ready to On-On', hares_wanted: 'Hares wanted', completed: 'Completed' };
+    const STATUS_LABELS = { planning: 'In Planning', hares_wanted: 'Hares needed', open: 'Open', ready: 'Ready to On-On', completed: 'Completed', closed: 'Cancelled' };
     const wrapup = wrapupRes?.data || [];
     if (wrapup.length > 0) {
       $('#wrapup-section').hidden = false;

@@ -141,6 +141,7 @@
                 <button class="btn orange" type="button" data-action="enter-edit">▸ Edit my on-on</button>
                 <button class="btn muted"  type="button" data-action="quick-cant-make" id="btn-quick-cant-make">↶ Can't make it after all</button>
               </div>
+              <a class="btn cream" id="whatsapp-join-btn" href="#" target="_blank" rel="noopener" hidden style="margin-top: 12px;">▸ Join the WhatsApp group</a>
               <div class="auth-msg" id="rsvp-msg-confirmed"></div>
             </div>
 
@@ -174,14 +175,8 @@
 
         <!-- Route placeholder for upcoming events -->
         <div class="route-box" id="route-box" hidden>
-          <h2>The <span class="or">route</span></h2>
-          <p id="route-blurb">Route TBC — start point and trail map shared closer to the date.</p>
-          <div class="route-placeholder">
-            <div class="stack">
-              <div class="big">▸ Route map placeholder</div>
-              <div class="lil">Smutley uploads a MapMyRoute / Strava link here. Photos of OS-style maps work too.</div>
-            </div>
-          </div>
+          <h2>The <span class="or">plan</span></h2>
+          <p id="route-blurb">Details shared closer to the date.</p>
         </div>
 
         <!-- Past-event write-up -->
@@ -320,11 +315,7 @@
       $('#d-distance').hidden = false;
       $('#d-distance').textContent = `≈ ${ev.distance_miles} miles`;
     }
-    if (ev.on_on_pub) {
-      $('#dt-onon').hidden = false;
-      $('#d-onon').hidden = false;
-      $('#d-onon').textContent = ev.on_on_pub;
-    }
+    // On-on pub is kept private (members find out on the day) — not shown here.
 
     // ---- Charity raised badge (Phase 4) — finalised events only ----
     if (ev.attendance_finalised_at && Number(ev.charity_raised) > 0) {
@@ -332,10 +323,10 @@
       $('#charity-badge').hidden = false;
     }
 
-    // ---- Upcoming events: route placeholder + add-to-calendar button ----
+    // ---- Upcoming events: the plan blurb + add-to-calendar button ----
     if (!isPast) {
       $('#route-box').hidden = false;
-      $('#route-blurb').textContent = ev.description || 'Route shared closer to the date.';
+      $('#route-blurb').textContent = ev.description || 'Details shared closer to the date.';
 
       if (ev.status !== 'closed') {
         const calBtn = $('#add-to-cal');
@@ -502,6 +493,17 @@
       // Belt and braces — explicit display:none in case the global [hidden]
       // override gets out-competed by some browser cache or specificity edge case.
       quickBtn.style.display = 'none';
+    }
+
+    // WhatsApp group join — on-on members only, when a link is set on the event
+    const waBtn = document.getElementById('whatsapp-join-btn');
+    if (waBtn) {
+      if (r.status === 'on_on' && currentEvent?.whatsapp_group_link) {
+        waBtn.href = currentEvent.whatsapp_group_link;
+        waBtn.hidden = false;
+      } else {
+        waBtn.hidden = true;
+      }
     }
   }
 
