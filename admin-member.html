@@ -225,11 +225,11 @@
           <tbody>
             ${rsvps.map((r) => `
               <tr>
-                <td><b>#${r.run_number}</b></td>
-                <td>${formatShortDate(r.event_date)}</td>
-                <td><a href="/event.html?id=${r.event_id}">${escapeHtml(r.title)}</a></td>
-                <td><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
-                <td>${r.guests_count || 0}</td>
+                <td data-label="Run"><b>#${r.run_number}</b></td>
+                <td data-label="Date">${formatShortDate(r.event_date)}</td>
+                <td data-label="Event"><a href="/event.html?id=${r.event_id}">${escapeHtml(r.title)}</a></td>
+                <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+                <td data-label="Guests">${r.guests_count || 0}</td>
               </tr>
             `).join('')}
           </tbody>

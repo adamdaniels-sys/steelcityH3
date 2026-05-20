@@ -173,11 +173,11 @@
       if (m.newsletter_opt_in) badges.push(badge('Newsletter', 'var(--ink-3)'));
       return `
         <tr>
-          <td><b>${escapeHtml(m.hash_name || '—')}</b></td>
-          <td>${escapeHtml(m.real_name || '—')}</td>
-          <td>${escapeHtml(m.email || '—')}</td>
-          <td>${m.rsvp_count}</td>
-          <td>${badges.join('') || '—'}</td>
+          <td data-label="Hash name"><b>${escapeHtml(m.hash_name || '—')}</b></td>
+          <td data-label="Real name">${escapeHtml(m.real_name || '—')}</td>
+          <td data-label="Email">${escapeHtml(m.email || '—')}</td>
+          <td data-label="RSVPs">${m.rsvp_count}</td>
+          <td data-label="Status">${badges.join('') || '—'}</td>
           <td><a href="/admin-member.html?id=${m.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
         </tr>
       `;

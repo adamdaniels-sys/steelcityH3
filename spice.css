@@ -2096,9 +2096,8 @@
 }
 .admin-table tr:last-child td { border-bottom: none; }
 .admin-table tr:hover td { background: var(--cream-3); }
-@media (max-width: 720px) {
-  .admin-table { display: block; overflow-x: auto; }
-}
+/* Mobile reflow lives in the MOBILE OPTIMISATION PASS block at the end of
+   this file — admin tables become labelled cards, never horizontal scroll. */
 
 /* Inline admin pencils on public site */
 .admin-pencil {
@@ -2445,5 +2444,144 @@ a.onons-title:hover { color: var(--orange); }
 }
 .going-list .who {
   flex: 1;
+}
+
+/* ============================================================
+   MOBILE OPTIMISATION PASS  (≤720px)
+   Makes the whole site comfortable one-handed on a ~380px phone.
+   Project brief rule #6: admin must work at 380px with no
+   horizontal scrolling. Kept in one block for maintainability —
+   overrides earlier rules by source order.
+   ============================================================ */
+@media (max-width: 720px) {
+
+  /* ---- Topbar: brand + chip share row 1, nav scrolls on row 2 ---- */
+  .topbar-inner {
+    gap: 10px 12px;
+    padding: 10px 16px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar-inner .brand {
+    order: 1;
+    font-size: 1.3rem;
+    gap: 10px;
+  }
+  .topbar-inner .brand img { width: 36px; height: 36px; }
+
+  .login-chip,
+  .login-chip-wrap { order: 2; margin-left: 0; }
+  .login-chip { padding: 8px 14px; }
+
+  .topbar-inner nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding-top: 10px;
+    border-top: 2px solid rgba(244, 229, 184, 0.16);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .topbar-inner nav::-webkit-scrollbar { display: none; }
+  .topbar-inner nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.98rem;
+    padding: 6px 11px;
+  }
+  /* No rotate-on-hover wobble (causes clipping inside the scroll strip) */
+  .topbar-inner nav a:hover { transform: none; }
+
+  /* ---- Trim chunky paddings so panels breathe on a phone ---- */
+  .hero { padding: 36px 0 50px; }
+  .hero-panel { padding: 28px 22px 34px; }
+  .hero-title { font-size: clamp(2.5rem, 11vw, 5rem); }
+  .sec { padding: 50px 0; }
+  .sec-title { font-size: clamp(2.2rem, 8vw, 4rem); }
+  .soundfx { padding: 22px 0; }
+  .soundfx .fx { font-size: clamp(1.8rem, 7vw, 4.5rem); }
+  .event-hero { padding: 36px 0 28px; }
+  .event-hero .panel { padding: 26px 20px; }
+  .event-hero h1 { font-size: clamp(2.2rem, 8vw, 4rem); }
+  .ev-info, .ev-side { padding: 22px 20px; }
+  .rsvp { padding: 22px 20px; }
+  .admin-form { padding: 24px 20px 28px; }
+
+  /* ---- Speech bubble would overhang the right edge once hero stacks ---- */
+  .bubble {
+    top: -6px;
+    right: 0;
+    max-width: 170px;
+    font-size: 1rem;
+    padding: 10px 14px;
+  }
+
+  /* ---- Full-width thumb-friendly action buttons ---- */
+  .admin-quick-actions .btn,
+  .profile-actions .btn { min-width: 0; width: 100%; flex: 1 1 100%; }
+  .filter-pill { padding: 10px 16px; }
+
+  /* ---- Admin tables → labelled cards (no horizontal scroll) ---- */
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td { display: block; width: 100%; }
+  .admin-table { border: none; box-shadow: none; background: transparent; }
+  .admin-table thead { display: none; }
+  .admin-table tr {
+    margin-bottom: 16px;
+    border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    background: var(--cream-2);
+  }
+  .admin-table tr:hover td { background: transparent; }
+  .admin-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 14px;
+    text-align: right;
+    padding: 9px 14px;
+    border-bottom: 2px solid var(--rule);
+    overflow-wrap: anywhere;
+  }
+  .admin-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    text-align: left;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 700;
+  }
+  /* Clean bottom edge on every card */
+  .admin-table tr td:last-child { border-bottom: none; }
+  /* The action cell (Edit button) has no data-label — span it full width */
+  .admin-table td:not([data-label]) {
+    padding-top: 12px;
+  }
+  .admin-table td:not([data-label])::before { display: none; }
+  .admin-table td:not([data-label]) .btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem !important;
+    padding: 11px 14px !important;
+  }
+}
+
+/* ---- Smallest phones: shrink the corner sticker stack on event cards ---- */
+@media (max-width: 600px) {
+  .corner-stick-main {
+    font-size: 1.25rem;
+    padding: 8px 14px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .corner-stick-sub { font-size: 0.72rem; padding: 3px 9px; }
+  .ev-personal-corner { gap: 7px; right: 10px; }
 }
 

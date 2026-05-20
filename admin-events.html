@@ -186,12 +186,12 @@
         : escapeHtml(ev.hares || 'TBC');
       return `
         <tr>
-          <td><b>#${ev.run_number}</b></td>
-          <td>${dateStr}</td>
-          <td>${escapeHtml(ev.title)}</td>
-          <td>${statusBadgeHtml(ev.status)}</td>
-          <td>${haresHtml}</td>
-          <td>${onOn}</td>
+          <td data-label="Run #"><b>#${ev.run_number}</b></td>
+          <td data-label="Date">${dateStr}</td>
+          <td data-label="Title">${escapeHtml(ev.title)}</td>
+          <td data-label="Status">${statusBadgeHtml(ev.status)}</td>
+          <td data-label="Hares">${haresHtml}</td>
+          <td data-label="On-on">${onOn}</td>
           <td><a href="/admin-event.html?id=${ev.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
         </tr>
       `;

@@ -587,12 +587,12 @@
       if (r.status === 'maybe') maybeTotal += total;
       return `
         <tr>
-          <td>${escapeHtml(p.hash_name || '—')}</td>
-          <td>${escapeHtml(p.real_name || '—')}</td>
-          <td>${escapeHtml(p.phone || '—')}</td>
-          <td><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
-          <td>${guests}</td>
-          <td>${total}</td>
+          <td data-label="Hash name">${escapeHtml(p.hash_name || '—')}</td>
+          <td data-label="Real name">${escapeHtml(p.real_name || '—')}</td>
+          <td data-label="Phone">${escapeHtml(p.phone || '—')}</td>
+          <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+          <td data-label="Guests">${guests}</td>
+          <td data-label="Total bodies">${total}</td>
         </tr>
       `;
     }).join('');
