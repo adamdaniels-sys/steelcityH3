@@ -19,7 +19,7 @@ const path = require('path');
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gxxlnpgvlghypmofualh.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_KXdPysEoJoHK2LRaqh33VQ_m-nOmWcp';
 const SITE_URL = (process.env.SITE_URL || 'https://steelcityh3.org').replace(/\/$/, '');
-const DEFAULT_IMAGE = SITE_URL + '/logo-original.jpg';
+const DEFAULT_IMAGE = SITE_URL + '/og-cover.jpg';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
