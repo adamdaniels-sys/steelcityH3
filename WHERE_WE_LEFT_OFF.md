@@ -2,6 +2,22 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
+## 🅿️ PARKED — go-live + SEO (do AFTER the test data is cleared)
+The site is live but full of test data, so we are deliberately **NOT** chasing
+search rankings yet (don't want randoms stumbling into the rubbish).
+
+**Before launch:** clear the test events / accounts / RSVPs so it's all real.
+
+**Optional now:** lock the whole site out of Google with a `noindex` header
+(Vercel `X-Robots-Tag: noindex` in `vercel.json`) — link previews to people you
+directly share with still work; only search engines are kept out. Remove it at
+launch. (Not yet applied — Adam to decide.)
+
+**At go-live, the SEO checklist (mostly easy wins for the niche "Sheffield hashing"):**
+1. **Google Search Console** — verify the domain, submit the sitemap, "Request indexing". (Biggest first step.)
+2. On-page (assistant to build): `sitemap.xml` + `robots.txt`; JSON-LD structured data (SportsClub on home, Event on event pages); sharpen homepage `<title>`/meta to include "Sheffield Hash House Harriers / hashing"; a visible "Sheffield Hash House Harriers" heading.
+3. Backlinks (the bit that actually ranks a niche query): global hash-house-harriers directories, the Facebook group/page (link in About + pinned post), a Strava club and/or Meetup listing, local Sheffield "clubs/running" directories. Keep the club name identical everywhere.
+
 ## ⚡ Do these now (see STEP_BY_STEP.md for the full walk-through)
 1. **Run `0018_debt_tracking.sql`** (debt RPCs + `orphaned_debts` table).
 2. **Run `0019_legacy_attendees_merge.sql`** (legacy attendees + merge + metrics).
