@@ -2,13 +2,15 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
-## ⚡ Before this round goes live — two manual steps
-1. **Run `0015_event_feedback_round.sql`** in the Supabase SQL Editor. The new
-   code saves `charity_name`, walk-up `attendee_kennel`, and the `via_hare`
-   flag — saving an event will error until this migration is in.
-2. **Redeploy the `rapid-processor` Edge Function** (its source lives in
-   `supabase/functions/rsvp-email/index.ts`) so confirmation emails carry the
-   WhatsApp link and Maybe RSVPs get one too.
+## ⚡ Before the latest round goes live
+**Run `0016_meals_accommodation.sql`** in the Supabase SQL Editor. It adds the
+meal/accommodation columns and **tightens `rsvps` read access** (dietary needs
+are sensitive, so RSVPs are no longer world-readable — own + admin only; public
+displays already use the definer RPCs, so nothing breaks). Saving an event or
+RSVP will error until it's in.
+
+_(Already done earlier: migration 0015 + the `rapid-processor` redeploy for the
+WhatsApp-in-email / Maybe-email round.)_
 
 ## State of play
 
@@ -20,7 +22,8 @@ you're happy with the site.
 - **0001–0012** — run ✅ (auth, profiles, events, RSVPs, attendance, leaderboards, etc.)
 - **0013_phase4_finalise_historical.sql** — _optional, probably not run yet._ Marks the seeded historical events (#13–17) as finalised so the old **£282.15** shows in the public/lifetime charity totals. Run it only if you want that historical figure displayed.
 - **0014_phase4_workflow_charity.sql** — run ✅. New statuses, event type, charity model, kennel name, WhatsApp link, written-up flag.
-- **0015_event_feedback_round.sql** — _NEEDS RUNNING._ Test-pass fixes: `rsvps.via_hare` (+ hare-delete trigger so removing a hare clears the RSVP it created), `events.charity_name`, `event_attendances.attendee_kennel`, and the roster RPC returns kennel.
+- **0015_event_feedback_round.sql** — run ✅. Test-pass fixes: `rsvps.via_hare` (+ hare-delete trigger so removing a hare clears the RSVP it created), `events.charity_name`, `event_attendances.attendee_kennel`, and the roster RPC returns kennel.
+- **0016_meals_accommodation.sql** — _NEEDS RUNNING._ `events.has_meal`/`meal_note`/`asks_accommodation`, `rsvps.needs_accommodation`/`dietary_requirements`, and tightens `rsvps` SELECT to own + admin (was world-readable).
 
 ## Round 2 — test-pass fixes (2026-05-21)
 From Adam's run-through of TEST_SCRIPT.md:
@@ -34,6 +37,12 @@ From Adam's run-through of TEST_SCRIPT.md:
 - **Walk-ups** can record a **hash name + kennel**.
 - **On-on pub** field added to Tab 4 — private before the event, shown on the past write-up.
 - **Mobile**: form rows (date/time, charity, after-event money) and the roster now stack instead of overflowing on a phone.
+
+## Round 3 — meals, accommodation + wider desktop forms (2026-05-21)
+- **Tabs span the full width** on desktop; the **Status** label sits above the 4th tab; the **event-detail form fills the width** (fields paired into 2-column rows) so planning uses the screen.
+- **Meals**: Tab 1 has an **"Includes a meal?"** toggle (+ optional meal note). When on, the RSVP asks each attendee for **dietary requirements**, the public page shows a **Meal** row, and Tab 2 gains a **Dietary** column + count.
+- **Accommodation**: Tab 1 **"Might need a place to stay?"** toggle. When on, the RSVP asks **"I'll need a place to stay"**; Tab 2 gains a **Stay?** column + count, and it's in the CSV — so hotels can be block-booked.
+- **Privacy**: `rsvps` is **no longer world-readable** (dietary needs are sensitive) — own + admin reads only; public attendee lists already use definer RPCs so they're unaffected.
 
 ## What changed this session (all committed + deployed)
 
@@ -57,8 +66,13 @@ To test it all: see **TEST_SCRIPT.md**.
 ## The next big thing: Email & audience phase (planned, NOT started)
 You chose to do this **after** the rework. Scope: import ~200 contacts from
 other hashing groups, email them event **invites + newsletters**, and let them
-**RSVP straight from the email** (one-click, no login) so people who never visit
-the site still count.
+RSVP for events they don't normally attend the site for.
+
+**RSVP-from-email decision (2026-05-21):** _not_ pure one-click RSVP. Newsletter
+/ invite buttons should **link to the event page** (a tokenised magic-link so no
+password is needed) so the attendee can also set **dietary requirements** and
+**accommodation** needs while they RSVP — a one-click "I'm on-on" can't capture
+those.
 
 Key decisions already made / constraints:
 - **Sender**: Resend **free** plan = 100 emails/day, 1 domain — a 200-person blast exceeds the daily cap, so we'll likely use **Brevo's free tier (300/day)** or split the send. Queen Myrtle would need her own sender account for `steelcityh3.org`.

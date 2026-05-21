@@ -138,6 +138,31 @@ Admin → Manage events → **Schedule next hash**.
 
 ---
 
+## J. Round 3 — meals, accommodation + desktop layout
+
+> First: run `0016_meals_accommodation.sql`, then hard-refresh.
+
+**Desktop layout**
+- [ ] On a wide screen the **event-detail form fills the width** (fields sit in 2-column rows), balancing the full-width tab bar; the **Status** sits above the 4th tab.
+
+**Meals → dietary**
+- [ ] Tab 1: tick **Includes a meal?** → a **Meal details** field appears; save.
+- [ ] On the public event page there's a **Meal** row showing your note.
+- [ ] As a member, RSVP **On-on/Maybe** → you're asked **"Any dietary requirements?"**; enter something + confirm.
+- [ ] The confirmed card echoes **"🍽 dietary: …"**.
+- [ ] Admin Tab 2 shows a **Dietary** column + a "🍽 N with dietary needs" count; it's in the **CSV export**.
+
+**Accommodation**
+- [ ] Tab 1: tick **Might need a place to stay?** → save.
+- [ ] As a member RSVPing, you see **"🛏 I'll need a place to stay"**; tick + confirm.
+- [ ] Admin Tab 2 shows a **Stay?** column + a "🛏 N need a place to stay" count (and in the CSV) — for block-booking.
+- [ ] A normal hash (neither toggle) shows **no** dietary/stay columns or questions.
+
+**Privacy (quick sanity)**
+- [ ] Signed out, the public event page still lists who's coming (names only) — dietary/phone/accommodation are **not** exposed.
+
+---
+
 ## Found a bug?
 Jot the page + what you did + what you expected, and we'll fix it. The most
 likely rough edges are in the brand-new tabbed event page (Section B).

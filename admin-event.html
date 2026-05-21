@@ -82,17 +82,18 @@
         <section class="tab-panel" data-panel="details">
           <form class="admin-form" id="event-form" novalidate>
 
-            <div class="auth-field">
-              <label for="event_type">Event type</label>
-              <select id="event_type" name="event_type" required>
-                <option value="hash">Hash (a trail)</option>
-                <option value="meetup">Meet-up (social)</option>
-              </select>
-            </div>
-
-            <div class="auth-field">
-              <label for="run_number" id="run_number_label">Run number</label>
-              <input type="number" id="run_number" name="run_number" min="1" required />
+            <div class="field-grid-2">
+              <div class="auth-field">
+                <label for="event_type">Event type</label>
+                <select id="event_type" name="event_type" required>
+                  <option value="hash">Hash (a trail)</option>
+                  <option value="meetup">Meet-up (social)</option>
+                </select>
+              </div>
+              <div class="auth-field">
+                <label for="run_number" id="run_number_label">Run number</label>
+                <input type="number" id="run_number" name="run_number" min="1" required />
+              </div>
             </div>
 
             <div class="auth-field">
@@ -111,16 +112,17 @@
               </div>
             </div>
 
-            <div class="auth-field">
-              <label for="location_summary">Where (short)</label>
-              <input type="text" id="location_summary" name="location_summary" required placeholder="Sheffield centre — TBC" />
-              <div class="profile-hint">Shows on the homepage event card. Keep it short.</div>
-            </div>
-
-            <div class="auth-field">
-              <label for="location_full">Where it starts (full address)</label>
-              <input type="text" id="location_full" name="location_full" placeholder="e.g. The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG" />
-              <div class="profile-hint">Optional. The start point.</div>
+            <div class="field-grid-2">
+              <div class="auth-field">
+                <label for="location_summary">Where (short)</label>
+                <input type="text" id="location_summary" name="location_summary" required placeholder="Sheffield centre — TBC" />
+                <div class="profile-hint">Shows on the homepage event card. Keep it short.</div>
+              </div>
+              <div class="auth-field">
+                <label for="location_full">Where it starts (full address)</label>
+                <input type="text" id="location_full" name="location_full" placeholder="e.g. The Old Queen's Head, 40 Pond Hill, Sheffield S1 2BG" />
+                <div class="profile-hint">Optional. The start point.</div>
+              </div>
             </div>
 
             <div class="auth-field" id="pace-field">
@@ -156,6 +158,29 @@
                   <div class="profile-hint">Named on the public "Raised £X for…" badge after the event.</div>
                 </div>
               </div>
+            </div>
+
+            <div class="field-grid-2">
+              <div class="profile-toggle" style="align-self: start;">
+                <label class="label" for="has_meal">
+                  Includes a meal?
+                  <span class="hint">Adds a "dietary requirements" question to the RSVP so you can cater.</span>
+                </label>
+                <input type="checkbox" id="has_meal" name="has_meal" />
+              </div>
+              <div class="profile-toggle" style="align-self: start;">
+                <label class="label" for="asks_accommodation">
+                  Might need a place to stay?
+                  <span class="hint">Asks attendees if they need accommodation so you can block-book.</span>
+                </label>
+                <input type="checkbox" id="asks_accommodation" name="asks_accommodation" />
+              </div>
+            </div>
+
+            <div class="auth-field" id="meal-note-wrap" hidden>
+              <label for="meal_note">Meal details</label>
+              <input type="text" id="meal_note" name="meal_note" placeholder="e.g. Two-course curry at the Aagrah, ~£18 a head" />
+              <div class="profile-hint">Shown on the event page and by the dietary question. Optional.</div>
             </div>
 
             <div class="auth-field">
@@ -202,6 +227,7 @@
                 <tr>
                   <th>Hash name</th><th>Real name</th><th>Kennel</th><th>Phone</th>
                   <th>Status</th><th>Guests</th><th>Total bodies</th>
+                  <th id="th-stay" hidden>Stay?</th><th id="th-diet" hidden>Dietary</th>
                 </tr>
               </thead>
               <tbody id="attendees-tbody"></tbody>
@@ -498,6 +524,9 @@
     const on = $('#is_charity_event').checked;
     $('#charity-amount-wrap').hidden = !on;
   }
+  function applyMealUI() {
+    $('#meal-note-wrap').hidden = !$('#has_meal').checked;
+  }
 
   // ---- Defaults / load --------------------------------------------------
 
@@ -517,11 +546,11 @@
       $('#title').value = `${d.toLocaleDateString('en-GB', { month: 'long' })} Hash`;
     }
     $('#start_time').value = '12:00';
-    applyEventTypeUI(); applyCharityUI();
+    applyEventTypeUI(); applyCharityUI(); applyMealUI();
   }
   function blankDefaults() {
     $('#start_time').value = '12:00';
-    applyEventTypeUI(); applyCharityUI();
+    applyEventTypeUI(); applyCharityUI(); applyMealUI();
   }
 
   async function loadForEdit(id) {
@@ -554,6 +583,9 @@
     $('#is_charity_event').checked = !!data.is_charity_event;
     $('#charity_amount_per_head').value = data.charity_amount_per_head ?? '5.00';
     $('#charity_name').value = data.charity_name || "St Luke's Hospice";
+    $('#has_meal').checked = !!data.has_meal;
+    $('#meal_note').value = data.meal_note || '';
+    $('#asks_accommodation').checked = !!data.asks_accommodation;
     $('#description').value = data.description || '';
     $('#whatsapp_group_link').value = data.whatsapp_group_link || '';
     $('#distance_miles').value = data.distance_miles ?? '';
@@ -561,7 +593,7 @@
     $('#scribe_report_by').value = data.scribe_report_by || '';
     $('#scribe_report').value = data.scribe_report || '';
     $('#written_up').checked = !!data.written_up;
-    applyEventTypeUI(); applyCharityUI();
+    applyEventTypeUI(); applyCharityUI(); applyMealUI();
 
     $('#crumb-title').textContent = `Run #${data.run_number}`;
     document.title = `Admin — Run #${data.run_number} — Steel City H3`;
@@ -590,6 +622,9 @@
       is_charity_event: isCharityEvent,
       charity_amount_per_head: isCharityEvent ? (parseFloat($('#charity_amount_per_head').value) || 0) : 0,
       charity_name:     isCharityEvent ? ($('#charity_name').value.trim() || "St Luke's Hospice") : null,
+      has_meal:         $('#has_meal').checked,
+      meal_note:        $('#has_meal').checked ? ($('#meal_note').value.trim() || null) : null,
+      asks_accommodation: $('#asks_accommodation').checked,
       whatsapp_group_link: $('#whatsapp_group_link').value.trim() || null,
       description:      $('#description').value.trim() || null,
     };
@@ -709,13 +744,18 @@
 
   async function refreshAttendees(id) {
     const { data, error } = await supabase.from('rsvps')
-      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone, kennel_name)')
+      .select('id, status, guests_count, needs_accommodation, dietary_requirements, profile:profiles(id, hash_name, real_name, phone, kennel_name)')
       .eq('event_id', id);
     if (error) { console.warn('[admin-event] rsvp fetch failed:', error); return; }
     currentAttendees = (data || []).filter((r) => r.profile);
     const table = $('#attendees-table');
     if (currentAttendees.length === 0) { table.hidden = true; $('#attendees-summary').textContent = 'No RSVPs yet.'; return; }
     table.hidden = false;
+
+    const showStay = !!originalEvent?.asks_accommodation;
+    const showDiet = !!originalEvent?.has_meal;
+    $('#th-stay').hidden = !showStay;
+    $('#th-diet').hidden = !showDiet;
     const order = { on_on: 0, maybe: 1, not_this_time: 2 };
     currentAttendees.sort((a, b) => {
       const c = (order[a.status] ?? 9) - (order[b.status] ?? 9);
@@ -729,6 +769,10 @@
       if (r.status === 'maybe') maybeTotal += total;
       const isHare = initialHareIds.includes(p.id);
       const statusText = escapeHtml(r.status.replace('_', ' ')) + (isHare ? ' · 🐇 hare' : '');
+      const stayCell = showStay
+        ? `<td data-label="Stay?">${r.needs_accommodation ? '🛏 Yes' : '—'}</td>` : '';
+      const dietCell = showDiet
+        ? `<td data-label="Dietary">${escapeHtml(r.dietary_requirements || '—')}</td>` : '';
       return `<tr>
         <td data-label="Hash name">${escapeHtml(p.hash_name || '—')}</td>
         <td data-label="Real name">${escapeHtml(p.real_name || '—')}</td>
@@ -737,9 +781,22 @@
         <td data-label="Status"><b>${statusText}</b></td>
         <td data-label="Guests">${guests}</td>
         <td data-label="Total bodies">${total}</td>
+        ${stayCell}${dietCell}
       </tr>`;
     }).join('');
-    $('#attendees-summary').innerHTML = `Expecting <b>${onOnTotal}</b> on-on, <b>${maybeTotal}</b> maybe.`;
+
+    // Summary line, with block-booking + catering counts when relevant
+    const coming = currentAttendees.filter((r) => r.status === 'on_on' || r.status === 'maybe');
+    let summary = `Expecting <b>${onOnTotal}</b> on-on, <b>${maybeTotal}</b> maybe.`;
+    if (showStay) {
+      const stayCount = coming.filter((r) => r.needs_accommodation).length;
+      summary += ` <b>🛏 ${stayCount}</b> need${stayCount === 1 ? 's' : ''} a place to stay.`;
+    }
+    if (showDiet) {
+      const dietCount = coming.filter((r) => r.dietary_requirements && r.dietary_requirements.trim()).length;
+      summary += ` <b>🍽 ${dietCount}</b> with dietary needs.`;
+    }
+    $('#attendees-summary').innerHTML = summary;
   }
 
   function copyPhonesForWhatsApp() {
@@ -759,10 +816,10 @@
   function csvEscape(v) { if (v == null) return ''; const s = String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
   function exportCsv() {
     if (currentAttendees.length === 0) return;
-    const header = ['Hash name', 'Real name', 'Phone', 'Status', 'Guests', 'Total bodies'];
+    const header = ['Hash name', 'Real name', 'Kennel', 'Phone', 'Status', 'Guests', 'Total bodies', 'Needs accommodation', 'Dietary requirements'];
     const rows = currentAttendees.map((r) => {
       const p = r.profile, total = 1 + (r.guests_count || 0);
-      return [p.hash_name || '', p.real_name || '', p.phone || '', r.status, r.guests_count || 0, total].map(csvEscape).join(',');
+      return [p.hash_name || '', p.real_name || '', p.kennel_name || '', p.phone || '', r.status, r.guests_count || 0, total, r.needs_accommodation ? 'Yes' : '', r.dietary_requirements || ''].map(csvEscape).join(',');
     });
     const blob = new Blob([[header.join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -957,6 +1014,7 @@
   });
   $('#event_type').addEventListener('change', applyEventTypeUI);
   $('#is_charity_event').addEventListener('change', applyCharityUI);
+  $('#has_meal').addEventListener('change', applyMealUI);
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-onon-btn').addEventListener('click', saveOnOn);

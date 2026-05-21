@@ -67,6 +67,7 @@
               <dt>Where</dt><dd id="d-where">—</dd>
               <dt>Hares</dt><dd id="d-hares">—</dd>
               <dt id="dt-pace">Pace</dt><dd id="d-pace">Walk or run</dd>
+              <dt id="dt-meal" hidden>Meal</dt><dd id="d-meal" hidden>—</dd>
               <dt id="dt-distance" hidden>Distance</dt><dd id="d-distance" hidden>—</dd>
               <dt id="dt-onon" hidden>On-on pub</dt><dd id="d-onon" hidden>—</dd>
             </dl>
@@ -124,6 +125,20 @@
                 <p class="profile-hint" style="text-align: center; margin-top: 4px;">
                   Each hash virgin is on your tab — ~£<span id="amount-per-head">5</span> each, cash on the day, all to St Luke's.
                 </p>
+              </div>
+
+              <div id="diet-section" hidden style="margin-top: 16px;">
+                <label class="note" for="dietary-requirements" style="display: block; margin-bottom: 6px;"><b>🍽 Any dietary requirements?</b></label>
+                <input type="text" id="dietary-requirements" placeholder="e.g. veggie, no nuts, coeliac" style="width: 100%; background: var(--cream); border: 3px solid var(--ink); padding: 10px 12px; font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink);" />
+                <p class="profile-hint" id="diet-meal-note" style="margin-top: 4px;">There's a meal on this one — let us know so we can cater.</p>
+              </div>
+
+              <div id="accom-section" hidden style="margin-top: 16px;">
+                <label style="display: flex; align-items: center; gap: 10px; font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink); cursor: pointer;">
+                  <input type="checkbox" id="needs-accommodation" style="width: 22px; height: 22px; flex: 0 0 auto;" />
+                  <span>🛏 I'll need a place to stay</span>
+                </label>
+                <p class="profile-hint" style="margin-top: 4px;">We'll try to block-book somewhere — tick if you'd like a room sorting.</p>
               </div>
 
               <div class="rsvp-actions" style="margin-top: 18px;">
@@ -316,6 +331,12 @@
     const haresStr = await composeHaresString(ev);
     $('#d-hares').textContent = haresStr;
 
+    if (ev.has_meal) {
+      $('#dt-meal').hidden = false;
+      $('#d-meal').hidden = false;
+      $('#d-meal').textContent = ev.meal_note || 'Yes — a meal is included';
+    }
+
     if (ev.distance_miles != null) {
       $('#dt-distance').hidden = false;
       $('#d-distance').hidden = false;
@@ -438,6 +459,8 @@
     card.addEventListener('click', onCardClick);
     $('#guests-minus').addEventListener('click', () => changeDraftGuests(-1));
     $('#guests-plus').addEventListener('click',  () => changeDraftGuests(+1));
+    $('#needs-accommodation').addEventListener('change', (e) => { if (editingDraft) editingDraft.needs_accommodation = e.target.checked; });
+    $('#dietary-requirements').addEventListener('input', (e) => { if (editingDraft) editingDraft.dietary_requirements = e.target.value; });
   }
 
   function showRsvpState(stateName) {
@@ -461,14 +484,27 @@
       btn.classList.toggle('selected', btn.dataset.status === editingDraft.status);
     });
 
-    const showStepper = editingDraft.status === 'on_on' || editingDraft.status === 'maybe';
-    $('#guests-section').hidden = !showStepper;
+    const isComing = editingDraft.status === 'on_on' || editingDraft.status === 'maybe';
+    $('#guests-section').hidden = !isComing;
 
-    if (showStepper) {
+    if (isComing) {
       $('#guests-count').textContent = String(editingDraft.guests_count);
       $('#guests-minus').disabled = editingDraft.guests_count <= 0;
       $('#guests-plus').disabled  = editingDraft.guests_count >= GUESTS_MAX;
     }
+
+    // Dietary requirements — only when the event has a meal, and they're coming
+    const showDiet = isComing && !!currentEvent?.has_meal;
+    $('#diet-section').hidden = !showDiet;
+    if (showDiet) {
+      $('#dietary-requirements').value = editingDraft.dietary_requirements || '';
+      if (currentEvent.meal_note) $('#diet-meal-note').textContent = currentEvent.meal_note;
+    }
+
+    // Accommodation — only when the event asks, and they're coming
+    const showAccom = isComing && !!currentEvent?.asks_accommodation;
+    $('#accom-section').hidden = !showAccom;
+    if (showAccom) $('#needs-accommodation').checked = !!editingDraft.needs_accommodation;
 
     let headline;
     if (editingDraft.status === 'on_on')        headline = "On-on?";
@@ -506,6 +542,14 @@
       // Belt and braces — explicit display:none in case the global [hidden]
       // override gets out-competed by some browser cache or specificity edge case.
       quickBtn.style.display = 'none';
+    }
+
+    // Echo back any accommodation / dietary requests they've made
+    if (r.status === 'on_on' || r.status === 'maybe') {
+      const extras = [];
+      if (currentEvent?.asks_accommodation && r.needs_accommodation) extras.push("🛏 you've asked for a place to stay");
+      if (currentEvent?.has_meal && r.dietary_requirements && r.dietary_requirements.trim()) extras.push(`🍽 dietary: ${r.dietary_requirements.trim()}`);
+      if (extras.length) detail.textContent += ' ' + extras.join(' · ') + '.';
     }
 
     // WhatsApp group join — on-on AND maybe members, when a link is set on the
@@ -558,7 +602,7 @@
     switch (action) {
       case 'start-edit':
         // From pristine — enter editing with the picked status, no guests yet
-        editingDraft = { status, guests_count: 0 };
+        editingDraft = { status, guests_count: 0, needs_accommodation: false, dietary_requirements: '' };
         renderRsvpState();
         break;
 
@@ -567,6 +611,8 @@
         editingDraft = {
           status: currentRsvp.status,
           guests_count: currentRsvp.guests_count || 0,
+          needs_accommodation: !!currentRsvp.needs_accommodation,
+          dietary_requirements: currentRsvp.dietary_requirements || '',
         };
         renderRsvpState();
         break;
@@ -610,11 +656,14 @@
     const newStatus = editingDraft.status;
     const shouldFireEmail = (newStatus === 'on_on' || newStatus === 'maybe') && newStatus !== prevStatus;
 
+    const isComing = newStatus === 'on_on' || newStatus === 'maybe';
     const payload = {
       user_id: currentSession.user.id,
       event_id: currentEvent.id,
       status: editingDraft.status,
       guests_count: editingDraft.guests_count,
+      needs_accommodation: (isComing && currentEvent.asks_accommodation) ? !!editingDraft.needs_accommodation : false,
+      dietary_requirements: (isComing && currentEvent.has_meal) ? ((editingDraft.dietary_requirements || '').trim() || null) : null,
     };
 
     const { data, error } = await supabase
@@ -667,6 +716,8 @@
       event_id: currentEvent.id,
       status: 'not_this_time',
       guests_count: 0,
+      needs_accommodation: false,
+      dietary_requirements: null,
     };
 
     const { data, error } = await supabase

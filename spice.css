@@ -2988,6 +2988,11 @@ a.onons-title:hover { color: var(--orange); }
   .field-grid-2,
   .field-grid-3 { grid-template-columns: 1fr; }
 }
+/* On desktop the event-detail form fills the width (matching the full-width
+   tab bar above it) — planning mostly happens on a big screen. */
+@media (min-width: 760px) {
+  .tab-panel .admin-form { max-width: none; }
+}
 
 /* ===== Tabbed event workflow (admin-event.html) ===== */
 .event-headline {
