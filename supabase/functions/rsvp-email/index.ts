@@ -106,6 +106,9 @@ function buildEmailHtml(opts: {
   eventUrl: string;
   status: "on_on" | "maybe";
   whatsappLink: string;
+  charityName: string;
+  charityPerHead: number;
+  isCharityEvent: boolean;
 }): string {
   const isMaybe = opts.status === "maybe";
   const eyebrow = isMaybe ? "▸ You're a maybe" : "▸ You're on-on!";
@@ -126,6 +129,13 @@ function buildEmailHtml(opts: {
           ▸ Join the WhatsApp group
         </a>
       </td></tr></table>
+    </td></tr>
+  ` : "";
+  const charityBlock = opts.isCharityEvent ? `
+    <tr><td style="padding: 0 32px 18px;">
+      <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 14px; color: #3a2e1f; line-height: 1.5; font-weight: 600;">
+        💷 This is a charity hash — <b>£${opts.charityPerHead.toFixed(2)}</b> of your subs goes to <b>${escapeHtml(opts.charityName)}</b>. Pay a little more on the day and the extra goes to them too.
+      </p>
     </td></tr>
   ` : "";
   const guestsBlock = opts.guestsCount > 0 ? `
@@ -219,6 +229,8 @@ function buildEmailHtml(opts: {
 
             ${guestsBlock}
 
+            ${charityBlock}
+
             <tr><td style="padding: 0 32px 22px;">
               <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 15px; color: #3a2e1f; line-height: 1.55; font-weight: 500;">
                 ${shoesLine}
@@ -275,6 +287,9 @@ function buildEmailText(opts: {
   eventUrl: string;
   status: "on_on" | "maybe";
   whatsappLink: string;
+  charityName: string;
+  charityPerHead: number;
+  isCharityEvent: boolean;
 }): string {
   // Plain-text fallback for clients that don't render HTML
   const isMaybe = opts.status === "maybe";
@@ -287,12 +302,15 @@ function buildEmailText(opts: {
   const whatsappLine = opts.whatsappLink
     ? `\nJoin the event WhatsApp group: ${opts.whatsappLink}\n`
     : "";
+  const charityLine = opts.isCharityEvent
+    ? `\nCharity: £${opts.charityPerHead.toFixed(2)} a head goes to ${opts.charityName} (pay more on the day and the extra goes too).\n`
+    : "";
   return `${lead}
 
 Where: ${opts.locationSummary}
 Hares: ${opts.hares}
 On-on: ${opts.onOnPub}
-${guestsLine}${whatsappLine}
+${guestsLine}${charityLine}${whatsappLine}
 Wear shoes you don't love.
 
 Changed your mind? Update your on-on here: ${opts.eventUrl}
@@ -624,6 +642,9 @@ serve(async (req) => {
     eventUrl,
     status:          rsvpStatus,
     whatsappLink:    event.whatsapp_group_link || "",
+    charityName:     event.charity_name || "the charity",
+    charityPerHead:  Number(event.charity_amount_per_head || 0),
+    isCharityEvent:  !!event.is_charity_event,
   };
 
   const html = buildEmailHtml(opts);

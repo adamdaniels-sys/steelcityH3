@@ -2,6 +2,14 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
+## ⚡ Do these for the latest round (bugs + money model)
+1. **Run `0017_money_model_and_pace.sql`** (makes `pace` nullable — fixes meet-up
+   creation — and switches the charity maths to the single-field model).
+2. **Re-deploy `rapid-processor`** from the CURRENT `supabase/functions/rsvp-email/index.ts`.
+   The live function was stale (still said "St Luke's", no WhatsApp link). After
+   redeploy: confirmation emails name the chosen charity + carry the WhatsApp link.
+   Verify by RSVPing on-on to a charity event with a WhatsApp link set.
+
 ## ⚡ Status of recent rounds
 - Migrations **0015 + 0016** are run; `rapid-processor` redeployed for the
   WhatsApp/Maybe-email round. All live.
@@ -12,6 +20,29 @@ _Last updated: 2026-05-21 (test-pass fixes)_
   Debugger). The og:image is a themed **1200×630 `og-cover.jpg`** (full badge on
   the cream/orange rivet backdrop) — regenerate it from the logo with `sharp` if
   the branding ever changes.
+
+## Round 5 — bug fixes, single-field money model, clearer toggles (2026-05-21)
+From a re-run with Queen Myrtle:
+- **Bug:** meet-ups wouldn't save (pace was NOT NULL). Fixed — `pace` is now nullable.
+- **Bug:** confirmation email said "St Luke's" + had no WhatsApp link. Root cause: the
+  deployed function was an old version. The current source names the chosen
+  **charity** and includes the **WhatsApp** link — **re-deploy `rapid-processor`**.
+- **Money model rebuilt:** the per-head amount is now the **total** a head pays
+  (charity is a slice of it, not added on top — the old way double-counted). One
+  "Paid £" box per person; the page shows **Collected / Organiser keeps / To charity**.
+  Rule: organiser keeps the expenses (per-head − charity slice); everything above
+  goes to the charity (so a charity hash always raises at least its earmarked bit).
+- **Toggles** (Charity? / Meal? / Stay? / Written up / Hash virgin) are no longer an
+  orange slider — now a clear box that fills black with a big orange **tick** when on.
+
+**Strategy:** no mass-emailing un-opted-in people. Instead post the site link in the
+WhatsApp/Facebook groups asking people to **register**, repeat weekly, judge uptake.
+
+**Still to build (next, agreed):** (1) **legacy attendee names + merge** (enter past
+attendees as Hash name + Kennel; merge a legacy name into a real account when it
+signs up, so metrics don't double-count); (2) **debt tracking** (complete events with
+money outstanding; [Money Outstanding] tag; settle debts from Manage Members; flag
+debtors in new RSVP logs; keep a record if a debtor deletes their account).
 
 ## Round 4 — shareable link previews (2026-05-21)
 Mass-emailing the 200 contacts is **on hold** — first promote the site and get

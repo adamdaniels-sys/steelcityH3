@@ -134,12 +134,12 @@
               <div class="auth-field">
                 <label for="amount_per_head">Amount per head (£)</label>
                 <input type="number" id="amount_per_head" name="amount_per_head" step="0.01" min="0" value="3.50" required />
-                <div class="profile-hint">The basic sub (covers expenses, down-downs, a drink for newcomers).</div>
+                <div class="profile-hint">The total each person pays on the day. For a charity hash this includes the charity bit below.</div>
               </div>
               <div class="profile-toggle" style="align-self: start; margin-top: 26px;">
                 <label class="label" for="is_charity_event">
                   Charity event?
-                  <span class="hint">Tick if you're collecting a donation for a charity on top of the sub.</span>
+                  <span class="hint">Tick if part of the head charge is a charity donation.</span>
                 </label>
                 <input type="checkbox" id="is_charity_event" name="is_charity_event" />
               </div>
@@ -148,9 +148,9 @@
             <div id="charity-amount-wrap" hidden>
               <div class="field-grid-2">
                 <div class="auth-field">
-                  <label for="charity_amount_per_head">Charity donation per head (£)</label>
+                  <label for="charity_amount_per_head">Charity portion per head (£)</label>
                   <input type="number" id="charity_amount_per_head" name="charity_amount_per_head" step="0.01" min="0" value="5.00" />
-                  <div class="profile-hint">On top of the sub. e.g. £3.50 sub + £5 donation = £8.50 a head.</div>
+                  <div class="profile-hint">Part of the amount per head — e.g. £20 a head, £5 of it to the charity. Anyone who pays more, the extra goes to charity too.</div>
                 </div>
                 <div class="auth-field">
                   <label for="charity_name">Which charity?</label>
@@ -264,8 +264,12 @@
               <div class="att-stat"><div class="lbl">Expected</div><div class="val" id="stat-expected">—</div></div>
               <div class="att-stat"><div class="lbl">On the roster</div><div class="val" id="stat-roster">0</div></div>
               <div class="att-stat"><div class="lbl">Collected</div><div class="val">£<span id="stat-collected">0.00</span></div></div>
-              <div class="att-stat" id="stat-charity-card" hidden><div class="lbl">Charity</div><div class="val">£<span id="stat-charity">0.00</span></div></div>
+              <div class="att-stat" id="stat-keep-card" hidden><div class="lbl">Organiser keeps</div><div class="val">£<span id="stat-keep">0.00</span></div></div>
+              <div class="att-stat" id="stat-charity-card" hidden><div class="lbl">To charity</div><div class="val">£<span id="stat-charity">0.00</span></div></div>
             </div>
+            <p class="profile-hint" id="money-split-hint" hidden style="margin: -10px 0 16px;">
+              Enter what each person actually pays. The organiser keeps the expenses; everything above that goes to the charity.
+            </p>
 
             <div class="att-list" id="roster-list"></div>
             <div id="roster-empty" hidden style="font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-3); margin-bottom: 24px;">
@@ -837,6 +841,8 @@
     isCharity = !!originalEvent.is_charity_event;
     charityPerHead = isCharity ? (Number(originalEvent.charity_amount_per_head) || 0) : 0;
     $('#stat-charity-card').hidden = !isCharity;
+    $('#stat-keep-card').hidden = !isCharity;
+    $('#money-split-hint').hidden = !isCharity;
 
     if (allMembers.length === 0) {
       const { data: mem } = await supabase.from('profiles').select('id, hash_name, real_name')
@@ -878,12 +884,6 @@
     else {
       $('#roster-empty').hidden = true;
       list.innerHTML = roster.map((row) => {
-        const charityField = isCharity
-          ? `<span class="att-amount-wrap" title="Charity portion">
-               <span class="att-cap att-cap-charity">♥ Charity £</span>
-               <input class="att-amount att-charity" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.charity_amount)}" data-id="${row.id}" aria-label="Charity amount" />
-             </span>`
-          : '';
         return `
         <div class="att-row ${row.paid ? 'is-paid' : ''}" data-id="${row.id}">
           <div class="att-main">
@@ -892,11 +892,10 @@
           </div>
           <div class="att-controls">
             <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">${row.paid ? '✓ Paid' : '✗ Unpaid'}</button>
-            <span class="att-amount-wrap" title="Total paid">
-              <span class="att-cap">Total £</span>
+            <span class="att-amount-wrap" title="What they paid">
+              <span class="att-cap">Paid £</span>
               <input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" />
             </span>
-            ${charityField}
             <button class="att-remove" type="button" title="Remove from roster" data-id="${row.id}">✕</button>
           </div>
         </div>`;
@@ -907,19 +906,31 @@
     refreshAddControls();
   }
 
+  // Single-field money model: each row stores what they actually paid.
+  // The organiser keeps the expenses share (per-head minus the charity part);
+  // everything above that goes to the charity.
+  function computeMoney() {
+    const expensesShare = Math.max(0, amountPerHead - charityPerHead);
+    let collected = 0, charity = 0;
+    for (const r of roster) {
+      if (!r.paid) continue;
+      const amt = Number(r.amount_paid) || 0;
+      collected += amt;
+      if (isCharity) charity += Math.max(0, amt - expensesShare);
+    }
+    return { collected, charity, keep: collected - charity };
+  }
+
   function recomputeTotals() {
-    const collected = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
-    const charity = roster.reduce((s, r) => s + (r.paid ? Number(r.charity_amount) || 0 : 0), 0);
+    const { collected, charity, keep } = computeMoney();
     $('#stat-collected').textContent = money(collected);
     $('#stat-charity').textContent = money(charity);
+    $('#stat-keep').textContent = money(keep);
     renderAfterTotals(collected, charity);
   }
 
   function renderAfterTotals(collected, charity) {
-    if (collected === undefined) {
-      collected = roster.reduce((s, r) => s + (r.paid ? Number(r.amount_paid) || 0 : 0), 0);
-      charity = roster.reduce((s, r) => s + (r.paid ? Number(r.charity_amount) || 0 : 0), 0);
-    }
+    if (collected === undefined) { const m = computeMoney(); collected = m.collected; charity = m.charity; }
     $('#money-collected-display').value = '£' + money(collected);
     $('#charity-collected-display').value = '£' + money(charity);
   }
@@ -978,13 +989,13 @@
 
   async function addRosterMember() {
     const uid = $('#add-member-select').value; if (!uid) return;
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that member.", { kind: 'error' }); return; }
     await reloadRoster();
   }
   async function addRosterPlusOne() {
     const label = $('#add-plusone-label').value.trim() || 'Plus-one';
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: $('#add-plusone-virgin').checked, host_user_id: $('#add-plusone-host').value || null, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: $('#add-plusone-virgin').checked, host_user_id: $('#add-plusone-host').value || null, amount_paid: amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that plus-one.", { kind: 'error' }); return; }
     $('#add-plusone-label').value = ''; $('#add-plusone-virgin').checked = true;
     await reloadRoster();
@@ -993,7 +1004,7 @@
     const label = $('#add-walkup-label').value.trim();
     const kennel = $('#add-walkup-kennel').value.trim() || null;
     if (!label) { showToast('Give the walk-up a hash name first.', { kind: 'error' }); return; }
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, amount_paid: amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that walk-up.", { kind: 'error' }); return; }
     $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = '';
     await reloadRoster();
@@ -1030,7 +1041,6 @@
   });
   $('#roster-list').addEventListener('change', (e) => {
     const a = e.target.closest('.att-amount'); if (a) { saveField(a.dataset.id, 'amount_paid', a.value); return; }
-    const c = e.target.closest('.att-charity'); if (c) { saveField(c.dataset.id, 'charity_amount', c.value); return; }
   });
   $('#add-member-btn').addEventListener('click', addRosterMember);
   $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
