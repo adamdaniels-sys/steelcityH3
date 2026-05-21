@@ -69,6 +69,7 @@
           <a class="filter-pill" data-filter="admin">Admins</a>
           <a class="filter-pill" data-filter="virgin">Hash virgins</a>
           <a class="filter-pill" data-filter="newsletter">Newsletter subs</a>
+          <a class="filter-pill" data-filter="owes">Owes money</a>
         </div>
 
         <table class="admin-table" id="members-table" hidden>
@@ -88,6 +89,13 @@
         <div id="members-empty" hidden style="padding: 30px 0; font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-3);">
           Nothing matching that filter.
         </div>
+
+        <!-- Former members who left while still owing (snapshotted on delete) -->
+        <section id="orphaned-wrap" hidden style="margin-top: 36px;">
+          <h3 style="font-family: 'Bangers', sans-serif; font-size: 1.4rem; letter-spacing: 0.04em; margin-bottom: 12px;">Former members with unsettled debts</h3>
+          <p class="profile-hint" style="margin-bottom: 12px;">Kept by hash name in case they rejoin. Not tied to a live account.</p>
+          <div id="orphaned-list"></div>
+        </section>
 
       </div>
 
@@ -137,6 +145,22 @@
     return `<span style="display: inline-block; background: ${bg}; color: ${fg}; padding: 2px 8px; font-family: 'Bangers', sans-serif; font-size: 0.8rem; letter-spacing: 0.04em; line-height: 1.3; border: 2px solid var(--ink); margin-right: 4px;">${text}</span>`;
   }
 
+  function renderOrphaned(rows) {
+    const wrap = $('#orphaned-wrap');
+    const list = $('#orphaned-list');
+    if (!rows || rows.length === 0) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    list.innerHTML = rows.map((o) => {
+      const name = escapeHtml(o.hash_name || o.real_name || 'Unknown');
+      const kennel = o.kennel_name ? ` · ${escapeHtml(o.kennel_name)}` : '';
+      const when = o.recorded_at ? new Date(o.recorded_at).toLocaleDateString('en-GB') : '';
+      return `<div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 10px 14px; border: 3px solid var(--ink); background: var(--cream-2); margin-bottom: 8px;">
+        <span style="font-family: 'Nunito', sans-serif; font-weight: 800;">${name}<span style="font-weight: 600; color: var(--ink-3);">${kennel}</span></span>
+        <span><span class="owes-badge">owes £${Number(o.owed).toFixed(2)}</span> <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--ink-3);">left ${when}</span></span>
+      </div>`;
+    }).join('');
+  }
+
   function render() {
     const filter = getFilter();
     const q = ($('#search').value || '').toLowerCase().trim();
@@ -145,6 +169,7 @@
     if (filter === 'admin')      filtered = filtered.filter((m) => m.is_admin);
     if (filter === 'virgin')     filtered = filtered.filter((m) => m.is_hash_virgin);
     if (filter === 'newsletter') filtered = filtered.filter((m) => m.newsletter_opt_in);
+    if (filter === 'owes')       filtered = filtered.filter((m) => (m.owed || 0) > 0);
 
     if (q) {
       filtered = filtered.filter((m) =>
@@ -171,6 +196,7 @@
       if (m.is_admin)        badges.push(badge('Admin', 'var(--red)'));
       if (m.is_hash_virgin)  badges.push(badge('Virgin', 'var(--yellow)', 'var(--ink)'));
       if (m.newsletter_opt_in) badges.push(badge('Newsletter', 'var(--ink-3)'));
+      if ((m.owed || 0) > 0) badges.push(`<span class="owes-badge">owes £${Number(m.owed).toFixed(2)}</span>`);
       return `
         <tr>
           <td data-label="Hash name"><b>${escapeHtml(m.hash_name || '—')}</b></td>
@@ -189,14 +215,20 @@
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;
 
-    const { data, error } = await supabase.rpc('get_member_admin_view');
+    const [{ data, error }, debtsRes, orphanRes] = await Promise.all([
+      supabase.rpc('get_member_admin_view'),
+      supabase.rpc('get_members_with_debts'),
+      supabase.from('orphaned_debts').select('*').order('owed', { ascending: false }),
+    ]);
     if (error) {
       console.error('[admin-members] fetch failed:', error);
       $('#admin-content').innerHTML = `<p>Couldn't load members: ${escapeHtml(error.message)}</p>`;
       return;
     }
-    allMembers = data || [];
+    const debtMap = new Map((debtsRes.data || []).map((d) => [d.user_id, Number(d.owed) || 0]));
+    allMembers = (data || []).map((m) => ({ ...m, owed: debtMap.get(m.id) || 0 }));
 
+    renderOrphaned(orphanRes.data || []);
     activatePill();
     render();
 

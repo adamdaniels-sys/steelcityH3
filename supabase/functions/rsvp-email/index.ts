@@ -531,6 +531,34 @@ serve(async (req) => {
       }
     }
 
+    // Snapshot any unsettled debts before the cascade wipes their attendance
+    // rows — so a debt isn't silently lost when someone deletes their account.
+    try {
+      const [{ data: prof }, { data: debtRows }] = await Promise.all([
+        supabase.from("profiles").select("hash_name, real_name, kennel_name").eq("id", targetUid).maybeSingle(),
+        supabase.from("event_attendances")
+          .select("amount_paid, events!inner(attendance_finalised_at)")
+          .eq("user_id", targetUid).eq("paid", false).gt("amount_paid", 0),
+      ]);
+      const finalised = (debtRows || []).filter((r: Record<string, unknown>) => {
+        const ev = r.events as { attendance_finalised_at?: string | null } | null;
+        return ev && ev.attendance_finalised_at;
+      });
+      const owed = finalised.reduce((s: number, r: Record<string, unknown>) => s + Number(r.amount_paid || 0), 0);
+      if (owed > 0) {
+        await supabase.from("orphaned_debts").insert({
+          hash_name: prof?.hash_name ?? null,
+          real_name: prof?.real_name ?? null,
+          kennel_name: prof?.kennel_name ?? null,
+          owed,
+          debt_count: finalised.length,
+          former_user_id: targetUid,
+        });
+      }
+    } catch (snapErr) {
+      console.warn("[rsvp-email] debt snapshot failed (continuing with delete):", snapErr);
+    }
+
     // Delete the auth.users row — cascade handles profiles → rsvps,
     // event_hares, user_roles. admin_actions.actor_id is ON DELETE SET NULL
     // so the audit log survives but anonymises.

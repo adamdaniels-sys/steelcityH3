@@ -120,6 +120,13 @@
           <p id="admin-status-note" class="profile-hint" style="margin-top: 10px;"></p>
         </section>
 
+        <!-- Outstanding payments -->
+        <section class="admin-form" id="debts-section" style="margin-top: 30px;" hidden>
+          <h3>Outstanding payments</h3>
+          <p class="profile-hint" style="margin-bottom: 12px;">Money still owed from past events. Tick each one off when they settle up.</p>
+          <div id="debts-wrap"></div>
+        </section>
+
         <!-- RSVP history -->
         <section class="admin-form" style="margin-top: 30px;">
           <h3>RSVP history</h3>
@@ -243,6 +250,44 @@
       </div>
     `;
   }
+
+  async function loadDebts() {
+    const { data, error } = await supabase.rpc('get_member_debts', { p_user_id: userId });
+    if (error) { console.warn('[admin-member] debts load failed:', error); return; }
+    renderDebts(data || []);
+  }
+
+  function renderDebts(debts) {
+    const sec = $('#debts-section');
+    const wrap = $('#debts-wrap');
+    if (!debts.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    const total = debts.reduce((s, d) => s + Number(d.amount || 0), 0);
+    wrap.innerHTML = `
+      <div style="font-family: 'Bangers', sans-serif; font-size: 1.3rem; letter-spacing: 0.03em; margin-bottom: 12px;">Total owed: <span style="color: var(--red);">£${total.toFixed(2)}</span></div>
+      ${debts.map((d) => `
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 14px; border: 3px solid var(--ink); background: var(--cream-2); margin-bottom: 8px;">
+          <span style="font-family: 'Nunito', sans-serif; font-weight: 800;">Run #${d.run_number} · ${escapeHtml(d.title)}<br><span style="font-weight: 600; color: var(--ink-3); font-size: 0.85rem;">${formatShortDate(d.event_date)}</span></span>
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <span class="owes-badge">£${Number(d.amount).toFixed(2)}</span>
+            <button class="btn cream" type="button" data-settle="${d.attendance_id}">▸ Mark paid</button>
+          </span>
+        </div>`).join('')}
+    `;
+  }
+
+  $('#debts-wrap').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-settle]');
+    if (!btn) return;
+    if (!window.confirm('Mark this one as paid? It updates the event takings too.')) return;
+    btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Saving…';
+    const { error } = await supabase.from('event_attendances')
+      .update({ paid: true, marked_paid_by: mySession?.user?.id || null, marked_paid_at: new Date().toISOString() })
+      .eq('id', btn.dataset.settle);
+    if (error) { btn.disabled = false; btn.textContent = o; showToast(error.message || "Couldn't update.", { kind: 'error' }); return; }
+    showToast('Marked paid — debt cleared.', { kind: 'ok' });
+    await loadDebts();
+  });
 
   function showMsg(text, ok = false) {
     const el = $('#form-msg');
@@ -430,6 +475,7 @@
 
     renderAdminStatus(adminCount);
     renderRsvpHistory();
+    await loadDebts();
 
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;

@@ -152,6 +152,7 @@
 
   let allEvents = [];
   let countsByEventId = new Map();
+  let outstandingByEventId = new Map();
 
   function render() {
     const filter = getFilter();
@@ -186,12 +187,19 @@
       const haresHtml = ev.status === 'hares_wanted'
         ? `<span class="warn-badge">Volunteers wanted</span>`
         : escapeHtml(ev.hares || 'TBC');
+      const out = outstandingByEventId.get(ev.id);
+      const outTag = (out && Number(out.unpaid_total) > 0)
+        ? ` <span class="owes-badge" title="${out.unpaid_count} not paid">Money outstanding £${Number(out.unpaid_total).toFixed(2)}</span>`
+        : '';
+      const writeupTag = ev.written_up
+        ? ' <span style="display:inline-block;background:var(--green);color:var(--cream);padding:2px 7px;font-family:\'Bangers\',sans-serif;font-size:0.78rem;letter-spacing:0.04em;border:2px solid var(--ink);margin-left:4px;">✎ Written up</span>'
+        : (ev.status === 'completed' ? ' <span style="display:inline-block;color:var(--ink-3);font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-left:4px;">✎ needs write-up</span>' : '');
       return `
         <tr>
           <td data-label="Run #"><b>#${ev.run_number}</b></td>
           <td data-label="Date">${dateStr}</td>
           <td data-label="Title">${escapeHtml(ev.title)}</td>
-          <td data-label="Status">${statusBadgeHtml(ev.status)}${ev.written_up ? ' <span style="display:inline-block;background:var(--green);color:var(--cream);padding:2px 7px;font-family:\'Bangers\',sans-serif;font-size:0.78rem;letter-spacing:0.04em;border:2px solid var(--ink);margin-left:4px;">✎ Written up</span>' : (ev.status === 'completed' ? ' <span style="display:inline-block;color:var(--ink-3);font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-left:4px;">✎ needs write-up</span>' : '')}</td>
+          <td data-label="Status">${statusBadgeHtml(ev.status)}${writeupTag}${outTag}</td>
           <td data-label="Hares">${haresHtml}</td>
           <td data-label="On-on">${onOn}</td>
           <td><a href="/admin-event.html?id=${ev.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
@@ -218,8 +226,12 @@
     // Bulk fetch attendance counts
     const ids = allEvents.map((e) => e.id);
     if (ids.length > 0) {
-      const { data: countsData } = await supabase.rpc('get_event_attendance_counts', { p_event_ids: ids });
+      const [{ data: countsData }, { data: outData }] = await Promise.all([
+        supabase.rpc('get_event_attendance_counts', { p_event_ids: ids }),
+        supabase.rpc('get_events_outstanding', { p_event_ids: ids }),
+      ]);
       (countsData || []).forEach((c) => countsByEventId.set(c.event_id, c));
+      (outData || []).forEach((o) => outstandingByEventId.set(o.event_id, o));
     }
 
     activatePill();

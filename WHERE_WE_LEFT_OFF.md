@@ -2,13 +2,32 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
-## ⚡ Do these for the latest round (bugs + money model)
-1. **Run `0017_money_model_and_pace.sql`** (makes `pace` nullable — fixes meet-up
-   creation — and switches the charity maths to the single-field model).
-2. **Re-deploy `rapid-processor`** from the CURRENT `supabase/functions/rsvp-email/index.ts`.
-   The live function was stale (still said "St Luke's", no WhatsApp link). After
-   redeploy: confirmation emails name the chosen charity + carry the WhatsApp link.
-   Verify by RSVPing on-on to a charity event with a WhatsApp link set.
+## ⚡ Do these for the latest round (debt tracking)
+1. **Run `0018_debt_tracking.sql`** (debt-query RPCs + the `orphaned_debts` table).
+2. **Re-deploy `rapid-processor`** from the CURRENT `supabase/functions/rsvp-email/index.ts`
+   — this round adds a debt snapshot on account deletion (and still carries the
+   charity-name + WhatsApp-link fixes, which the live function may still be missing).
+
+_(Migration 0017 was already run.)_
+
+## Round 6 — debt / outstanding-money tracking (2026-05-21)
+A debt = someone on a **completed** event's roster who isn't ticked **Paid** (the
+amount in their box is what they owe). Money model already supports this.
+- **Event page (Tab 3):** live **Outstanding** total (red when there's money owed).
+- **Manage events:** completed events show a **Money outstanding £X** tag.
+- **Who's coming (Tab 2):** anyone who owes from a past event gets an **owes £X** flag.
+- **Manage members:** an **owes £X** badge + an **Owes money** filter; clicking a
+  member shows **Outstanding payments** with a **Mark paid** button per event (which
+  updates that event's takings). Plus a **Former members with unsettled debts** list.
+- **Account deletion** snapshots any unsettled debt (by hash name) into `orphaned_debts`
+  so it isn't lost; re-matching a returning member comes with the legacy-names feature.
+
+You can now **complete an event with money still outstanding** — it just shows the
+tags afterwards, rather than having to leave the event open.
+
+**Still to build:** legacy attendee names + merge (backfill past attendees as
+Hash name + Kennel; merge a legacy name into a real account on sign-up; this is also
+where orphaned-debt re-matching will live).
 
 ## ⚡ Status of recent rounds
 - Migrations **0015 + 0016** are run; `rapid-processor` redeployed for the

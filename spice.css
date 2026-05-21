@@ -2817,6 +2817,24 @@ a.onons-title:hover { color: var(--orange); }
   color: var(--ink);
   margin-top: 4px;
 }
+/* Outstanding-money stat turns red when there's a debt */
+.att-stat.att-stat-warn { background: #fff4ee; box-shadow: 4px 4px 0 var(--red); }
+.att-stat.att-stat-warn .lbl { color: var(--red); }
+
+/* "owes £X" tag — used on rosters, RSVP logs and the members list */
+.owes-badge {
+  display: inline-block;
+  background: var(--red);
+  color: var(--cream);
+  padding: 1px 7px;
+  font-family: "Bangers", sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  border: 2px solid var(--ink);
+  margin-left: 4px;
+  white-space: nowrap;
+}
 .att-finalised-banner {
   background: var(--steel);
   color: var(--cream);

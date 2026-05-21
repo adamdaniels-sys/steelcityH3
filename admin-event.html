@@ -264,6 +264,7 @@
               <div class="att-stat"><div class="lbl">Expected</div><div class="val" id="stat-expected">—</div></div>
               <div class="att-stat"><div class="lbl">On the roster</div><div class="val" id="stat-roster">0</div></div>
               <div class="att-stat"><div class="lbl">Collected</div><div class="val">£<span id="stat-collected">0.00</span></div></div>
+              <div class="att-stat" id="stat-outstanding-card"><div class="lbl">Outstanding</div><div class="val">£<span id="stat-outstanding">0.00</span></div></div>
               <div class="att-stat" id="stat-keep-card" hidden><div class="lbl">Organiser keeps</div><div class="val">£<span id="stat-keep">0.00</span></div></div>
               <div class="att-stat" id="stat-charity-card" hidden><div class="lbl">To charity</div><div class="val">£<span id="stat-charity">0.00</span></div></div>
             </div>
@@ -471,6 +472,7 @@
   let me = null;
   let roster = [];
   let allMembers = [];
+  let debtByUser = new Map();  // user_id -> £ owed from past finalised events
   let amountPerHead = 3.5;
   let charityPerHead = 0;
   let isCharity = false;
@@ -601,6 +603,11 @@
 
     $('#crumb-title').textContent = `Run #${data.run_number}`;
     document.title = `Admin — Run #${data.run_number} — Steel City H3`;
+
+    try {
+      const { data: debts } = await supabase.rpc('get_members_with_debts');
+      debtByUser = new Map((debts || []).map((d) => [d.user_id, Number(d.owed) || 0]));
+    } catch (e) { console.warn('[admin-event] debts load failed:', e); }
 
     await refreshAttendees(id);
     await setupAttendance();
@@ -772,7 +779,9 @@
       if (r.status === 'on_on') onOnTotal += total;
       if (r.status === 'maybe') maybeTotal += total;
       const isHare = initialHareIds.includes(p.id);
-      const statusText = escapeHtml(r.status.replace('_', ' ')) + (isHare ? ' · 🐇 hare' : '');
+      const owes = debtByUser.get(p.id) || 0;
+      const owesBadge = owes > 0 ? ` <span class="owes-badge" title="Owes from past events">owes £${money(owes)}</span>` : '';
+      const statusText = escapeHtml(r.status.replace('_', ' ')) + (isHare ? ' · 🐇 hare' : '') + owesBadge;
       const stayCell = showStay
         ? `<td data-label="Stay?">${r.needs_accommodation ? '🛏 Yes' : '—'}</td>` : '';
       const dietCell = showDiet
@@ -892,8 +901,8 @@
           </div>
           <div class="att-controls">
             <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">${row.paid ? '✓ Paid' : '✗ Unpaid'}</button>
-            <span class="att-amount-wrap" title="What they paid">
-              <span class="att-cap">Paid £</span>
+            <span class="att-amount-wrap" title="Their charge — collected if paid, owed if not">
+              <span class="att-cap">Amount £</span>
               <input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" />
             </span>
             <button class="att-remove" type="button" title="Remove from roster" data-id="${row.id}">✕</button>
@@ -911,21 +920,26 @@
   // everything above that goes to the charity.
   function computeMoney() {
     const expensesShare = Math.max(0, amountPerHead - charityPerHead);
-    let collected = 0, charity = 0;
+    let collected = 0, charity = 0, outstanding = 0;
     for (const r of roster) {
-      if (!r.paid) continue;
       const amt = Number(r.amount_paid) || 0;
-      collected += amt;
-      if (isCharity) charity += Math.max(0, amt - expensesShare);
+      if (r.paid) {
+        collected += amt;
+        if (isCharity) charity += Math.max(0, amt - expensesShare);
+      } else {
+        outstanding += amt;  // on the roster but not settled = they owe it
+      }
     }
-    return { collected, charity, keep: collected - charity };
+    return { collected, charity, keep: collected - charity, outstanding };
   }
 
   function recomputeTotals() {
-    const { collected, charity, keep } = computeMoney();
+    const { collected, charity, keep, outstanding } = computeMoney();
     $('#stat-collected').textContent = money(collected);
     $('#stat-charity').textContent = money(charity);
     $('#stat-keep').textContent = money(keep);
+    $('#stat-outstanding').textContent = money(outstanding);
+    $('#stat-outstanding-card').classList.toggle('att-stat-warn', outstanding > 0);
     renderAfterTotals(collected, charity);
   }
 
