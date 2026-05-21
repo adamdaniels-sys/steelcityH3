@@ -10,7 +10,7 @@ new bits. Hard-refresh (Ctrl-F5) after the deploy.
 1. **Supabase → SQL Editor → run `0018_debt_tracking.sql`** (if you haven't yet).
 2. **Run `0019_legacy_attendees_merge.sql`.**
 3. **Re-deploy the `rapid-processor` Edge Function** from
-   `supabase/functions/rsvp-email/index.ts`.
+   `supabase/functions/rapid-processor/index.ts`.
    - This carries: the debt-snapshot-on-account-deletion, **and** the email fixes
      (names the right charity + the WhatsApp link) that the live function has been
      missing.

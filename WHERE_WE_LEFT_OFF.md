@@ -5,7 +5,7 @@ _Last updated: 2026-05-21 (test-pass fixes)_
 ## ⚡ Do these now (see STEP_BY_STEP.md for the full walk-through)
 1. **Run `0018_debt_tracking.sql`** (debt RPCs + `orphaned_debts` table).
 2. **Run `0019_legacy_attendees_merge.sql`** (legacy attendees + merge + metrics).
-3. **Re-deploy `rapid-processor`** from `supabase/functions/rsvp-email/index.ts`
+3. **Re-deploy `rapid-processor`** from `supabase/functions/rapid-processor/index.ts`
    (debt-snapshot-on-delete + the charity-name/WhatsApp email fixes — the live
    function appears to still be stale, so double-check the deploy lands).
 

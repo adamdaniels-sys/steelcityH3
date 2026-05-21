@@ -4,7 +4,9 @@ Server-side bits for Steel City H3. Each subfolder is one Edge Function.
 
 | Function | What it does | Invoked by |
 |---|---|---|
-| `rsvp-email` (deployed as `rapid-processor`) | Sends an on-brand "You're on-on for X" email when a user confirms an RSVP that transitions into `on_on` | Frontend (`event.html`) via `supabase.functions.invoke()` |
+| `rapid-processor` | Sends an on-brand confirmation email when a user RSVPs **on-on or maybe** (with the WhatsApp link + charity name), notifies admins when someone volunteers to hare, and handles full account deletion (snapshotting any unsettled debt first) | Frontend (`event.html`, `admin-member.html`) via `supabase.functions.invoke()` |
+
+> The folder is now `rapid-processor` (matches the deployed function name). It used to be `rsvp-email`, which caused endless deploy confusion — see the ⚠️ in **Redeploying** below.
 
 ## Architecture
 
@@ -24,10 +26,17 @@ After making code changes:
 
 ### Option A — Supabase Dashboard
 
+⚠️ **The dashboard's code editor is a SEPARATE copy from this repo.** "Deploy
+updates" only ships whatever is *currently in that editor box*. If you click it
+without pasting the latest code first, you just re-deploy the old code (this is
+exactly why the email kept saying the wrong thing).
+
 1. Dashboard → steelcityh3 → **Edge Functions** → click **`rapid-processor`**
-2. Open the editor → paste fresh contents of `supabase/functions/rsvp-email/index.ts`
-3. **Verify JWT**: this should be **ON** for the new architecture (it's what authenticates the caller)
-4. **Deploy**
+2. Open the editor → **select all → paste the full current contents of
+   `supabase/functions/rapid-processor/index.ts` over it.** Sanity-check: it's
+   ~740 lines and contains **no** "St Luke" and the text "Join the WhatsApp group".
+3. **Verify JWT**: should be **ON** (it's what authenticates the caller)
+4. **Deploy updates**
 
 ### Option B — Supabase CLI
 
@@ -66,8 +75,8 @@ Same as before. Edge Functions → `rapid-processor` → Manage secrets:
 7. Edit → switch to Maybe → Confirm → **no email**
 8. Edit → flip back to On-on → Confirm → **fresh email** (it's a new transition)
 
-Logs are visible in the Edge Functions section of the dashboard. If something errors, `[rsvp-email]` log lines from `console.log` / `console.error` will appear there.
+Logs are visible in the Edge Functions section of the dashboard. If something errors, `[rapid-processor]` log lines from `console.log` / `console.error` will appear there.
 
 ## Why the function is named `rapid-processor`
 
-Supabase's "Deploy a new function" dialog pre-fills a random name and we kept that one for now. The internal URL is `https://gxxlnpgvlghypmofualh.supabase.co/functions/v1/rapid-processor`. The frontend invokes by name (`rapid-processor`), so as long as that matches the deployed function name, all is well. To rename, delete this function and redeploy with a new name, then update the `invoke('rapid-processor', …)` call in `event.html` to match.
+Supabase's "Deploy a new function" dialog pre-filled this random name and we kept it. The internal URL is `https://gxxlnpgvlghypmofualh.supabase.co/functions/v1/rapid-processor`, and the frontend invokes by that name. The repo folder now matches (`supabase/functions/rapid-processor/`), so "the source" and "the deployed function" are the same word. To rename properly, delete this function and redeploy under a new name, rename the folder to match, and update the `invoke('rapid-processor', …)` calls in `event.html` / `admin-member.html`.

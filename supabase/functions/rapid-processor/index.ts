@@ -454,10 +454,6 @@ async function sendHareVolunteerEmail(opts: {
       subject,
       content: text,
       html,
-      mimeContent: [
-        { mimeType: "text/plain; charset=utf-8",                 content: text },
-        { mimeType: "text/html;  charset=utf-8; format=flowed",  content: html },
-      ],
       headers: {
         "List-Unsubscribe":      "<mailto:on-on@steelcityh3.org?subject=Unsubscribe%20me>",
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -465,7 +461,7 @@ async function sendHareVolunteerEmail(opts: {
       },
     });
   } catch (err) {
-    console.error("[rsvp-email] hare-notify SMTP send failed:", err);
+    console.error("[rapid-processor] hare-notify SMTP send failed:", err);
     return jsonResponse(500, { error: "smtp_send_failed", detail: String(err) });
   } finally {
     try { await client.close(); } catch (_) { /* ignore */ }
@@ -556,7 +552,7 @@ serve(async (req) => {
         });
       }
     } catch (snapErr) {
-      console.warn("[rsvp-email] debt snapshot failed (continuing with delete):", snapErr);
+      console.warn("[rapid-processor] debt snapshot failed (continuing with delete):", snapErr);
     }
 
     // Delete the auth.users row — cascade handles profiles → rsvps,
@@ -564,7 +560,7 @@ serve(async (req) => {
     // so the audit log survives but anonymises.
     const { error: delErr } = await supabase.auth.admin.deleteUser(targetUid);
     if (delErr) {
-      console.error("[rsvp-email] admin.deleteUser failed:", delErr);
+      console.error("[rapid-processor] admin.deleteUser failed:", delErr);
       return jsonResponse(500, { error: "delete_failed", detail: delErr.message });
     }
     return jsonResponse(200, { deleted: true, user_id: targetUid, self: isSelf });
@@ -675,7 +671,9 @@ serve(async (req) => {
     isCharityEvent:  !!event.is_charity_event,
   };
 
-  const html = buildEmailHtml(opts);
+  // Strip trailing whitespace per line so empty optional blocks don't leave
+  // indented blank lines that quoted-printable turns into "=20".
+  const html = buildEmailHtml(opts).replace(/[ \t]+$/gm, "");
   const text = buildEmailText(opts);
 
   const smtpHost = Deno.env.get("SMTP_HOST");
@@ -705,12 +703,11 @@ serve(async (req) => {
   });
 
   try {
-    // mimeContent forces denomailer to emit explicit multipart/alternative
-    // with both text/plain and text/html parts (mail-tester was flagging
-    // MIME_HTML_ONLY even though we passed `content` + `html`, suggesting
-    // the auto-MIME wasn't building the plain-text part properly). Custom
-    // headers add List-Unsubscribe so receiving filters recognise it as
-    // legitimate transactional mail.
+    // Pass content (plain text) + html and let denomailer build a proper
+    // multipart/alternative with the correct Content-Transfer-Encoding header
+    // on each part. (An earlier mimeContent override with `format=flowed` left
+    // the HTML part's quoted-printable undecodable — clients showed raw "=20".)
+    // List-Unsubscribe headers help filters recognise it as legit transactional mail.
     await client.send({
       from:    smtpFrom,
       to:      user.email,
@@ -719,10 +716,6 @@ serve(async (req) => {
         : `You're on-on for ${event.title}`,
       content: text,
       html,
-      mimeContent: [
-        { mimeType: "text/plain; charset=utf-8",                 content: text },
-        { mimeType: "text/html;  charset=utf-8; format=flowed",  content: html },
-      ],
       headers: {
         "List-Unsubscribe":      "<mailto:on-on@steelcityh3.org?subject=Unsubscribe%20me>",
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -730,7 +723,7 @@ serve(async (req) => {
       },
     });
   } catch (err) {
-    console.error("[rsvp-email] SMTP send failed:", err);
+    console.error("[rapid-processor] SMTP send failed:", err);
     return jsonResponse(500, { error: "smtp_send_failed", detail: String(err) });
   } finally {
     try { await client.close(); } catch (_) { /* ignore */ }
