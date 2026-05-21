@@ -8,10 +8,10 @@ search rankings yet (don't want randoms stumbling into the rubbish).
 
 **Before launch:** clear the test events / accounts / RSVPs so it's all real.
 
-**Optional now:** lock the whole site out of Google with a `noindex` header
-(Vercel `X-Robots-Tag: noindex` in `vercel.json`) — link previews to people you
-directly share with still work; only search engines are kept out. Remove it at
-launch. (Not yet applied — Adam to decide.)
+**✅ APPLIED:** the whole site is locked out of Google via `X-Robots-Tag: noindex, nofollow`
+in `vercel.json` (link previews to people you directly share with still work; only
+search engines are kept out). **➡️ Step 1 at launch: delete that `headers` block
+from `vercel.json`** so Google can index the real site.
 
 **At go-live, the SEO checklist (mostly easy wins for the niche "Sheffield hashing"):**
 1. **Google Search Console** — verify the domain, submit the sitemap, "Request indexing". (Biggest first step.)

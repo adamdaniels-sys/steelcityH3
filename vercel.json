@@ -4,5 +4,13 @@
   ],
   "functions": {
     "api/event.js": { "includeFiles": "event.html" }
-  }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
 }
