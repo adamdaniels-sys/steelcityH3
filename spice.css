@@ -2853,7 +2853,7 @@ a.onons-title:hover { color: var(--orange); }
   font-weight: 700;
   margin-top: 5px;
 }
-.att-controls { display: flex; align-items: center; gap: 8px; }
+.att-controls { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .att-paid-toggle {
   min-height: 48px;
   padding: 0 16px;
@@ -2873,16 +2873,24 @@ a.onons-title:hover { color: var(--orange); }
   color: var(--cream);
   box-shadow: 3px 3px 0 var(--ink);
 }
+/* Labelled money control: tiny caption stacked over the input so it's always
+   clear which box is the sub and which is the charity donation. */
 .att-amount-wrap {
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: 3px;
-  font-family: "Bangers", sans-serif;
-  font-size: 1.1rem;
-  color: var(--ink);
+}
+.att-cap {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 .att-amount {
-  width: 72px;
+  width: 92px;
   min-height: 48px;
   border: 3px solid var(--ink);
   background: var(--cream);
@@ -2894,6 +2902,10 @@ a.onons-title:hover { color: var(--orange); }
   text-align: right;
 }
 .att-amount:focus { outline: 3px solid var(--orange); outline-offset: 0; }
+/* Charity box is tinted red so it reads differently from the plain sub */
+.att-charity { border-color: var(--red); background: #fff4ee; }
+.att-charity:focus { outline-color: var(--red); }
+.att-cap-charity { color: var(--red); }
 .att-remove {
   min-height: 48px;
   min-width: 48px;
@@ -2965,12 +2977,25 @@ a.onons-title:hover { color: var(--orange); }
 }
 .att-add-check input { width: 20px; height: 20px; }
 
+/* Two/three-column form rows that collapse to one column on phones.
+   Used instead of inline grid styles so a media query can override them
+   (inline styles can't be — that was the cause of the mobile overlaps). */
+.field-grid-2,
+.field-grid-3 { display: grid; gap: 16px; }
+.field-grid-2 { grid-template-columns: 1fr 1fr; }
+.field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 600px) {
+  .field-grid-2,
+  .field-grid-3 { grid-template-columns: 1fr; }
+}
+
 /* ===== Tabbed event workflow (admin-event.html) ===== */
 .event-headline {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 12px 18px;
   margin-bottom: 16px;
 }
 .event-name-label {
@@ -2980,16 +3005,39 @@ a.onons-title:hover { color: var(--orange); }
   color: var(--ink);
   line-height: 1;
 }
-.status-chip {
+/* Status block sits hard-right, clearly labelled and large */
+.status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  margin-left: auto;
+}
+.status-caption {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 700;
-  padding: 6px 12px;
-  border: 2px solid var(--ink);
+  color: var(--ink-3);
+}
+.status-chip {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 400;
+  padding: 7px 18px;
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
   background: var(--cream-3);
   color: var(--ink);
+  line-height: 1;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .event-headline { flex-direction: column; align-items: flex-start; }
+  .status-wrap { align-items: flex-start; margin-left: 0; }
 }
 .status-chip.status-planning     { background: var(--cream-3); color: var(--ink-2); }
 .status-chip.status-hares_wanted { background: var(--red);     color: var(--cream); }
@@ -3030,6 +3078,8 @@ a.onons-title:hover { color: var(--orange); }
   cursor: not-allowed;
 }
 .event-tab:hover:not(.active):not(.locked) { background: var(--cream-3); }
+/* A step that's been completed shows a green tick (added in JS) */
+.event-tab.done:not(.active) { color: var(--green); }
 
 .admin-subsection {
   background: var(--cream-2);
@@ -3064,6 +3114,19 @@ a.onons-title:hover { color: var(--orange); }
 }
 @media (max-width: 600px) {
   .event-tab { font-size: 0.92rem; padding: 9px 11px; flex: 1 1 auto; text-align: center; }
+
+  /* Attendance roster: stack each row so nothing runs off a 380px screen.
+     Name on its own line; the paid toggle + money boxes wrap underneath
+     and fill the width so Smutley can tap them in the pub. */
+  .att-row { gap: 10px; }
+  .att-main { flex: 1 1 100%; }
+  .att-controls { width: 100%; gap: 8px; }
+  .att-paid-toggle { flex: 1 1 100%; }
+  .att-amount-wrap { flex: 1 1 auto; }
+  .att-amount { width: 100%; }
+  .att-remove { flex: 0 0 48px; align-self: flex-end; }
+  /* Admin sub-sections lose their big side padding on a phone */
+  .admin-subsection { padding: 16px 14px; }
 }
 
 /* Collapsible admin sections (Event details / RSVPs / Attendance) */

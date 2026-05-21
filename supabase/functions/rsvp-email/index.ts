@@ -104,7 +104,30 @@ function buildEmailHtml(opts: {
   guestsCount: number;
   amountPerHead: number;
   eventUrl: string;
+  status: "on_on" | "maybe";
+  whatsappLink: string;
 }): string {
+  const isMaybe = opts.status === "maybe";
+  const eyebrow = isMaybe ? "▸ You're a maybe" : "▸ You're on-on!";
+  const bigHeadline = isMaybe ? "Pencilled in," : "You're on-on,";
+  const introLead = isMaybe
+    ? "Cheers — we've pencilled you in for"
+    : "Right then — you're booked in for";
+  const introTail = isMaybe
+    ? " Flip to on-on on the page when you know for sure."
+    : "";
+  const shoesLine = opts.whatsappLink
+    ? "Wear shoes you don't love. Jump into the event WhatsApp group below to keep up with the plan."
+    : "Wear shoes you don't love. We'll add you to the event WhatsApp group nearer the time.";
+  const whatsappBlock = opts.whatsappLink ? `
+    <tr><td align="center" style="padding: 0 32px 24px;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td>
+        <a href="${escapeHtml(opts.whatsappLink)}" style="display: inline-block; background: #25d366; color: #0b3d1f; padding: 13px 26px; font-family: 'Bangers', 'Impact', sans-serif; font-size: 20px; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; border: 3px solid #15110a; box-shadow: 5px 5px 0 #15110a;">
+          ▸ Join the WhatsApp group
+        </a>
+      </td></tr></table>
+    </td></tr>
+  ` : "";
   const guestsBlock = opts.guestsCount > 0 ? `
     <tr><td style="padding: 0 32px 24px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffd23a; border: 3px solid #15110a; box-shadow: 4px 4px 0 #15110a;"><tr>
@@ -115,7 +138,7 @@ function buildEmailHtml(opts: {
           <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 14px; color: #3a2e1f; line-height: 1.5; font-weight: 600;">
             They're on your tab for subs — about
             <b>£${(opts.guestsCount * opts.amountPerHead).toFixed(2)}</b>
-            cash on the day, all to St Luke's. Plus your own £${opts.amountPerHead.toFixed(2)}.
+            cash on the day. Plus your own £${opts.amountPerHead.toFixed(2)}.
           </p>
         </td>
       </tr></table>
@@ -140,7 +163,7 @@ function buildEmailHtml(opts: {
 </head>
 <body style="background: #f4e5b8; margin: 0; padding: 0; font-family: 'Nunito', 'Segoe UI', Helvetica, Arial, sans-serif; color: #15110a;">
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    You're on-on for ${escapeHtml(opts.eventTitle)} — ${escapeHtml(opts.dateLong)}. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+    ${isMaybe ? "You're pencilled in for" : "You're on-on for"} ${escapeHtml(opts.eventTitle)} — ${escapeHtml(opts.dateLong)}. ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
   </div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f4e5b8; padding: 30px 12px;">
     <tr><td align="center">
@@ -152,7 +175,7 @@ function buildEmailHtml(opts: {
               Steel City H3
             </td>
             <td align="right" valign="middle" style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #ee5a17; font-weight: 700;">
-              ▸ You're on-on!
+              ${eyebrow}
             </td>
           </tr></table>
         </td></tr>
@@ -162,17 +185,17 @@ function buildEmailHtml(opts: {
 
             <tr><td align="center" style="padding: 40px 32px 12px;">
               <div style="font-family: 'Bangers', 'Impact', sans-serif; font-size: 48px; line-height: 0.92; letter-spacing: 0.025em; color: #15110a; text-transform: uppercase;">
-                You're on-on,<br/>
+                ${bigHeadline}<br/>
                 <span style="color: #ee5a17;">${escapeHtml(opts.greetingName)}!</span>
               </div>
             </td></tr>
 
             <tr><td align="center" style="padding: 8px 32px 22px;">
               <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #3a2e1f; line-height: 1.5;">
-                Right then — you're booked in for
+                ${introLead}
                 <b style="color: #15110a;">${escapeHtml(opts.eventTitle)}</b> on
                 <b style="color: #15110a;">${escapeHtml(opts.dateLong)}</b>
-                at <b style="color: #15110a;">${escapeHtml(opts.timeFriendly)}</b>.
+                at <b style="color: #15110a;">${escapeHtml(opts.timeFriendly)}</b>.${introTail}
               </p>
             </td></tr>
 
@@ -198,10 +221,11 @@ function buildEmailHtml(opts: {
 
             <tr><td style="padding: 0 32px 22px;">
               <p style="margin: 0; font-family: 'Nunito', Helvetica, Arial, sans-serif; font-size: 15px; color: #3a2e1f; line-height: 1.55; font-weight: 500;">
-                Wear shoes you don't love. We'll add you to the event WhatsApp
-                group nearer the time.
+                ${shoesLine}
               </p>
             </td></tr>
+
+            ${whatsappBlock}
 
             <tr><td align="center" style="padding: 0 32px 36px;">
               <table role="presentation" cellpadding="0" cellspacing="0"><tr>
@@ -249,20 +273,29 @@ function buildEmailText(opts: {
   guestsCount: number;
   amountPerHead: number;
   eventUrl: string;
+  status: "on_on" | "maybe";
+  whatsappLink: string;
 }): string {
   // Plain-text fallback for clients that don't render HTML
+  const isMaybe = opts.status === "maybe";
+  const lead = isMaybe
+    ? `Cheers, ${opts.greetingName} — we've pencilled you in for ${opts.eventTitle} on ${opts.dateLong} at ${opts.timeFriendly}. Flip to on-on on the page when you know for sure.`
+    : `Right then, ${opts.greetingName} — you're booked in for ${opts.eventTitle} on ${opts.dateLong} at ${opts.timeFriendly}.`;
   const guestsLine = opts.guestsCount > 0
-    ? `\nBringing: ${opts.guestsCount} hash virgin${opts.guestsCount === 1 ? "" : "s"}. They're on your tab for subs — about £${(opts.guestsCount * opts.amountPerHead).toFixed(2)} cash on the day, all to St Luke's. Plus your own £${opts.amountPerHead.toFixed(2)}.\n`
+    ? `\nBringing: ${opts.guestsCount} hash virgin${opts.guestsCount === 1 ? "" : "s"}. They're on your tab for subs — about £${(opts.guestsCount * opts.amountPerHead).toFixed(2)} cash on the day. Plus your own £${opts.amountPerHead.toFixed(2)}.\n`
     : "";
-  return `Right then, ${opts.greetingName} — you're booked in for ${opts.eventTitle} on ${opts.dateLong} at ${opts.timeFriendly}.
+  const whatsappLine = opts.whatsappLink
+    ? `\nJoin the event WhatsApp group: ${opts.whatsappLink}\n`
+    : "";
+  return `${lead}
 
 Where: ${opts.locationSummary}
 Hares: ${opts.hares}
 On-on: ${opts.onOnPub}
-${guestsLine}
-Wear shoes you don't love. We'll add you to the event WhatsApp group nearer the time.
+${guestsLine}${whatsappLine}
+Wear shoes you don't love.
 
-Can't make it after all? Update your on-on here: ${opts.eventUrl}
+Changed your mind? Update your on-on here: ${opts.eventUrl}
 
 On-on!
 Steel City H3`;
@@ -543,9 +576,12 @@ serve(async (req) => {
   if (!rsvpRes.data) {
     return jsonResponse(200, { skipped: true, reason: "no rsvp for this user+event" });
   }
-  if (rsvpRes.data.status !== "on_on") {
-    return jsonResponse(200, { skipped: true, reason: "rsvp not on_on" });
+  // Confirmation goes out for on_on AND maybe (both get the WhatsApp link so
+  // they can jump into the group early). not_this_time gets nothing.
+  if (rsvpRes.data.status !== "on_on" && rsvpRes.data.status !== "maybe") {
+    return jsonResponse(200, { skipped: true, reason: "rsvp not on_on/maybe" });
   }
+  const rsvpStatus = rsvpRes.data.status as "on_on" | "maybe";
   const guestsCount = rsvpRes.data.guests_count || 0;
 
   const [eventRes, profileRes] = await Promise.all([
@@ -586,6 +622,8 @@ serve(async (req) => {
     guestsCount,
     amountPerHead,
     eventUrl,
+    status:          rsvpStatus,
+    whatsappLink:    event.whatsapp_group_link || "",
   };
 
   const html = buildEmailHtml(opts);
@@ -627,7 +665,9 @@ serve(async (req) => {
     await client.send({
       from:    smtpFrom,
       to:      user.email,
-      subject: `You're on-on for ${event.title}`,
+      subject: rsvpStatus === "maybe"
+        ? `You're a maybe for ${event.title}`
+        : `You're on-on for ${event.title}`,
       content: text,
       html,
       mimeContent: [

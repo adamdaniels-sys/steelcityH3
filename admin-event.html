@@ -64,7 +64,10 @@
         <!-- Event name + status chip -->
         <div class="event-headline">
           <span class="event-name-label" id="event-name-label">NEW EVENT</span>
-          <span class="status-chip" id="status-chip">In Planning</span>
+          <div class="status-wrap">
+            <span class="status-caption">Status</span>
+            <span class="status-chip" id="status-chip">In Planning</span>
+          </div>
         </div>
 
         <!-- Workflow tabs -->
@@ -97,7 +100,7 @@
               <input type="text" id="title" name="title" required placeholder="e.g. October Hash" />
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="field-grid-2">
               <div class="auth-field">
                 <label for="event_date">Date</label>
                 <input type="date" id="event_date" name="event_date" required />
@@ -120,12 +123,12 @@
               <div class="profile-hint">Optional. The start point.</div>
             </div>
 
-            <div class="auth-field">
+            <div class="auth-field" id="pace-field">
               <label for="pace">Pace</label>
-              <input type="text" id="pace" name="pace" value="Walk or run" required placeholder="Walk or run, two pints an hour…" />
+              <input type="text" id="pace" name="pace" value="Walk or run" placeholder="Walk or run, two pints an hour…" />
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="field-grid-2">
               <div class="auth-field">
                 <label for="amount_per_head">Amount per head (£)</label>
                 <input type="number" id="amount_per_head" name="amount_per_head" step="0.01" min="0" value="3.50" required />
@@ -134,22 +137,37 @@
               <div class="profile-toggle" style="align-self: start; margin-top: 26px;">
                 <label class="label" for="is_charity_event">
                   Charity event?
-                  <span class="hint">Tick if you're collecting a donation for St Luke's on top.</span>
+                  <span class="hint">Tick if you're collecting a donation for a charity on top of the sub.</span>
                 </label>
                 <input type="checkbox" id="is_charity_event" name="is_charity_event" />
               </div>
             </div>
 
-            <div class="auth-field" id="charity-amount-wrap" hidden>
-              <label for="charity_amount_per_head">Charity donation per head (£)</label>
-              <input type="number" id="charity_amount_per_head" name="charity_amount_per_head" step="0.01" min="0" value="5.00" />
-              <div class="profile-hint">On top of the sub. e.g. £3.50 sub + £5 donation = £8.50 a head.</div>
+            <div id="charity-amount-wrap" hidden>
+              <div class="field-grid-2">
+                <div class="auth-field">
+                  <label for="charity_amount_per_head">Charity donation per head (£)</label>
+                  <input type="number" id="charity_amount_per_head" name="charity_amount_per_head" step="0.01" min="0" value="5.00" />
+                  <div class="profile-hint">On top of the sub. e.g. £3.50 sub + £5 donation = £8.50 a head.</div>
+                </div>
+                <div class="auth-field">
+                  <label for="charity_name">Which charity?</label>
+                  <input type="text" id="charity_name" name="charity_name" value="St Luke's Hospice" placeholder="e.g. St Luke's Hospice" />
+                  <div class="profile-hint">Named on the public "Raised £X for…" badge after the event.</div>
+                </div>
+              </div>
             </div>
 
             <div class="auth-field">
               <label for="description">Description / blurb</label>
               <input type="text" id="description" name="description" placeholder='e.g. "Sheffield month — Loxley pub crawl."' />
               <div class="profile-hint">Shows on the public event page. Optional.</div>
+            </div>
+
+            <div class="auth-field">
+              <label for="whatsapp_group_link">WhatsApp group invite link</label>
+              <input type="url" id="whatsapp_group_link" name="whatsapp_group_link" placeholder="https://chat.whatsapp.com/…" />
+              <div class="profile-hint">Make the group in WhatsApp → Invite via link → Copy, paste here. On-on and maybe members get a "Join the group" button on the event page and in their confirmation email — so set it early to round up hares.</div>
             </div>
 
             <div class="profile-actions" style="margin-top: 22px;">
@@ -182,7 +200,7 @@
             <table class="admin-table" id="attendees-table" hidden>
               <thead>
                 <tr>
-                  <th>Hash name</th><th>Real name</th><th>Phone</th>
+                  <th>Hash name</th><th>Real name</th><th>Kennel</th><th>Phone</th>
                   <th>Status</th><th>Guests</th><th>Total bodies</th>
                 </tr>
               </thead>
@@ -200,17 +218,14 @@
 
           <div class="admin-subsection">
             <h3 class="admin-section-heading">Spread the word</h3>
-            <div class="auth-field">
-              <label for="whatsapp_group_link">WhatsApp group invite link</label>
-              <input type="url" id="whatsapp_group_link" name="whatsapp_group_link" placeholder="https://chat.whatsapp.com/…" />
-              <div class="profile-hint">Make the group once in WhatsApp, tap the group → Invite via link → Copy, paste it here. On-on members get a "Join the WhatsApp group" button on the event page.</div>
+            <div class="profile-hint" id="whatsapp-status-hint" style="margin-bottom: 14px;">
+              The WhatsApp invite link is set on the <b>Event details</b> tab — on-on and maybe members get a Join button there and in their email.
             </div>
             <div class="admin-quick-actions" style="margin-bottom: 4px;">
-              <button class="btn cream" type="button" id="save-whatsapp-btn">▸ Save link</button>
               <button class="btn cream" type="button" id="copy-phones-btn">▸ Copy phone numbers</button>
               <button class="btn cream" type="button" id="export-csv-btn">▸ Export CSV</button>
             </div>
-            <div class="profile-hint">WhatsApp can't add numbers from a paste — use the invite link above. Copy is handy for saving contacts.</div>
+            <div class="profile-hint">WhatsApp can't add numbers from a paste — use the invite link. Copy is handy for saving contacts.</div>
           </div>
 
           <div class="admin-subsection" style="margin-top: 26px;">
@@ -252,9 +267,11 @@
               <div class="att-add-group">
                 <label class="att-add-label" for="add-walkup-label">Add a walk-up</label>
                 <div class="att-add-controls">
-                  <input type="text" id="add-walkup-label" class="att-add-input" placeholder="e.g. Visiting Manchester H3" />
+                  <input type="text" id="add-walkup-label" class="att-add-input" placeholder="Hash name (e.g. Tail Gunner)" />
+                  <input type="text" id="add-walkup-kennel" class="att-add-input" placeholder="Kennel (e.g. Manchester H3)" />
                   <button class="btn cream" type="button" id="add-walkup-btn">▸ Add</button>
                 </div>
+                <div class="profile-hint" style="margin-top: 6px;">A surprise visitor from another kennel. Kennel is optional.</div>
               </div>
             </div>
           </div>
@@ -272,7 +289,7 @@
               The write-up. Optional — it doesn't hold anything else up. Marking it "written up" just flags it as done in the events list.
             </p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div class="field-grid-3">
               <div class="auth-field">
                 <label for="distance_miles">Distance (miles)</label>
                 <input type="number" id="distance_miles" name="distance_miles" step="0.1" min="0" />
@@ -287,6 +304,12 @@
                 <input type="text" id="charity-collected-display" disabled value="—" />
                 <div class="profile-hint">From the roster.</div>
               </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="on_on_pub">On-on pub</label>
+              <input type="text" id="on_on_pub" name="on_on_pub" placeholder="e.g. The Old Queen's Head" />
+              <div class="profile-hint">Where you ended up. Kept secret before the event — shown on the write-up afterwards.</div>
             </div>
 
             <div class="auth-field">
@@ -374,11 +397,35 @@
     planning: 'In Planning', hares_wanted: 'Hares Needed', open: 'Open',
     ready: 'Ready to On-On', completed: 'Completed', closed: 'Cancelled',
   };
+  // Base tab labels — a green ✓ is appended when that step is done
+  const TAB_BASE = {
+    details: '1 · Event details',
+    whos:    "2 · Who's Cumming?",
+    ready:   '3 · Ready to On-On',
+    after:   '4 · After the event',
+  };
   // Which tabs are reachable at each status
   function tabsForStatus(s) {
     if (s === 'planning') return ['details'];
     if (s === 'ready' || s === 'completed') return ['details', 'whos', 'ready', 'after'];
     return ['details', 'whos']; // hares_wanted, open, closed
+  }
+  // Has this step been completed? (drives the ✓ on the tab)
+  function tabDone(key) {
+    const s = status();
+    if (key === 'details') return !!(originalEvent && originalEvent.id);
+    if (key === 'whos')    return ['open', 'ready', 'completed'].includes(s);
+    if (key === 'ready')   return s === 'completed';
+    if (key === 'after')   return !!originalEvent?.written_up;
+    return false;
+  }
+  function applyTabTicks() {
+    document.querySelectorAll('.event-tab').forEach((t) => {
+      const k = t.dataset.tab;
+      const done = tabDone(k);
+      t.textContent = (TAB_BASE[k] || t.textContent) + (done ? '  ✓' : '');
+      t.classList.toggle('done', done);
+    });
   }
 
   const params = new URLSearchParams(location.search);
@@ -429,6 +476,7 @@
       : '▸ Mark "Enough hares"';
 
     $('#danger-zone').hidden = isNew;
+    applyTabTicks();
   }
 
   function gotoCurrentTab() {
@@ -441,7 +489,10 @@
 
   function applyEventTypeUI() {
     const t = $('#event_type').value;
-    $('#run_number_label').textContent = t === 'meetup' ? 'Meet-up number' : 'Run number';
+    const isMeetup = t === 'meetup';
+    $('#run_number_label').textContent = isMeetup ? 'Meet-up number' : 'Run number';
+    // Pace is meaningless for a social meet-up — hide it
+    $('#pace-field').hidden = isMeetup;
   }
   function applyCharityUI() {
     const on = $('#is_charity_event').checked;
@@ -502,9 +553,11 @@
     $('#amount_per_head').value = data.amount_per_head ?? '3.50';
     $('#is_charity_event').checked = !!data.is_charity_event;
     $('#charity_amount_per_head').value = data.charity_amount_per_head ?? '5.00';
+    $('#charity_name').value = data.charity_name || "St Luke's Hospice";
     $('#description').value = data.description || '';
     $('#whatsapp_group_link').value = data.whatsapp_group_link || '';
     $('#distance_miles').value = data.distance_miles ?? '';
+    $('#on_on_pub').value = data.on_on_pub || '';
     $('#scribe_report_by').value = data.scribe_report_by || '';
     $('#scribe_report').value = data.scribe_report || '';
     $('#written_up').checked = !!data.written_up;
@@ -522,6 +575,8 @@
   // ---- Payloads ---------------------------------------------------------
 
   function detailsPayload() {
+    const isMeetup = $('#event_type').value === 'meetup';
+    const isCharityEvent = $('#is_charity_event').checked;
     return {
       event_type:       $('#event_type').value,
       run_number:       parseInt($('#run_number').value, 10),
@@ -530,10 +585,12 @@
       start_time:       $('#start_time').value || '12:00',
       location_summary: $('#location_summary').value.trim(),
       location_full:    $('#location_full').value.trim() || null,
-      pace:             $('#pace').value.trim() || 'Walk or run',
+      pace:             isMeetup ? null : ($('#pace').value.trim() || 'Walk or run'),
       amount_per_head:  parseFloat($('#amount_per_head').value) || 0,
-      is_charity_event: $('#is_charity_event').checked,
-      charity_amount_per_head: $('#is_charity_event').checked ? (parseFloat($('#charity_amount_per_head').value) || 0) : 0,
+      is_charity_event: isCharityEvent,
+      charity_amount_per_head: isCharityEvent ? (parseFloat($('#charity_amount_per_head').value) || 0) : 0,
+      charity_name:     isCharityEvent ? ($('#charity_name').value.trim() || "St Luke's Hospice") : null,
+      whatsapp_group_link: $('#whatsapp_group_link').value.trim() || null,
       description:      $('#description').value.trim() || null,
     };
   }
@@ -606,6 +663,7 @@
 
   async function toggleHareStatus() {
     if (!(await syncHares())) return;
+    await refreshAttendees(eventId);  // hares auto-RSVP on-on; removed hares drop off
     const next = status() === 'open' ? 'hares_wanted' : 'open';
     if (await setEventStatus(next)) { applyStatusUI(); showToast(next === 'open' ? 'Hares sorted — marked Open.' : 'Back to hares needed.', { kind: 'ok' }); }
   }
@@ -635,6 +693,7 @@
     const btn = $('#save-after-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Saving…';
     const body = {
       distance_miles: $('#distance_miles').value !== '' ? parseFloat($('#distance_miles').value) : null,
+      on_on_pub: $('#on_on_pub').value.trim() || null,
       scribe_report_by: $('#scribe_report_by').value.trim() || null,
       scribe_report: $('#scribe_report').value.trim() || null,
       written_up: $('#written_up').checked,
@@ -646,19 +705,11 @@
     showToast('Write-up saved.', { kind: 'ok' });
   }
 
-  async function saveWhatsapp() {
-    const link = $('#whatsapp_group_link').value.trim() || null;
-    const { data, error } = await supabase.from('events').update({ whatsapp_group_link: link }).eq('id', eventId).select().single();
-    if (error) { showToast("Couldn't save the link.", { kind: 'error' }); return; }
-    originalEvent = data;
-    showToast('WhatsApp link saved.', { kind: 'ok' });
-  }
-
   // ---- RSVPs (who's planning to come) -----------------------------------
 
   async function refreshAttendees(id) {
     const { data, error } = await supabase.from('rsvps')
-      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone)')
+      .select('id, status, guests_count, profile:profiles(id, hash_name, real_name, phone, kennel_name)')
       .eq('event_id', id);
     if (error) { console.warn('[admin-event] rsvp fetch failed:', error); return; }
     currentAttendees = (data || []).filter((r) => r.profile);
@@ -676,11 +727,14 @@
       const p = r.profile, guests = r.guests_count || 0, total = 1 + guests;
       if (r.status === 'on_on') onOnTotal += total;
       if (r.status === 'maybe') maybeTotal += total;
+      const isHare = initialHareIds.includes(p.id);
+      const statusText = escapeHtml(r.status.replace('_', ' ')) + (isHare ? ' · 🐇 hare' : '');
       return `<tr>
         <td data-label="Hash name">${escapeHtml(p.hash_name || '—')}</td>
         <td data-label="Real name">${escapeHtml(p.real_name || '—')}</td>
+        <td data-label="Kennel">${escapeHtml(p.kennel_name || '—')}</td>
         <td data-label="Phone">${escapeHtml(p.phone || '—')}</td>
-        <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
+        <td data-label="Status"><b>${statusText}</b></td>
         <td data-label="Guests">${guests}</td>
         <td data-label="Total bodies">${total}</td>
       </tr>`;
@@ -744,15 +798,21 @@
   }
 
   function rosterSubtext(row) {
+    let base;
     if (row.user_id) {
-      if (row.rsvp_status === 'on_on') return "RSVP'd on-on";
-      if (row.rsvp_status === 'maybe') return "RSVP'd maybe";
-      if (row.rsvp_status === 'not_this_time') return "RSVP'd: can't make it";
-      return 'Walk-up';
+      if (row.rsvp_status === 'on_on') base = "RSVP'd on-on";
+      else if (row.rsvp_status === 'maybe') base = "RSVP'd maybe";
+      else if (row.rsvp_status === 'not_this_time') base = "RSVP'd: can't make it";
+      else base = 'Walk-up';
+    } else if (row.host_name) {
+      base = `Plus-one of ${row.host_name}`;
+    } else if (row.is_virgin_guest) {
+      base = 'Plus-one (hash virgin)';
+    } else {
+      base = 'Walk-up';
     }
-    if (row.host_name) return `Plus-one of ${row.host_name}`;
-    if (row.is_virgin_guest) return 'Plus-one (hash virgin)';
-    return 'Walk-up';
+    if (row.kennel_name && String(row.kennel_name).trim()) base += ` · ${String(row.kennel_name).trim()}`;
+    return base;
   }
 
   function renderRoster() {
@@ -762,7 +822,10 @@
       $('#roster-empty').hidden = true;
       list.innerHTML = roster.map((row) => {
         const charityField = isCharity
-          ? `<span class="att-amount-wrap" title="Charity portion">♥£<input class="att-charity" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.charity_amount)}" data-id="${row.id}" aria-label="Charity amount" /></span>`
+          ? `<span class="att-amount-wrap" title="Charity portion">
+               <span class="att-cap att-cap-charity">♥ Charity £</span>
+               <input class="att-amount att-charity" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.charity_amount)}" data-id="${row.id}" aria-label="Charity amount" />
+             </span>`
           : '';
         return `
         <div class="att-row ${row.paid ? 'is-paid' : ''}" data-id="${row.id}">
@@ -772,7 +835,10 @@
           </div>
           <div class="att-controls">
             <button class="att-paid-toggle" type="button" aria-pressed="${row.paid ? 'true' : 'false'}" data-id="${row.id}">${row.paid ? '✓ Paid' : '✗ Unpaid'}</button>
-            <span class="att-amount-wrap" title="Total paid">£<input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" /></span>
+            <span class="att-amount-wrap" title="Total paid">
+              <span class="att-cap">Total £</span>
+              <input class="att-amount" type="number" step="0.01" min="0" inputmode="decimal" value="${money(row.amount_paid)}" data-id="${row.id}" aria-label="Amount paid" />
+            </span>
             ${charityField}
             <button class="att-remove" type="button" title="Remove from roster" data-id="${row.id}">✕</button>
           </div>
@@ -868,10 +934,11 @@
   }
   async function addRosterWalkup() {
     const label = $('#add-walkup-label').value.trim();
-    if (!label) { showToast('Give the walk-up a label first.', { kind: 'error' }); return; }
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: false, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
+    const kennel = $('#add-walkup-kennel').value.trim() || null;
+    if (!label) { showToast('Give the walk-up a hash name first.', { kind: 'error' }); return; }
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, amount_paid: amountPerHead + charityPerHead, charity_amount: charityPerHead, paid: false });
     if (error) { showToast(error.message || "Couldn't add that walk-up.", { kind: 'error' }); return; }
-    $('#add-walkup-label').value = '';
+    $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = '';
     await reloadRoster();
   }
 
@@ -895,7 +962,6 @@
   $('#save-onon-btn').addEventListener('click', saveOnOn);
   $('#save-complete-btn').addEventListener('click', saveComplete);
   $('#save-after-btn').addEventListener('click', saveAfter);
-  $('#save-whatsapp-btn').addEventListener('click', saveWhatsapp);
   $('#copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
   $('#export-csv-btn').addEventListener('click', exportCsv);
   $('#cancel-event-btn').addEventListener('click', cancelEvent);

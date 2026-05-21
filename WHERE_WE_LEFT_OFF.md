@@ -1,6 +1,14 @@
 # Where we left off — Steel City H3
 
-_Last updated: 2026-05-20 (end of session)_
+_Last updated: 2026-05-21 (test-pass fixes)_
+
+## ⚡ Before this round goes live — two manual steps
+1. **Run `0015_event_feedback_round.sql`** in the Supabase SQL Editor. The new
+   code saves `charity_name`, walk-up `attendee_kennel`, and the `via_hare`
+   flag — saving an event will error until this migration is in.
+2. **Redeploy the `rapid-processor` Edge Function** (its source lives in
+   `supabase/functions/rsvp-email/index.ts`) so confirmation emails carry the
+   WhatsApp link and Maybe RSVPs get one too.
 
 ## State of play
 
@@ -11,7 +19,21 @@ you're happy with the site.
 ### Migrations (run in the Supabase SQL editor)
 - **0001–0012** — run ✅ (auth, profiles, events, RSVPs, attendance, leaderboards, etc.)
 - **0013_phase4_finalise_historical.sql** — _optional, probably not run yet._ Marks the seeded historical events (#13–17) as finalised so the old **£282.15** shows in the public/lifetime charity totals. Run it only if you want that historical figure displayed.
-- **0014_phase4_workflow_charity.sql** — run ✅ (this session). New statuses, event type, charity model, kennel name, WhatsApp link, written-up flag.
+- **0014_phase4_workflow_charity.sql** — run ✅. New statuses, event type, charity model, kennel name, WhatsApp link, written-up flag.
+- **0015_event_feedback_round.sql** — _NEEDS RUNNING._ Test-pass fixes: `rsvps.via_hare` (+ hare-delete trigger so removing a hare clears the RSVP it created), `events.charity_name`, `event_attendances.attendee_kennel`, and the roster RPC returns kennel.
+
+## Round 2 — test-pass fixes (2026-05-21)
+From Adam's run-through of TEST_SCRIPT.md:
+- **Status** is now labelled "Status", right-aligned and large on the event page.
+- **Pace** is hidden for Meet-ups (admin form + public page).
+- **Charity name** field added (not always St Luke's) → shows on the public "Raised £X for…" badge.
+- **Tabs get a green ✓** as each step is completed.
+- **Hare logic**: removing a hare now clears the auto-created "coming" RSVP (only the auto-created one — a member's own RSVP is left alone). The Who's-coming table shows a 🐇 marker and a **Kennel** column, and refreshes when hares change.
+- **WhatsApp link moved to Tab 1** (Event details) so it can be set early; it now goes in the **confirmation email** and shows on the event page for **on-on _and_ maybe** members. **Maybe RSVPs now get a confirmation email too.**
+- **Charity roster boxes** are themed (red-tinted), bigger, and captioned ("Total £" / "♥ Charity £").
+- **Walk-ups** can record a **hash name + kennel**.
+- **On-on pub** field added to Tab 4 — private before the event, shown on the past write-up.
+- **Mobile**: form rows (date/time, charity, after-event money) and the roster now stack instead of overflowing on a phone.
 
 ## What changed this session (all committed + deployed)
 

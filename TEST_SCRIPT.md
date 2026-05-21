@@ -102,6 +102,42 @@ Admin → Manage events → **Schedule next hash**.
 
 ---
 
+## I. Round 2 — your test-pass feedback (re-test these)
+
+> First: run `0015_event_feedback_round.sql` and redeploy the `rapid-processor`
+> Edge Function (see WHERE_WE_LEFT_OFF.md). Then hard-refresh.
+
+**Event details (Tab 1)**
+- [ ] The **Status** is labelled "Status", sits top-right, and is big/clear.
+- [ ] Set type to **Meet-up** → the **Pace** field disappears (and is gone on the public page too).
+- [ ] Tick **Charity event?** → both **Charity per head** and **Which charity?** appear.
+- [ ] The **WhatsApp invite link** field is now here (not Tab 3); it saves with the event.
+- [ ] After **Save & invite**, **Tab 1 shows a green ✓**. Each later step ticks as you finish it.
+
+**Who's Cumming (Tab 2)**
+- [ ] Add a member as a hare → they appear in the list with a **🐇 hare** marker and their **Kennel** column.
+- [ ] **Remove that hare** → if they hadn't RSVP'd themselves, they **drop off** the coming list (no more phantom).
+- [ ] A member who RSVP'd on-on themselves **stays** even if you add/remove them as a hare.
+
+**Ready to On-On (Tab 3)**
+- [ ] Charity box is **red-tinted, bigger**, with **"Total £" / "♥ Charity £"** captions above each box.
+- [ ] **Add a walk-up** → you can enter a **hash name + kennel**; the kennel shows under their name.
+
+**After the event (Tab 4) + public page**
+- [ ] **On-on pub** field is here. It's hidden on the public page before the event, and **shows on the write-up** once completed.
+- [ ] Completed charity event's public badge reads **"Raised £X for <your charity>"** (not always St Luke's).
+
+**Email + WhatsApp**
+- [ ] RSVP **On-on** → confirmation email arrives **with a "Join the WhatsApp group" button** (if a link is set).
+- [ ] RSVP **Maybe** → you now also get a confirmation email (with the link).
+- [ ] On the event page, the **Join WhatsApp** button shows for both **on-on and maybe**.
+
+**Mobile**
+- [ ] Tab 1 date/time, charity fields, and Tab 4 money no longer **run off the screen**.
+- [ ] Tab 3 roster rows **stack** — paid toggle + amount + charity each tappable, nothing overlaps.
+
+---
+
 ## Found a bug?
 Jot the page + what you did + what you expected, and we'll fix it. The most
 likely rough edges are in the brand-new tabbed event page (Section B).
