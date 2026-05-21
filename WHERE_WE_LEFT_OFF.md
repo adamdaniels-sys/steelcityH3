@@ -9,8 +9,9 @@ _Last updated: 2026-05-21 (test-pass fixes)_
   `vercel.json` + `api/event.js` automatically). After it deploys, **verify once**:
   open `https://steelcityh3.org/event/<an-id>` and check the page source has the
   event's title in `og:title` (or paste the link into Facebook's Sharing
-  Debugger). The og:image is the square logo for now — dropping a 1200×630
-  `og-cover.jpg` in the repo + pointing the tags at it would give a bigger card.
+  Debugger). The og:image is a themed **1200×630 `og-cover.jpg`** (full badge on
+  the cream/orange rivet backdrop) — regenerate it from the logo with `sharp` if
+  the branding ever changes.
 
 ## Round 4 — shareable link previews (2026-05-21)
 Mass-emailing the 200 contacts is **on hold** — first promote the site and get
