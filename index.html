@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Steel City H3 — Sheffield's daftest hash</title>
 <meta name="description" content="Steel City Hash House Harriers — Sheffield's youngest hash. Third Saturday of every month, high noon. A drinking club with a running problem." />
+<!-- Link previews (Facebook / WhatsApp / Twitter) -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Steel City H3" />
+<meta property="og:title" content="Steel City H3 — Sheffield Hash House Harriers" />
+<meta property="og:description" content="A drinking club with a running problem. Sign up, RSVP for the next hash, and join the newsletter so you don't miss anything." />
+<meta property="og:image" content="https://steelcityh3.org/logo-original.jpg" />
+<meta property="og:url" content="https://steelcityh3.org/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Steel City H3 — Sheffield Hash House Harriers" />
+<meta name="twitter:description" content="A drinking club with a running problem. Sign up and RSVP for the next hash." />
+<meta name="twitter:image" content="https://steelcityh3.org/logo-original.jpg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
@@ -498,7 +509,7 @@
     const haresStr = composeHaresStringForCard(ev, hareRows);
 
     return `
-      <a class="panel ev ${colorClass}${badge.warn ? ' warn' : ''}" href="event.html?id=${ev.id}" style="text-decoration:none;color:inherit;display:block;">
+      <a class="panel ev ${colorClass}${badge.warn ? ' warn' : ''}" href="/event/${ev.id}" style="text-decoration:none;color:inherit;display:block;">
         <span class="issue">▸ Run #${ev.run_number}</span>
         ${renderPersonal(myRsvp, isHare)}
         <div class="date-row">
@@ -539,7 +550,7 @@
       ? ` · £${Number(ev.charity_raised).toFixed(2)} raised` : '';
     const meta = `${dateStr} · ${hareLabel}: ${escapeHtml(ev.hares || 'TBC')} · ${escapeHtml(ev.location_summary || '')}${charity}`;
     return `
-      <a class="past-row" href="event.html?id=${ev.id}">
+      <a class="past-row" href="/event/${ev.id}">
         <div class="pn">#${ev.run_number}</div>
         <div>
           <h4>${escapeHtml(ev.title)}</h4>

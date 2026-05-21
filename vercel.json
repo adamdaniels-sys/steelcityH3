@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/event/:id", "destination": "/api/event?id=:id" }
+  ],
+  "functions": {
+    "api/event.js": { "includeFiles": "event.html" }
+  }
+}

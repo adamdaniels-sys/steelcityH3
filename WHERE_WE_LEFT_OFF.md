@@ -2,15 +2,33 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
-## ⚡ Before the latest round goes live
-**Run `0016_meals_accommodation.sql`** in the Supabase SQL Editor. It adds the
-meal/accommodation columns and **tightens `rsvps` read access** (dietary needs
-are sensitive, so RSVPs are no longer world-readable — own + admin only; public
-displays already use the definer RPCs, so nothing breaks). Saving an event or
-RSVP will error until it's in.
+## ⚡ Status of recent rounds
+- Migrations **0015 + 0016** are run; `rapid-processor` redeployed for the
+  WhatsApp/Maybe-email round. All live.
+- **Link-previews round needs no migration** — just the git push (Vercel picks up
+  `vercel.json` + `api/event.js` automatically). After it deploys, **verify once**:
+  open `https://steelcityh3.org/event/<an-id>` and check the page source has the
+  event's title in `og:title` (or paste the link into Facebook's Sharing
+  Debugger). The og:image is the square logo for now — dropping a 1200×630
+  `og-cover.jpg` in the repo + pointing the tags at it would give a bigger card.
 
-_(Already done earlier: migration 0015 + the `rapid-processor` redeploy for the
-WhatsApp-in-email / Maybe-email round.)_
+## Round 4 — shareable link previews (2026-05-21)
+Mass-emailing the 200 contacts is **on hold** — first promote the site and get
+people to **sign up** (Queen Myrtle to post in the FB group daily: "new website,
+all RSVPs here now, sign up to the newsletter"). Single source of truth: Facebook
+posts **link to the event**, they're not a second RSVP venue.
+
+To make those posted links look good:
+- New route **`/event/:id`** (served by `api/event.js`, a dependency-free Vercel
+  function) returns the event page with **per-event Open Graph tags** (title,
+  date, where) so Facebook/WhatsApp show a proper card. `/event.html?id=` still
+  works as a fallback (generic preview).
+- A **"Share / copy link"** button on every event page hands over the `/event/:id`
+  URL (native share sheet, or copies to clipboard).
+- Homepage, My On-Ons and admin links now point at `/event/:id`; the homepage has
+  static OG tags too.
+- **Note:** because `/event/:id` has a path segment, `event.html`'s assets were
+  switched to root-absolute (`/spice.css`, `/auth.js`, `/logo-original.jpg`).
 
 ## State of play
 

@@ -233,7 +233,7 @@
               <tr>
                 <td data-label="Run"><b>#${r.run_number}</b></td>
                 <td data-label="Date">${formatShortDate(r.event_date)}</td>
-                <td data-label="Event"><a href="/event.html?id=${r.event_id}">${escapeHtml(r.title)}</a></td>
+                <td data-label="Event"><a href="/event/${r.event_id}">${escapeHtml(r.title)}</a></td>
                 <td data-label="Status"><b>${escapeHtml(r.status.replace('_', ' '))}</b></td>
                 <td data-label="Guests">${r.guests_count || 0}</td>
               </tr>

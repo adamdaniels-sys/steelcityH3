@@ -4,10 +4,23 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Steel City H3 — Hash detail</title>
+<!-- OG_BLOCK_START — replaced per-event by /api/event (served at /event/:id) for rich link previews -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Steel City H3" />
+<meta property="og:title" content="Steel City H3 — Sheffield Hash House Harriers" />
+<meta property="og:description" content="A drinking club with a running problem. Find the next hash and RSVP." />
+<meta property="og:image" content="https://steelcityh3.org/logo-original.jpg" />
+<meta property="og:url" content="https://steelcityh3.org/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Steel City H3 — Sheffield Hash House Harriers" />
+<meta name="twitter:description" content="A drinking club with a running problem. Find the next hash and RSVP." />
+<meta name="twitter:image" content="https://steelcityh3.org/logo-original.jpg" />
+<!-- OG_BLOCK_END -->
+<!-- SCH3_EVENT_ID -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="spice.css" />
+<link rel="stylesheet" href="/spice.css" />
 </head>
 <body>
 
@@ -16,7 +29,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <a href="/" class="brand" style="text-decoration: none; color: inherit;">
-      <img src="logo-original.jpg" alt="" />
+      <img src="/logo-original.jpg" alt="" />
       Steel City H3
     </a>
     <nav>
@@ -73,6 +86,9 @@
             </dl>
             <button class="btn cream" type="button" id="add-to-cal" hidden style="margin-top: 22px;">
               ▸ Add to calendar
+            </button>
+            <button class="btn cream" type="button" id="share-btn" style="margin-top: 12px;">
+              ▸ Share / copy link
             </button>
             <div class="charity-badge" id="charity-badge" hidden>
               💷 Raised <b>£<span id="charity-badge-amt">0</span></b> for <span id="charity-badge-name">St Luke's Hospice</span> on this hash. Thank you, hounds.
@@ -221,7 +237,7 @@
 </footer>
 
 <script type="module">
-  import { supabase, getSession, isAdmin, showToast } from './auth.js';
+  import { supabase, getSession, isAdmin, showToast } from '/auth.js';
 
   const WEEKDAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -268,7 +284,13 @@
 
   function getQueryId() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    const q = params.get('id');
+    if (q) return q;
+    // Served at /event/:id (the rich-preview route) — id is injected by the
+    // function and/or available in the path.
+    if (window.__SCH3_EVENT_ID__) return String(window.__SCH3_EVENT_ID__);
+    const m = window.location.pathname.match(/\/event\/(\d+)/);
+    return m ? m[1] : null;
   }
 
   function showNotFound() {
@@ -382,6 +404,9 @@
 
     // ---- Attendee list (Phase 2 chunk 3) ----
     await refreshAttendeeList(ev, isPast);
+
+    // ---- Share button (everyone) ----
+    setupShare(ev);
 
     // ---- Admin pencil (Phase 3) ----
     initAdminPencil(ev, isPast);
@@ -879,6 +904,27 @@
     return 'TBC';
   }
 
+  function setupShare(ev) {
+    const btn = document.getElementById('share-btn');
+    if (!btn) return;
+    const runLabel = ev.event_type === 'meetup' ? `Meet-up #${ev.run_number}` : `Run #${ev.run_number}`;
+    // The /event/:id route is the one with rich Facebook/WhatsApp previews.
+    const url = `${location.origin}/event/${ev.id}`;
+    btn.addEventListener('click', async () => {
+      const shareData = { title: `Steel City H3 — ${ev.title}`, text: `${runLabel} · ${formatLongDate(ev.event_date)}`, url };
+      if (navigator.share) {
+        try { await navigator.share(shareData); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; /* else fall through to copy */ }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Link copied — paste it into your Facebook post.', { kind: 'ok' });
+      } catch {
+        window.prompt('Copy this link:', url);
+      }
+    });
+  }
+
   async function initAdminPencil(ev, isPast) {
     if (isPast && ev.status !== 'completed') return;
     const admin = await isAdmin();
@@ -1086,7 +1132,7 @@
     const dtstart = icsLocalDateTime(ev.event_date, startTime);
     const end = addHoursToLocal(ev.event_date, startTime, 3);
     const dtend = icsLocalDateTime(end.date, end.time);
-    const eventUrl = `${location.origin}/event.html?id=${ev.id}`;
+    const eventUrl = `${location.origin}/event/${ev.id}`;
 
     const descParts = [];
     if (ev.description) descParts.push(ev.description);

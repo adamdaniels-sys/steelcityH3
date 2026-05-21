@@ -158,7 +158,7 @@
           <div class="m">${MONTHS_FULL[parseDate(ev.event_date).getUTCMonth()]}</div>
         </div>
         <div class="onons-body">
-          <a class="onons-title" href="/event.html?id=${ev.id}">
+          <a class="onons-title" href="/event/${ev.id}">
             Run #${ev.run_number} · ${escapeHtml(ev.title)}
           </a>
           <div class="onons-meta">
@@ -183,7 +183,7 @@
       ? `<span class="hare-stick" title="You hared this one">▸ Hared</span>`
       : '';
     return `
-      <a class="onons-row onons-row-past" href="/event.html?id=${ev.id}">
+      <a class="onons-row onons-row-past" href="/event/${ev.id}">
         <div class="onons-date">
           <div class="d">${parseDate(ev.event_date).getUTCDate()}</div>
           <div class="m">${MONTHS_FULL[parseDate(ev.event_date).getUTCMonth()]}</div>
