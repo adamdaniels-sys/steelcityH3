@@ -3054,6 +3054,9 @@ a.onons-title:hover { color: var(--orange); }
   border-bottom: 4px solid var(--ink);
 }
 .event-tab {
+  flex: 1 1 0;          /* tabs share the full width — tab 4 reaches the right
+                           edge so the right-aligned status sits above it */
+  text-align: center;
   font-family: "Bangers", sans-serif;
   font-size: 1.05rem;
   letter-spacing: 0.03em;
