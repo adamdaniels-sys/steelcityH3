@@ -2,13 +2,29 @@
 
 _Last updated: 2026-05-21 (test-pass fixes)_
 
-## ⚡ Do these for the latest round (debt tracking)
-1. **Run `0018_debt_tracking.sql`** (debt-query RPCs + the `orphaned_debts` table).
-2. **Re-deploy `rapid-processor`** from the CURRENT `supabase/functions/rsvp-email/index.ts`
-   — this round adds a debt snapshot on account deletion (and still carries the
-   charity-name + WhatsApp-link fixes, which the live function may still be missing).
+## ⚡ Do these now (see STEP_BY_STEP.md for the full walk-through)
+1. **Run `0018_debt_tracking.sql`** (debt RPCs + `orphaned_debts` table).
+2. **Run `0019_legacy_attendees_merge.sql`** (legacy attendees + merge + metrics).
+3. **Re-deploy `rapid-processor`** from `supabase/functions/rsvp-email/index.ts`
+   (debt-snapshot-on-delete + the charity-name/WhatsApp email fixes — the live
+   function appears to still be stale, so double-check the deploy lands).
 
-_(Migration 0017 was already run.)_
+_(Migration 0017 already run.)_
+
+## Round 7 — legacy attendees + merge (2026-05-21)
+Backfill the people who came before the website + merge them into real accounts.
+- **Add a past attendee (legacy)** box on a past event's attendance tab — enter
+  Hash name (+ Kennel). Stored as £0, paid, "Past member (legacy)" — counts in
+  metrics, never shows as owing.
+- New **Legacy attendees** admin page (dashboard quick action) lists each legacy
+  name, their kennel, # past events, and whether a matching account has signed up.
+- When it has, a **Merge into account** button reattaches all their backfilled
+  attendances to the real account — so the Hall of Fame shows ONE person.
+- **Top Hounds** now counts distinct past events *attended* (RSVPs + attendance
+  rows incl. legacy), which is what makes legacy folk show up and merge cleanly.
+
+**That clears the whole feature backlog.** Remaining nice-to-have (not built):
+re-matching an orphaned debt to a returning member (would live on the Legacy page).
 
 ## Round 6 — debt / outstanding-money tracking (2026-05-21)
 A debt = someone on a **completed** event's roster who isn't ticked **Paid** (the

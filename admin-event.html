@@ -304,6 +304,15 @@
                 </div>
                 <div class="profile-hint" style="margin-top: 6px;">A surprise visitor from another kennel. Kennel is optional.</div>
               </div>
+              <div class="att-add-group" id="add-legacy-group" hidden>
+                <label class="att-add-label" for="add-legacy-label">Add a past attendee (legacy)</label>
+                <div class="att-add-controls">
+                  <input type="text" id="add-legacy-label" class="att-add-input" placeholder="Hash name" />
+                  <input type="text" id="add-legacy-kennel" class="att-add-input" placeholder="Kennel (optional)" />
+                  <button class="btn cream" type="button" id="add-legacy-btn">▸ Add</button>
+                </div>
+                <div class="profile-hint" style="margin-top: 6px;">Backfill someone who came before the site. Counts in metrics; merge into their account from the <b>Legacy attendees</b> page when they sign up.</div>
+              </div>
             </div>
           </div>
 
@@ -852,6 +861,9 @@
     $('#stat-charity-card').hidden = !isCharity;
     $('#stat-keep-card').hidden = !isCharity;
     $('#money-split-hint').hidden = !isCharity;
+    // Legacy backfill only makes sense for events that have already happened
+    const todayISO = new Date().toISOString().slice(0, 10);
+    $('#add-legacy-group').hidden = !(originalEvent.event_date < todayISO);
 
     if (allMembers.length === 0) {
       const { data: mem } = await supabase.from('profiles').select('id, hash_name, real_name')
@@ -871,7 +883,9 @@
 
   function rosterSubtext(row) {
     let base;
-    if (row.user_id) {
+    if (row.is_legacy && !row.user_id) {
+      base = 'Past member (legacy)';
+    } else if (row.user_id) {
       if (row.rsvp_status === 'on_on') base = "RSVP'd on-on";
       else if (row.rsvp_status === 'maybe') base = "RSVP'd maybe";
       else if (row.rsvp_status === 'not_this_time') base = "RSVP'd: can't make it";
@@ -1023,6 +1037,16 @@
     $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = '';
     await reloadRoster();
   }
+  async function addRosterLegacy() {
+    const label = $('#add-legacy-label').value.trim();
+    const kennel = $('#add-legacy-kennel').value.trim() || null;
+    if (!label) { showToast('Enter their hash name first.', { kind: 'error' }); return; }
+    // Historical backfill: counts for attendance, no money tracked, no debt.
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, is_legacy: true, amount_paid: 0, charity_amount: 0, paid: true });
+    if (error) { showToast(error.message || "Couldn't add that name.", { kind: 'error' }); return; }
+    $('#add-legacy-label').value = ''; $('#add-legacy-kennel').value = '';
+    await reloadRoster();
+  }
 
   // ---- Cancel / delete --------------------------------------------------
 
@@ -1059,6 +1083,7 @@
   $('#add-member-btn').addEventListener('click', addRosterMember);
   $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
   $('#add-walkup-btn').addEventListener('click', addRosterWalkup);
+  $('#add-legacy-btn').addEventListener('click', addRosterLegacy);
 
   // Delete modal
   $('#delete-event-btn').addEventListener('click', () => { $('#delete-confirm-input').value = ''; $('#delete-confirm-btn').disabled = true; $('#delete-modal').hidden = false; setTimeout(() => $('#delete-confirm-input').focus(), 50); });

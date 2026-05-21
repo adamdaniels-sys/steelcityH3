@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Admin — Legacy attendees — Steel City H3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="spice.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="brand" style="text-decoration: none; color: inherit;">
+      <img src="logo-original.jpg" alt="" />
+      Steel City H3
+    </a>
+    <nav>
+      <a href="/#events">Coming up</a>
+      <a href="/admin.html" class="admin-active">Admin</a>
+    </nav>
+    <a href="/login.html" class="login-chip" id="login-chip">
+      <span class="av" id="login-av">?</span>
+      <span id="login-name">Sign in</span>
+    </a>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="container">
+    <a href="/">Home</a>
+    <span class="sep">▸</span>
+    <a href="/admin.html">Admin</a>
+    <span class="sep">▸</span>
+    <span>Legacy attendees</span>
+  </div>
+</div>
+
+<main id="main">
+  <section class="sec" style="padding-top: 40px;">
+    <div class="container">
+
+      <div class="sec-head">
+        <div>
+          <span class="sec-num">/ Admin · Legacy</span>
+          <h2 class="sec-title">Legacy <span class="or">attendees</span></h2>
+        </div>
+        <p class="sec-lede">People you've backfilled onto past events. When one signs up, merge their history into the real account so the metrics show one person, not two.</p>
+      </div>
+
+      <div id="admin-loading" class="auth-loading">
+        <h1>Loading…</h1>
+      </div>
+
+      <div id="admin-content" hidden>
+
+        <p class="profile-hint" style="margin-bottom: 16px;">
+          Add legacy attendees from a past event's <b>attendance</b> tab (the "Add a past attendee" box). They appear here grouped by hash name.
+        </p>
+
+        <table class="admin-table" id="legacy-table" hidden>
+          <thead>
+            <tr>
+              <th>Hash name</th>
+              <th>Kennel</th>
+              <th>Past events</th>
+              <th>Matching account</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="legacy-tbody"></tbody>
+        </table>
+
+        <div id="legacy-empty" hidden style="padding: 30px 0; font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-3);">
+          No legacy attendees yet. Add them from a past event's attendance tab.
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="big">ON-ON<span class="yel">·H3!</span></div>
+    <div class="meta">Steel City H3 · Sheffield · Year 1 · Find us on Facebook</div>
+  </div>
+</footer>
+
+<script type="module">
+  import { supabase, requireAdmin, showToast } from './auth.js';
+
+  const $ = (s) => document.querySelector(s);
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function render(rows) {
+    const tbody = $('#legacy-tbody');
+    const table = $('#legacy-table');
+    const empty = $('#legacy-empty');
+    if (!rows.length) { table.hidden = true; empty.hidden = false; return; }
+    table.hidden = false; empty.hidden = true;
+
+    tbody.innerHTML = rows.map((row) => {
+      const matchCell = row.matched_user_id
+        ? `<span style="font-family: 'Nunito', sans-serif; font-weight: 800; color: var(--green);">✓ ${escapeHtml(row.matched_name || 'an account')}</span>`
+        : `<span style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-3);">No account yet</span>`;
+      const actionCell = row.matched_user_id
+        ? `<button class="btn orange" type="button" data-merge="${escapeHtml(row.label)}" data-user="${row.matched_user_id}" data-name="${escapeHtml(row.matched_name || '')}" style="padding: 6px 12px; font-size: 0.9rem;">▸ Merge into account</button>`
+        : '';
+      return `
+        <tr>
+          <td data-label="Hash name"><b>${escapeHtml(row.label)}</b></td>
+          <td data-label="Kennel">${escapeHtml(row.kennel || '—')}</td>
+          <td data-label="Past events">${row.event_count}</td>
+          <td data-label="Matching account">${matchCell}</td>
+          <td>${actionCell}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function load() {
+    const { data, error } = await supabase.rpc('get_legacy_attendees');
+    if (error) {
+      console.error('[admin-legacy] fetch failed:', error);
+      $('#admin-content').innerHTML = `<p>Couldn't load: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+    render(data || []);
+  }
+
+  $('#legacy-tbody').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-merge]');
+    if (!btn) return;
+    const label = btn.dataset.merge;
+    const userId = btn.dataset.user;
+    const name = btn.dataset.name || 'this account';
+    if (!window.confirm(`Merge legacy attendances for "${label}" into ${name}? Their past attendances will count under that account.`)) return;
+    btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Merging…';
+    const { data, error } = await supabase.rpc('merge_legacy_attendee', { p_label: label, p_user_id: userId });
+    if (error) {
+      btn.disabled = false; btn.textContent = o;
+      showToast(error.message || "Couldn't merge.", { kind: 'error' });
+      return;
+    }
+    showToast(`Merged ${data ?? 0} attendance${data === 1 ? '' : 's'} into ${name}.`, { kind: 'ok' });
+    await load();
+  });
+
+  (async () => {
+    await requireAdmin();
+    $('#admin-loading').hidden = true;
+    $('#admin-content').hidden = false;
+    await load();
+  })().catch((err) => {
+    if (err?.message !== 'Not admin' && err?.message !== 'Not signed in') {
+      console.error('[admin-legacy] error:', err);
+    }
+  });
+</script>
+
+</body>
+</html>
