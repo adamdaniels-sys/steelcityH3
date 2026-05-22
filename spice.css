@@ -1282,11 +1282,11 @@
   box-shadow: 8px 8px 0 var(--ink);
 }
 .ev-side { background: var(--cream-2); }
-/* Details pane: dark "panel" with light text */
+/* Details pane: bold red panel with light text (photos pop white over it) */
 .ev-info {
-  background: var(--ink);
+  background: var(--red);
   color: var(--cream);
-  box-shadow: 8px 8px 0 var(--orange);
+  box-shadow: 8px 8px 0 var(--ink);
 }
 .ev-info h2, .ev-side h2 {
   font-family: "Bangers", sans-serif;
@@ -1307,7 +1307,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--orange);
+  color: var(--yellow);
   font-weight: 700;
 }
 .ev-info dd {
@@ -1475,13 +1475,13 @@
 /* Past event recap */
 .recap-blog {
   margin-top: 30px;
-  background: var(--ink);          /* dark "story" panel with light text */
-  color: var(--cream);
+  background: var(--orange);       /* orange "story" panel, dark text */
+  color: var(--ink);
   border: 4px solid var(--ink);
   padding: 36px 40px;
-  box-shadow: 8px 8px 0 var(--orange);
+  box-shadow: 8px 8px 0 var(--ink);
   position: relative;
-  z-index: 14;                     /* sits above the floating photos — text is never covered */
+  z-index: 14;                     /* normally above the photos; a hovered photo lifts over it */
 }
 .recap-blog h2 {
   font-family: "Bangers", sans-serif;
@@ -1494,7 +1494,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--orange-2);
+  color: var(--ink-2);
   margin-bottom: 20px;
 }
 .recap-blog p {
@@ -1502,10 +1502,10 @@
   font-weight: 500;
   font-size: 1.04rem;
   line-height: 1.65;
-  color: var(--cream);
+  color: var(--ink);
   margin: 0 0 16px;
 }
-.recap-blog p b { color: var(--yellow); font-weight: 800; }
+.recap-blog p b { color: var(--ink); font-weight: 800; }
 
 /* Photo grid */
 .photo-grid {
@@ -3300,27 +3300,34 @@ a.onons-title:hover { color: var(--orange); }
     position: absolute;
     top: 0;
     right: 0;
-    width: calc((100% - 24px) / 2.4);   /* matches the 1fr right column */
+    width: calc((100% - 24px) / 2.4);   /* the right ~40% of the panel */
     margin: 0;
-    z-index: 12;
     pointer-events: none;               /* clicks fall through the gaps to content beneath */
+    /* No z-index: photos paint above the in-flow details, but the write-up
+       (z-index 14) sits over them — until a photo is hovered (z-index 30). */
   }
   #event-gallery .gallery-heading { display: none; }   /* polaroids are self-evident; label only shows on mobile */
+  /* Past events: details span full width (RSVP is hidden), and the write-up sits
+     half-width on the left so the larger photos own the right side. */
+  .past-layout .ev-info { grid-column: 1 / -1; }
+  /* keep the detail text on the left so the photos float over clear red space */
+  .past-layout.has-photos .ev-info dl { max-width: 60%; }
+  .has-photos #past-content { max-width: 50%; }
   #event-gallery .photo-gallery {
     display: block;          /* a tossed stack, not a grid */
     position: relative;
   }
   #event-gallery .photo-cell {
-    width: 66%;
-    margin: 0 0 -96px 0;     /* tight overlap so a few sit compactly over the details */
+    width: 86%;
+    margin: 0 0 -28px 0;     /* big polaroids, light overlap — original size */
     position: relative;
     pointer-events: auto;    /* the photos themselves stay clickable (lightbox) */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-12%) rotate(-5deg); }
-  #event-gallery .photo-cell:nth-child(even) { transform: translateX(22%)  rotate(4deg);  }
-  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(4%)   rotate(2deg);  }
-  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-22%) rotate(-3deg); }
+  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-20%) rotate(-5deg); }
+  #event-gallery .photo-cell:nth-child(even) { transform: translateX(10%)  rotate(4deg);  }
+  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(-4%)  rotate(2deg);  }
+  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-28%) rotate(-3deg); }
   #event-gallery .photo-cell:last-child { margin-bottom: 0; }
   /* Hover pulls any photo (incl. the buried middle ones) straight + to the front */
   #event-gallery .photo-cell:hover {
