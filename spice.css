@@ -1251,6 +1251,7 @@
   grid-template-columns: 1.4fr 1fr;
   gap: 24px;
   margin-top: 30px;
+  position: relative;   /* anchor for the floating photo polaroids on past events */
 }
 @media (max-width: 880px) { .event-grid { grid-template-columns: 1fr; } }
 
@@ -3261,13 +3262,19 @@ a.onons-title:hover { color: var(--orange); }
    other and spilling left over the details. RSVP card is hidden on past events,
    so column 2 is free. */
 @media (min-width: 881px) {
+  /* Float the polaroids as a TOP LAYER over the right side. They're taken out of
+     grid flow, so the details panel keeps its natural width + height — the photos
+     just sit on top of whatever's beneath. */
   #event-gallery {
-    grid-column: 2;
-    align-self: start;
-    margin-top: 0;
-    z-index: 4;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc((100% - 24px) / 2.4);   /* matches the 1fr right column */
+    margin: 0;
+    z-index: 12;
+    pointer-events: none;               /* clicks fall through the gaps to content beneath */
   }
-  #event-gallery .gallery-heading { text-align: right; margin-right: 12px; transform: rotate(3deg); }
+  #event-gallery .gallery-heading { text-align: right; margin-right: 12px; transform: rotate(3deg); pointer-events: none; }
   #event-gallery .photo-gallery {
     display: block;          /* a tossed stack, not a grid */
     position: relative;
@@ -3276,6 +3283,7 @@ a.onons-title:hover { color: var(--orange); }
     width: 86%;
     margin: 0 0 -28px 0;     /* overlap the one beneath */
     position: relative;
+    pointer-events: auto;    /* the photos themselves stay clickable (lightbox) */
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
   #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-20%) rotate(-5deg); }
