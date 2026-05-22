@@ -72,12 +72,7 @@
           <div class="photo-frame">
             <div class="bubble">Sheffield's<br/>daftest<br/>hash!</div>
             <div class="photo-frame-inner">
-              <div class="home-snaps" id="home-snaps" hidden>
-                <div class="home-snap"><img alt="A snap from a past Steel City hash" /></div>
-                <div class="home-snap"><img alt="" /></div>
-                <div class="home-snap"><img alt="" /></div>
-                <div class="home-snap"><img alt="" /></div>
-              </div>
+              <img class="home-snap-img js-snap" id="home-snap-hero" alt="A snap from a past Steel City hash" hidden />
               <div class="photo-frame-ph" id="home-snaps-ph">
                 <span class="pf-icon">▸ ◂</span>
                 <span class="pf-text">Snaps from past hashes<br/>landing here soon</span>
@@ -151,6 +146,11 @@
       </div>
     </div>
   </section>
+
+  <!-- Past-hash snapshot band #1 -->
+  <div class="snap-band" hidden>
+    <div class="snap-frame"><img class="js-snap" alt="A snap from a past Steel City hash" /></div>
+  </div>
 
   <div class="soundfx"><span class="fx red">▸ What's a Hash?! ◂</span></div>
 
@@ -232,6 +232,11 @@
       </dl>
     </div>
   </section>
+
+  <!-- Past-hash snapshot band #2 -->
+  <div class="snap-band flip" hidden>
+    <div class="snap-frame"><img class="js-snap" alt="A snap from a past Steel City hash" /></div>
+  </div>
 
   <div class="soundfx"><span class="fx yel">▸ Meet the (mis)management! ◂</span></div>
 
@@ -350,6 +355,11 @@
       </div>
     </div>
   </section>
+
+  <!-- Past-hash snapshot band #3 -->
+  <div class="snap-band" hidden>
+    <div class="snap-frame"><img class="js-snap" alt="A snap from a past Steel City hash" /></div>
+  </div>
 
   <div class="soundfx"><span class="fx">▸ The Basics! ▸</span></div>
 
@@ -675,29 +685,30 @@
     }
   })();
 
-  // Homepage hero "snaps" — four little slideshows of random uploaded hash
-  // photos, each cycling on its own stagger so the front page always looks alive.
+  // Homepage "snaps" — the hero frame + the three bands down the page each cycle
+  // random photos from all uploaded hashes, on their own staggered timer.
   (async () => {
-    const wrap = document.getElementById('home-snaps');
-    if (!wrap) return;
+    const imgs = [...document.querySelectorAll('img.js-snap')];
+    if (imgs.length === 0) return;
     const { data, error } = await supabase
       .from('event_photos').select('storage_path').limit(300);
     const paths = (error ? [] : (data || [])).map((r) => r.storage_path).filter(Boolean);
-    if (paths.length === 0) return;   // leave the "landing here soon" placeholder
+    if (paths.length === 0) return;   // leave the hero placeholder; the bands stay hidden
     const urls = paths.map((p) => supabase.storage.from('event-photos').getPublicUrl(p).data.publicUrl);
     for (let i = urls.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [urls[i], urls[j]] = [urls[j], urls[i]]; }
-    const imgs = [...wrap.querySelectorAll('.home-snap img')];
+    // there are photos — reveal the hero image + the bands
     document.getElementById('home-snaps-ph')?.setAttribute('hidden', '');
-    wrap.hidden = false;
+    document.querySelectorAll('.snap-band').forEach((b) => { b.hidden = false; });
     const pick = (exclude) => {
       if (urls.length === 1) return urls[0];
       let u; do { u = urls[Math.floor(Math.random() * urls.length)]; } while (u === exclude);
       return u;
     };
     imgs.forEach((img, idx) => {
+      img.hidden = false;
       img.src = urls[idx % urls.length];
       img.dataset.cur = img.src;
-      const period = 4500 + idx * 1300 + Math.floor(Math.random() * 1200);
+      const period = 4500 + idx * 1500 + Math.floor(Math.random() * 1500);
       setInterval(() => {
         const next = pick(img.dataset.cur);
         const pre = new Image();

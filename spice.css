@@ -229,19 +229,8 @@
     text-transform: uppercase;
     color: var(--ink-2);
   }
-  /* Four-up slideshow collage that fills the frame once photos exist */
-  .home-snaps {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 4px;
-    background: var(--ink);
-  }
-  .home-snaps[hidden] { display: none; }
-  .home-snap { position: relative; overflow: hidden; background: var(--ink-2); }
-  .home-snap img {
+  /* Hero photo frame — a single cycling slideshow */
+  .home-snap-img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -249,7 +238,8 @@
     object-fit: cover;
     transition: opacity 0.4s ease;
   }
-  .home-snap img.swapping { opacity: 0; }
+  .home-snap-img[hidden] { display: none; }
+  .home-snap-img.swapping { opacity: 0; }
 
   /* Inner halftone background to the hero panel */
   .hero-panel::before {
@@ -1266,6 +1256,33 @@
   color: var(--ink);
   text-transform: uppercase;
 }
+
+/* Homepage past-hash snapshot bands — framed slideshows spaced down the page */
+.snap-band {
+  padding: 34px 0;
+  display: flex;
+  justify-content: center;
+}
+.snap-band[hidden] { display: none; }
+.snap-frame {
+  width: min(460px, 86vw);
+  background: var(--cream);
+  border: 5px solid var(--ink);
+  box-shadow: 9px 9px 0 var(--orange);
+  padding: 12px 12px 16px;
+  transform: rotate(-2deg);
+}
+.snap-band.flip .snap-frame { transform: rotate(2deg); box-shadow: 9px 9px 0 var(--red); }
+.snap-frame img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  background: var(--ink);
+  transition: opacity 0.4s ease;
+}
+.snap-frame img.swapping { opacity: 0; }
 
 .event-grid {
   display: grid;
@@ -3318,8 +3335,8 @@ a.onons-title:hover { color: var(--orange); }
     position: relative;
   }
   #event-gallery .photo-cell {
-    width: 86%;
-    margin: 0 0 -28px 0;     /* big polaroids, light overlap — original size */
+    width: 44%;
+    margin: 0 0 -16px 0;     /* about half size — smaller tossed snaps */
     position: relative;
     pointer-events: auto;    /* the photos themselves stay clickable (lightbox) */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
