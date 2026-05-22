@@ -865,7 +865,6 @@
     const photos = error ? [] : (data || []);
     if (photos.length === 0) { section.hidden = true; return; }
     section.hidden = false;
-    document.getElementById('event-panel')?.classList.add('has-photos');
     grid.innerHTML = photos.map((ph) => {
       const url = photoPublicUrl(ph.storage_path);
       const cap = ph.caption ? `<figcaption>${escapeHtml(ph.caption)}</figcaption>` : '';

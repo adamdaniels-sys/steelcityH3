@@ -1,9 +1,24 @@
 # Where we left off — Steel City H3
 
-_Last updated: 2026-05-22 (badge readability + roadmap)_
+_Last updated: 2026-05-22 (REAL DATA is live)_
 
-## 🧪 Mum is testing the evening of 2026-05-22
-Whatever she flags lands here next.
+## ✅ MILESTONE — real data is in (2026-05-22)
+All migrations run (**0020 / 0021 / 0022**, on top of 0018/0019), test data
+**cleared**, and the real club history **seeded** (runs 3–13). The site is now
+running on real data.
+
+**Now worth a glance / still to do:**
+- **No upcoming hash on the site** — runs 3–13 are all past, so the homepage
+  "Coming up" is empty and the hero shows "Next on-on: TBC". Create the **next
+  hash** (run 14?) in the admin UI so members can RSVP. Needs run 14's date.
+- **Data chase-ups:** run 14's date, and run 5 "Horny Devil"'s blank fee (loaded £0).
+- **Merge the regulars:** on **Legacy attendees**, merge Smutley / Queen Myrtle /
+  your own hash name into the real accounts so metrics count them once.
+- **Go-live decision:** the whole site is still `noindex` (kept out of Google for
+  the test phase). Real data's in now — when you're happy it's all correct, say the
+  word and we drop the `noindex` and start the SEO checklist.
+
+## 🧪 Mum tested 2026-05-22
 
 **Flagged + fixed:**
 - Photos at the bottom looked dull → reworked into **scattered polaroids** (tilted,
