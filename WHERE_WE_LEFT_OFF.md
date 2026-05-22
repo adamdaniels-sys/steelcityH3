@@ -1,6 +1,54 @@
 # Where we left off — Steel City H3
 
-_Last updated: 2026-05-22 (REAL DATA is live)_
+_Last updated: 2026-05-22 (end of session — event/homepage photo polish)._
+_Latest commit on `main`: `1b191f1`._
+
+## 📌 START HERE NEXT SESSION
+
+**Where we are:** the site is **live on real club data** (runs 3–13 seeded) and had a
+big round of photo + presentation polish this session. Everything below is pushed to
+`main` and deployed. Nothing is half-finished in the code.
+
+**⚠️ One migration still to run:** **`0023_event_facebook_url.sql`** (adds
+`events.facebook_url`). Until it's run, the new Facebook-link field won't save.
+_(0018–0022 are all run.)_
+
+**On Adam's side (no code needed — these unblock go-live):**
+1. **Create the next upcoming hash** in the admin UI — runs 3–13 are all past, so the
+   homepage "Coming up" is empty + hero says "Next on-on: TBC". Needs **run 14's date**.
+2. **Merge the regulars** on **Admin → Legacy attendees** (Smutley, Queen Myrtle, your
+   own hash name) so metrics count them once, not as legacy + account.
+3. **Data chase-ups:** run 14's date; run 5 **"Horny Devil"** blank fee (loaded as £0 — verify).
+4. **Go-live call:** site is still `noindex` (hidden from Google). When you're happy it's
+   all correct, say the word → we drop the `noindex` block in `vercel.json` and start the
+   SEO checklist (Search Console, sitemap, JSON-LD, footer FB link…).
+
+**Built this session (all done + pushed):**
+- "Hash Virgin" → **"SCH3 Hash Virgin"** everywhere; **hares + first-timers go free** on a hash.
+- **Cleared test data + seeded real history** (runs 3–13) as legacy attendees.
+- **Legacy attendees on Manage Members** with an `(L)` tag + their outstanding balance.
+- **Badge readability** (Nunito 800 across all chip badges).
+- **Event photos:** admin upload (auto-shrunk, **capped 3/event**) → public gallery +
+  lightbox; **"Who came"** roster (incl. legacy/kennels/🐇); **per-event Facebook link**.
+- **Event page look:** **red details box** (full-width, text left) + **orange half-width
+  write-up**; **large floating polaroids** (1.5× the original) over the red, **hover lifts
+  a photo** above the write-up.
+- **Homepage:** single hero slideshow + **three slideshow bands** down the page; **✍/📷
+  content badges** on the past-hashes list.
+
+**Next features to pick from (not started):**
+- **Editable homepage "fresh spots"** (roadmap #3) — admin-editable text like the line
+  under *"A Drinking Club with a Running Problem"*. Independent + quick.
+- **Footer "Find us on Facebook"** → make it a real link to the FB page.
+- **Round-up / share polish** (#2): visible "Share to Facebook" + maybe an Instagram
+  "copy caption" helper.
+- _(Optional)_ filter/sort the past-hashes list by "has photos / has write-up".
+
+**Standing context:** commit/push only when Adam asks; MCP can't reach this Supabase
+project so **Adam runs all SQL by hand**; the £3 hashes are **non-charity** (club funds);
+event titles are "Month Year Hash"; LF→CRLF git warnings on Windows are harmless.
+
+---
 
 ## ✅ MILESTONE — real data is in (2026-05-22)
 All migrations run (**0020 / 0021 / 0022**, on top of 0018/0019), test data
