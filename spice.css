@@ -1277,10 +1277,16 @@
 @media (max-width: 880px) { .event-grid { grid-template-columns: 1fr; } }
 
 .ev-info, .ev-side {
-  background: var(--cream-2);
   border: 4px solid var(--ink);
   padding: 28px 30px;
   box-shadow: 8px 8px 0 var(--ink);
+}
+.ev-side { background: var(--cream-2); }
+/* Details pane: dark "panel" with light text */
+.ev-info {
+  background: var(--ink);
+  color: var(--cream);
+  box-shadow: 8px 8px 0 var(--orange);
 }
 .ev-info h2, .ev-side h2 {
   font-family: "Bangers", sans-serif;
@@ -1289,6 +1295,7 @@
   margin-bottom: 16px;
   color: var(--ink);
 }
+.ev-info h2 { color: var(--cream); }
 .ev-info dl {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1307,7 +1314,7 @@
   margin: 0;
   font-family: "Nunito", sans-serif;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--cream);
   font-size: 1rem;
 }
 
@@ -1468,10 +1475,13 @@
 /* Past event recap */
 .recap-blog {
   margin-top: 30px;
-  background: var(--steel-light);   /* Steel-City grey — breaks up the cream panels */
+  background: var(--ink);          /* dark "story" panel with light text */
+  color: var(--cream);
   border: 4px solid var(--ink);
   padding: 36px 40px;
   box-shadow: 8px 8px 0 var(--orange);
+  position: relative;
+  z-index: 14;                     /* sits above the floating photos — text is never covered */
 }
 .recap-blog h2 {
   font-family: "Bangers", sans-serif;
@@ -1484,7 +1494,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--orange);
+  color: var(--orange-2);
   margin-bottom: 20px;
 }
 .recap-blog p {
@@ -1492,10 +1502,10 @@
   font-weight: 500;
   font-size: 1.04rem;
   line-height: 1.65;
-  color: var(--ink-2);
+  color: var(--cream);
   margin: 0 0 16px;
 }
-.recap-blog p b { color: var(--ink); font-weight: 800; }
+.recap-blog p b { color: var(--yellow); font-weight: 800; }
 
 /* Photo grid */
 .photo-grid {
@@ -3295,22 +3305,22 @@ a.onons-title:hover { color: var(--orange); }
     z-index: 12;
     pointer-events: none;               /* clicks fall through the gaps to content beneath */
   }
-  #event-gallery .gallery-heading { text-align: right; margin-right: 12px; transform: rotate(3deg); pointer-events: none; }
+  #event-gallery .gallery-heading { display: none; }   /* polaroids are self-evident; label only shows on mobile */
   #event-gallery .photo-gallery {
     display: block;          /* a tossed stack, not a grid */
     position: relative;
   }
   #event-gallery .photo-cell {
-    width: 86%;
-    margin: 0 0 -28px 0;     /* overlap the one beneath */
+    width: 66%;
+    margin: 0 0 -96px 0;     /* tight overlap so a few sit compactly over the details */
     position: relative;
     pointer-events: auto;    /* the photos themselves stay clickable (lightbox) */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-20%) rotate(-5deg); }
-  #event-gallery .photo-cell:nth-child(even) { transform: translateX(10%)  rotate(4deg);  }
-  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(-4%)  rotate(2deg);  }
-  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-28%) rotate(-3deg); }
+  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-12%) rotate(-5deg); }
+  #event-gallery .photo-cell:nth-child(even) { transform: translateX(22%)  rotate(4deg);  }
+  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(4%)   rotate(2deg);  }
+  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-22%) rotate(-3deg); }
   #event-gallery .photo-cell:last-child { margin-bottom: 0; }
   /* Hover pulls any photo (incl. the buried middle ones) straight + to the front */
   #event-gallery .photo-cell:hover {

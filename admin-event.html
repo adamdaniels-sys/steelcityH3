@@ -195,6 +195,12 @@
               <div class="profile-hint">Make the group in WhatsApp → Invite via link → Copy, paste here. On-on and maybe members get a "Join the group" button on the event page and in their confirmation email — so set it early to round up hares.</div>
             </div>
 
+            <div class="auth-field">
+              <label for="facebook_url">Facebook post / album link</label>
+              <input type="url" id="facebook_url" name="facebook_url" placeholder="https://www.facebook.com/…" />
+              <div class="profile-hint">Paste the link to this hash's Facebook post or photo album. A "▸ Photos on Facebook" button shows on the event page — handy when there are more snaps on Facebook than the 3 here.</div>
+            </div>
+
             <div class="profile-actions" style="margin-top: 22px;">
               <button class="btn orange" type="submit" id="save-details-btn">▸ Save &amp; invite</button>
               <a class="btn muted" href="/admin-events.html">↶ Cancel</a>
@@ -493,6 +499,7 @@
   let isHashType = true;  // hashes charge a fee (hares + SCH3 Hash Virgins go free); meet-ups don't
   let eventPhotos = [];
   const PHOTO_BUCKET = 'event-photos';
+  const PHOTO_MAX = 3;   // keep the on-site pile tidy; more snaps live on Facebook
 
   function status() { return originalEvent?.status || 'planning'; }
 
@@ -611,6 +618,7 @@
     $('#asks_accommodation').checked = !!data.asks_accommodation;
     $('#description').value = data.description || '';
     $('#whatsapp_group_link').value = data.whatsapp_group_link || '';
+    $('#facebook_url').value = data.facebook_url || '';
     $('#distance_miles').value = data.distance_miles ?? '';
     $('#on_on_pub').value = data.on_on_pub || '';
     $('#scribe_report_by').value = data.scribe_report_by || '';
@@ -655,6 +663,7 @@
       meal_note:        $('#has_meal').checked ? ($('#meal_note').value.trim() || null) : null,
       asks_accommodation: $('#asks_accommodation').checked,
       whatsapp_group_link: $('#whatsapp_group_link').value.trim() || null,
+      facebook_url:        $('#facebook_url').value.trim() || null,
       description:      $('#description').value.trim() || null,
     };
   }
@@ -1085,16 +1094,22 @@
   }
   function renderPhotoGrid() {
     const grid = $('#photo-grid'); if (!grid) return;
-    if (eventPhotos.length === 0) {
-      grid.innerHTML = '<p class="profile-hint" style="margin: 4px 0 0;">No photos yet.</p>';
-      return;
-    }
-    grid.innerHTML = eventPhotos.map((ph) => `
+    grid.innerHTML = eventPhotos.length === 0
+      ? '<p class="profile-hint" style="margin: 4px 0 0;">No photos yet.</p>'
+      : eventPhotos.map((ph) => `
       <div class="photo-admin-card" data-id="${ph.id}">
         <img src="${photoUrl(ph.storage_path)}" alt="" loading="lazy" />
         <input type="text" class="photo-caption" data-id="${ph.id}" value="${escapeHtml(ph.caption || '')}" placeholder="Caption (optional)" />
         <button type="button" class="photo-del" data-id="${ph.id}" title="Delete photo">✕</button>
       </div>`).join('');
+    // Cap at PHOTO_MAX per event — point the overflow at the Facebook album.
+    const atMax = eventPhotos.length >= PHOTO_MAX;
+    const addBtn = $('#photo-add-btn');
+    const status = $('#photo-status');
+    if (addBtn) { addBtn.disabled = atMax; addBtn.style.opacity = atMax ? '0.5' : ''; }
+    if (status) status.textContent = atMax
+      ? `${PHOTO_MAX} of ${PHOTO_MAX} — that's the limit. Delete one to swap, or link the Facebook album for more.`
+      : (eventPhotos.length ? `${eventPhotos.length} of ${PHOTO_MAX}` : '');
   }
   // Shrink big phone photos before upload (max 1600px, JPEG ~0.82) — keeps
   // Storage small and uploads quick.
@@ -1116,11 +1131,15 @@
   async function uploadPhotos(files) {
     if (!me) { const s = await getSession(); me = s?.user?.id || null; }
     const status = $('#photo-status');
+    const remaining = Math.max(0, PHOTO_MAX - eventPhotos.length);
+    if (remaining === 0) { showToast(`Max ${PHOTO_MAX} photos per event — delete one first, or link the Facebook album for more.`, { kind: 'error' }); return; }
+    const queue = [...files].slice(0, remaining);
+    if (files.length > remaining) showToast(`Only room for ${remaining} more (max ${PHOTO_MAX}) — uploading the first ${remaining}.`, { kind: 'ok' });
     const baseOrder = eventPhotos.length;
     let n = 0;
-    for (const file of files) {
+    for (const file of queue) {
       n++;
-      status.textContent = `Uploading ${n} of ${files.length}…`;
+      status.textContent = `Uploading ${n} of ${queue.length}…`;
       try {
         const blob = await downscaleImage(file);
         const ext = blob.type === 'image/png' ? 'png' : (blob.type === 'image/webp' ? 'webp' : 'jpg');

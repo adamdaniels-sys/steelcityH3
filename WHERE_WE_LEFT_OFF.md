@@ -53,6 +53,14 @@ Rough order / open questions noted.
      an event leaves orphaned Storage files (harmless); bucket can be made by hand in
      the dashboard if the SQL `insert into storage.buckets` is blocked.
 
+   - **Photos capped at 3 per event** (admin uploader + public gallery) so the on-site
+     pile stays tidy; the fuller set lives on Facebook.
+   - **Per-event Facebook link** (2026-05-22): admins paste a FB post/album URL on the
+     details (`events.facebook_url`, **migration 0023**); a "▸ Photos on Facebook"
+     button shows on the event page. _Still to do: make the footer "Find us on
+     Facebook" a real link to the club page (outbound). Biggest SEO lever is still the
+     inbound direction — your parents dropping the site link into FB posts._
+
 2. **"Round-up" / share to Facebook (+ maybe Instagram).**
    - A past-event view that pulls together **photos + scribe report + who came** as a
      clean summary — "the sort of thing that's easy to share on Facebook" alongside
