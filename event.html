@@ -19,7 +19,7 @@
 <!-- SCH3_EVENT_ID -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Caveat:wght@600;700&family=Lilita+One&family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/spice.css" />
 </head>
 <body>
@@ -177,6 +177,12 @@
             </div>
 
           </aside>
+
+          <!-- Past-event photos — scattered polaroids in the (otherwise empty) right column -->
+          <section id="event-gallery" hidden>
+            <h2 class="gallery-heading">Snaps</h2>
+            <div class="photo-gallery" id="photo-gallery-grid"></div>
+          </section>
         </div>
 
         <!-- Hare self-nominate panel (signed-in non-admin members on hares_wanted events) -->
@@ -219,11 +225,6 @@
           </div>
         </div>
 
-        <!-- Past-event photo gallery -->
-        <section id="event-gallery" hidden style="margin-top: 30px;">
-          <h2 class="attendee-heading">Photos</h2>
-          <div class="photo-gallery" id="photo-gallery-grid"></div>
-        </section>
       </div>
 
       <!-- Hash-not-found state -->

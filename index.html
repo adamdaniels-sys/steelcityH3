@@ -541,7 +541,7 @@
     return m === 0 ? `${h12}${period}` : `${h12}:${String(m).padStart(2, '0')}${period}`;
   }
 
-  function renderPastRow(ev) {
+  function renderPastRow(ev, hasPhotos) {
     const d = parseDate(ev.event_date);
     const dateStr = `${WEEKDAYS_FULL[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_FULL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
     const hareLabel = (ev.hares && ev.hares.includes('&')) ? 'Hares' : 'Hare';
@@ -549,12 +549,17 @@
     const charity = (ev.attendance_finalised_at && ev.charity_raised)
       ? ` · £${Number(ev.charity_raised).toFixed(2)} raised` : '';
     const meta = `${dateStr} · ${hareLabel}: ${escapeHtml(ev.hares || 'TBC')} · ${escapeHtml(ev.location_summary || '')}${charity}`;
+    const hasWriteup = !!(ev.written_up || (ev.scribe_report && ev.scribe_report.trim()));
+    const tags =
+      (hasWriteup ? '<span class="content-tag">✍ Write-up</span>' : '')
+      + (hasPhotos ? '<span class="content-tag tag-photos">📷 Photos</span>' : '');
     return `
       <a class="past-row" href="/event/${ev.id}">
         <div class="pn">#${ev.run_number}</div>
         <div>
           <h4>${escapeHtml(ev.title)}</h4>
           <div class="meta">${meta}</div>
+          ${tags ? `<div class="content-tags">${tags}</div>` : ''}
         </div>
         <div class="go">→ Read more</div>
       </a>
@@ -645,7 +650,16 @@
     } else {
       const list = document.getElementById('past-list');
       const evs = pastResult.data || [];
-      list.innerHTML = evs.map(renderPastRow).join('');
+      // Which past hashes have photos? (event_photos is public-readable)
+      let photoIds = new Set();
+      if (evs.length) {
+        const { data: ph } = await supabase
+          .from('event_photos')
+          .select('event_id')
+          .in('event_id', evs.map((e) => e.id));
+        photoIds = new Set((ph || []).map((r) => r.event_id));
+      }
+      list.innerHTML = evs.map((ev) => renderPastRow(ev, photoIds.has(ev.id))).join('');
     }
 
     // Inline "+ Add a hash" pencil for admins

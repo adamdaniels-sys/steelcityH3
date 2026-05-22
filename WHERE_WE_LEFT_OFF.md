@@ -5,6 +5,15 @@ _Last updated: 2026-05-22 (badge readability + roadmap)_
 ## 🧪 Mum is testing the evening of 2026-05-22
 Whatever she flags lands here next.
 
+**Flagged + fixed:**
+- Photos at the bottom looked dull → reworked into **scattered polaroids** (tilted,
+  overlapping, Caveat handwritten captions) tossed into the **empty right column**
+  on past events (where the RSVP card would be), spilling slightly over the details.
+  Falls back to a tidy polaroid grid on mobile. Lightbox unchanged.
+- **Content badges on the past-hashes list** (homepage): a row now shows
+  **✍ Write-up** and/or **📷 Photos** so you can spot the hashes with the most in them.
+  (Easy follow-up if wanted: a "has photos / has write-up" filter or sort.)
+
 **Done while she tested:** badge readability — all the chip-style badges
 ('Completed' & the other event statuses, 'Money outstanding'/'owes £X',
 Admin/Virgin/Newsletter/Legacy, 'Volunteers wanted', 'Written up') switched from

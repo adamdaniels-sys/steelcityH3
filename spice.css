@@ -1188,6 +1188,21 @@
   letter-spacing: 0.05em;
   color: var(--orange);
 }
+/* "has content" badges on a past-hash row */
+.content-tags { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
+.content-tag {
+  display: inline-block;
+  background: var(--cream-3);
+  color: var(--ink-2);
+  border: 2px solid var(--ink);
+  padding: 1px 8px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 0.74rem;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+.content-tag.tag-photos { background: var(--orange); color: var(--cream); }
 @media (max-width: 600px) {
   .past-row { grid-template-columns: 60px 1fr; }
   .past-row .go { display: none; }
@@ -3198,32 +3213,81 @@ a.onons-title:hover { color: var(--orange); }
 }
 .photo-admin-card .photo-del:hover { background: var(--ink); }
 
-/* ---- Public photo gallery (past-event write-up) ---- */
+/* ---- Public photo gallery — scattered polaroids ---- */
+#event-gallery { margin-top: 8px; }
+.gallery-heading {
+  font-family: "Caveat", cursive;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  transform: rotate(-3deg);
+  margin: 0 0 12px 6px;
+}
 .photo-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
 }
-.photo-gallery .photo-cell {
+/* Each photo is a polaroid: off-white frame, fat bottom lip, soft shadow, a tilt */
+.photo-cell {
   margin: 0;
-  border: 3px solid var(--ink);
-  background: var(--cream-2);
-  box-shadow: 4px 4px 0 var(--ink);
+  background: #fffdf7;
+  padding: 9px 9px 30px;
+  border: 1px solid rgba(21, 17, 10, 0.10);
+  box-shadow: 0 7px 16px rgba(21, 17, 10, 0.32);
+  transform: rotate(-2deg);
 }
-.photo-gallery .photo-cell img {
+.photo-cell:nth-child(even) { transform: rotate(2.5deg); }
+.photo-cell:nth-child(3n)   { transform: rotate(-1deg); }
+.photo-cell img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   cursor: zoom-in;
+  background: var(--ink);
 }
-.photo-gallery .photo-cell figcaption {
-  padding: 8px 10px;
-  border-top: 3px solid var(--ink);
-  font-family: "Nunito", sans-serif;
+.photo-cell figcaption {
+  padding: 8px 4px 0;
+  text-align: center;
+  font-family: "Caveat", cursive;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 1.15rem;
+  line-height: 1.1;
   color: var(--ink-2);
+}
+
+/* Desktop: toss the polaroids into the (empty) right column, overlapping each
+   other and spilling left over the details. RSVP card is hidden on past events,
+   so column 2 is free. */
+@media (min-width: 881px) {
+  #event-gallery {
+    grid-column: 2;
+    align-self: start;
+    margin-top: 0;
+    z-index: 4;
+  }
+  #event-gallery .gallery-heading { text-align: right; margin-right: 12px; transform: rotate(3deg); }
+  #event-gallery .photo-gallery {
+    display: block;          /* a tossed stack, not a grid */
+    position: relative;
+  }
+  #event-gallery .photo-cell {
+    width: 86%;
+    margin: 0 0 -28px 0;     /* overlap the one beneath */
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-20%) rotate(-5deg); }
+  #event-gallery .photo-cell:nth-child(even) { transform: translateX(10%)  rotate(4deg);  }
+  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(-4%)  rotate(2deg);  }
+  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-28%) rotate(-3deg); }
+  #event-gallery .photo-cell:last-child { margin-bottom: 0; }
+  #event-gallery .photo-cell:hover {
+    transform: scale(1.06) rotate(0deg);
+    box-shadow: 0 12px 28px rgba(21, 17, 10, 0.45);
+    z-index: 20;
+  }
 }
 
 /* ---- Lightbox ---- */
