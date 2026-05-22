@@ -3316,8 +3316,8 @@ a.onons-title:hover { color: var(--orange); }
   #event-gallery {
     position: absolute;
     top: 0;
-    right: 0;
-    width: calc(((100% - 24px) / 2.4) * 1.5);   /* 1.5x the right column — big snaps */
+    right: -34px;                       /* poke off the right edge of the panel */
+    width: calc(((100% - 24px) / 2.4) * 1.2);   /* ~20% smaller than before */
     margin: 0;
     pointer-events: none;               /* clicks fall through the gaps to content beneath */
     /* No z-index: photos paint above the in-flow details, but the write-up
@@ -3336,19 +3336,34 @@ a.onons-title:hover { color: var(--orange); }
   }
   #event-gallery .photo-cell {
     width: 86%;
-    margin: 0 0 -42px 0;     /* big polaroids (1.5x the original) */
+    margin: 0 0 -34px 0;     /* tossed pile */
     position: relative;
     pointer-events: auto;    /* the photos themselves stay clickable (lightbox) */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(-20%) rotate(-5deg); }
-  #event-gallery .photo-cell:nth-child(even) { transform: translateX(10%)  rotate(4deg);  }
-  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(-4%)  rotate(2deg);  }
-  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(-28%) rotate(-3deg); }
+  /* Shoved over to the right, varied tilt — like snaps carelessly pinned up */
+  #event-gallery .photo-cell:nth-child(odd)  { transform: translateX(8%)  rotate(-5deg); }
+  #event-gallery .photo-cell:nth-child(even) { transform: translateX(20%) rotate(4deg);  }
+  #event-gallery .photo-cell:nth-child(3n)   { transform: translateX(4%)  rotate(2deg);  }
+  #event-gallery .photo-cell:nth-child(4n)   { transform: translateX(16%) rotate(-3deg); }
   #event-gallery .photo-cell:last-child { margin-bottom: 0; }
-  /* Hover pulls any photo (incl. the buried middle ones) straight + to the front */
+  /* A pushpin at the top of each snap */
+  #event-gallery .photo-cell::before {
+    content: "";
+    position: absolute;
+    top: -9px; left: 50%;
+    width: 16px; height: 16px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff7a7a, #a01010 70%);
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+    z-index: 2;
+  }
+  #event-gallery .photo-cell:nth-child(even)::before { background: radial-gradient(circle at 35% 30%, #ffe680, #d8a200 70%); }
+  /* Hover lifts a photo straight up and to the front */
   #event-gallery .photo-cell:hover {
-    transform: translateX(-8%) translateY(-8px) scale(1.1) rotate(0deg);
+    transform: translateY(-10px) scale(1.1) rotate(0deg);
     box-shadow: 0 18px 36px rgba(21, 17, 10, 0.5);
     z-index: 30;
   }
