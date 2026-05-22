@@ -1,6 +1,58 @@
 # Where we left off — Steel City H3
 
-_Last updated: 2026-05-22 (SCH3 Hash Virgin rename + free hares/virgins + real-data load)_
+_Last updated: 2026-05-22 (badge readability + roadmap)_
+
+## 🧪 Mum is testing the evening of 2026-05-22
+Whatever she flags lands here next.
+
+**Done while she tested:** badge readability — all the chip-style badges
+('Completed' & the other event statuses, 'Money outstanding'/'owes £X',
+Admin/Virgin/Newsletter/Legacy, 'Volunteers wanted', 'Written up') switched from
+the heavy **Bangers** display font to **Nunito 800**, a touch bigger, tighter
+letter-spacing. Files: `spice.css` (`.owes-badge`, `.status-chip`, `.warn-badge`),
+`admin-members.html`, `admin-events.html`.
+
+## 🛣 ROADMAP — agreed next features (Adam, 2026-05-22)
+The big idea: turn a finished hash into a **shareable "round-up"** that's easy to
+post to Facebook (and maybe Instagram), and let the admins keep the homepage fresh.
+Rough order / open questions noted.
+
+1. **Event pages — photos + who attended.** ✅ DONE (2026-05-22) — needs migration **0022**.
+   - **Photo uploads** (admins) on the event "After the event" tab → **Supabase
+     Storage** bucket `event-photos`, shrunk client-side to ≤1600px before upload.
+     Public **gallery + lightbox** on the past-event write-up. _Migration `0022`
+     creates the table, bucket + policies, and the public roster RPC._
+   - **"Who came"** now shows the real **attendance roster** (incl. legacy + kennels +
+     🐇 hares) on past events via `get_event_attendees_public` — previously it only
+     listed RSVPs, so the back-filled hashes would have looked empty.
+   - _Still open / later:_ member uploads, drag-reorder, captions are there; deleting
+     an event leaves orphaned Storage files (harmless); bucket can be made by hand in
+     the dashboard if the SQL `insert into storage.buckets` is blocked.
+
+2. **"Round-up" / share to Facebook (+ maybe Instagram).**
+   - A past-event view that pulls together **photos + scribe report + who came** as a
+     clean summary — "the sort of thing that's easy to share on Facebook" alongside
+     other photos that never made the site.
+   - **Facebook backlink / share button** on the event (we already inject per-event
+     Open Graph tags via `api/event.js`, so the link preview is sorted — add a visible
+     "Share to Facebook" link + the club's FB page link). _Open: Instagram has no
+     simple web "share" — likely a "copy caption + open Instagram" helper at best;
+     confirm appetite. Also: add the FB page URL to the site (footer/about) as a real
+     backlink — doubles as an SEO win for the parked launch list._
+
+3. **Editable homepage "fresh spots" (admin-managed content blocks).**
+   - A handful of **editable text/areas** the admins can change without code — first
+     example: the line under **"A Drinking Club with a Running Problem"**.
+   - Pattern: a small `site_content` table (key → value/markdown), admin editor page,
+     homepage reads the keys. Pick ~3–4 strategic slots to start.
+
+4. **Homepage past-event photo slideshows.**
+   - We have one photo slot on the home page now; add **3–4 more down the page**, each
+     a **little slideshow** of photos from a past event (feeds off the event photos
+     from #1). Keeps the site looking alive between hashes.
+
+_Sequencing thought: #1 (photos + attendees) unlocks #2 (round-up/share) and #4
+(home slideshows), so photos first. #3 is independent and quick — good standalone win._
 
 ## 🟢 Round 8 — "SCH3 Hash Virgin" + free hares/virgins + REAL DATA (2026-05-22)
 Terminology + payment-rule clarifications, and the real club history is ready to load.

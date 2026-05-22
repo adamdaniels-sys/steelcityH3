@@ -218,6 +218,12 @@
             <div id="blog-body"></div>
           </div>
         </div>
+
+        <!-- Past-event photo gallery -->
+        <section id="event-gallery" hidden style="margin-top: 30px;">
+          <h2 class="attendee-heading">Photos</h2>
+          <div class="photo-gallery" id="photo-gallery-grid"></div>
+        </section>
       </div>
 
       <!-- Hash-not-found state -->
@@ -228,6 +234,13 @@
     </div>
   </section>
 </main>
+
+<!-- Photo lightbox -->
+<div id="lightbox" class="lightbox" hidden>
+  <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div class="lightbox-cap" id="lightbox-cap"></div>
+</div>
 
 <footer>
   <div class="container">
@@ -398,6 +411,9 @@
       $('#blog-by').textContent = `By ${ev.scribe_report_by || 'A scribe'}`;
       $('#blog-body').innerHTML = renderScribeReport(ev.scribe_report);
     }
+
+    // ---- Past events: photo gallery ----
+    await loadGallery(ev, isPast);
 
     // ---- RSVP panel (Phase 2) ----
     await initRsvpPanel(ev, isPast);
@@ -830,6 +846,63 @@
     }
   }
 
+  // ---- Photo gallery + lightbox ----
+  let lightboxReady = false;
+  function photoPublicUrl(path) {
+    return supabase.storage.from('event-photos').getPublicUrl(path).data.publicUrl;
+  }
+  async function loadGallery(ev, isPast) {
+    const section = document.getElementById('event-gallery');
+    const grid = document.getElementById('photo-gallery-grid');
+    if (!section || !grid) return;
+    if (!isPast) { section.hidden = true; return; }
+    const { data, error } = await supabase
+      .from('event_photos').select('*')
+      .eq('event_id', ev.id)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    const photos = error ? [] : (data || []);
+    if (photos.length === 0) { section.hidden = true; return; }
+    section.hidden = false;
+    grid.innerHTML = photos.map((ph) => {
+      const url = photoPublicUrl(ph.storage_path);
+      const cap = ph.caption ? `<figcaption>${escapeHtml(ph.caption)}</figcaption>` : '';
+      return `<figure class="photo-cell"><img src="${url}" alt="${escapeHtml(ph.caption || 'Hash photo')}" loading="lazy" data-full="${url}" data-cap="${escapeHtml(ph.caption || '')}" />${cap}</figure>`;
+    }).join('');
+    initLightbox();
+  }
+  function initLightbox() {
+    if (lightboxReady) return;
+    const box = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+    const cap = document.getElementById('lightbox-cap');
+    const grid = document.getElementById('photo-gallery-grid');
+    if (!box || !grid) return;
+    const close = () => { box.hidden = true; img.src = ''; document.body.style.overflow = ''; };
+    grid.addEventListener('click', (e) => {
+      const t = e.target.closest('img[data-full]'); if (!t) return;
+      img.src = t.dataset.full; cap.textContent = t.dataset.cap || ''; box.hidden = false; document.body.style.overflow = 'hidden';
+    });
+    document.getElementById('lightbox-close').addEventListener('click', close);
+    box.addEventListener('click', (e) => { if (e.target === box) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !box.hidden) close(); });
+    lightboxReady = true;
+  }
+
+  // Past hashes: show who actually CAME (the attendance roster, incl. legacy
+  // back-fills who never RSVP'd), with kennel + a 🐇 for hares.
+  function rosterLine(row) {
+    const name = row.display_name + (row.is_hare ? ' 🐇' : '');
+    const kennel = (row.kennel_name && String(row.kennel_name).trim())
+      ? `<span style="color: var(--ink-3); font-weight: 600;"> · ${escapeHtml(String(row.kennel_name).trim())}</span>`
+      : '';
+    return `
+      <li>
+        <span class="av">${escapeHtml(initialsFor(row.display_name))}</span>
+        <span class="who">${escapeHtml(name)}${kennel}</span>
+      </li>`;
+  }
+
   async function refreshAttendeeList(ev, isPast) {
     const wrap = $('#attendee-list-wrap');
     const onOnSection = $('#on-on-section');
@@ -841,6 +914,27 @@
     if (ev.status === 'closed' && isPast) {
       wrap.hidden = true;
       return;
+    }
+
+    if (isPast) {
+      const { data, error } = await supabase.rpc('get_event_attendees_public', { p_event_id: ev.id });
+      const rows = data || [];
+      if (!error && rows.length > 0) {
+        wrap.hidden = false;
+        maybeSection.hidden = true;
+        onOnSection.hidden = false;
+        $('#on-on-heading').textContent = `Who came (${rows.length})`;
+        const list = $('#on-on-list'); const more = $('#on-on-more');
+        const visible = rows.slice(0, ATTENDEE_VISIBLE_MAX);
+        list.innerHTML = visible.map(rosterLine).join('');
+        if (rows.length > ATTENDEE_VISIBLE_MAX) {
+          more.hidden = false;
+          more.textContent = `▸ Show the rest (${rows.length - ATTENDEE_VISIBLE_MAX})`;
+          more.onclick = () => { list.innerHTML = rows.map(rosterLine).join(''); more.hidden = true; };
+        } else { more.hidden = true; }
+        return;
+      }
+      // No finalised roster — fall through to the RSVP list (recent, not-yet-finalised event).
     }
 
     const { data, error } = await supabase.rpc('get_attendee_list', { p_event_id: ev.id });

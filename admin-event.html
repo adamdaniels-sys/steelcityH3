@@ -363,8 +363,12 @@
             </div>
 
             <div class="auth-field">
-              <label>Route &amp; photos</label>
-              <div class="upload-placeholder">▸ Route map &amp; photo uploads land here in a future update.</div>
+              <label>Photos</label>
+              <p class="profile-hint" style="margin-top: 0; margin-bottom: 8px;">Add photos from the day — they show on the public write-up. Big phone photos are shrunk automatically before upload, so it's quick.</p>
+              <input type="file" id="photo-input" accept="image/*" multiple style="display: none;" />
+              <button type="button" class="btn cream" id="photo-add-btn">▸ Add photos</button>
+              <span id="photo-status" style="margin-left: 10px; font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--ink-3);"></span>
+              <div id="photo-grid" class="photo-admin-grid"></div>
             </div>
 
             <div class="profile-toggle" style="margin-top: 4px;">
@@ -487,6 +491,8 @@
   let charityPerHead = 0;
   let isCharity = false;
   let isHashType = true;  // hashes charge a fee (hares + SCH3 Hash Virgins go free); meet-ups don't
+  let eventPhotos = [];
+  const PHOTO_BUCKET = 'event-photos';
 
   function status() { return originalEvent?.status || 'planning'; }
 
@@ -624,6 +630,7 @@
     await setupAttendance();
     applyStatusUI();
     gotoCurrentTab();
+    loadEventPhotos();
   }
 
   // ---- Payloads ---------------------------------------------------------
@@ -1061,6 +1068,90 @@
     await reloadRoster();
   }
 
+  // ---- Photos -----------------------------------------------------------
+
+  function photoUrl(path) {
+    return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+  async function loadEventPhotos() {
+    if (!eventId) return;
+    const { data, error } = await supabase.from('event_photos').select('*')
+      .eq('event_id', eventId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) { console.warn('[admin-event] photos load failed:', error); return; }
+    eventPhotos = data || [];
+    renderPhotoGrid();
+  }
+  function renderPhotoGrid() {
+    const grid = $('#photo-grid'); if (!grid) return;
+    if (eventPhotos.length === 0) {
+      grid.innerHTML = '<p class="profile-hint" style="margin: 4px 0 0;">No photos yet.</p>';
+      return;
+    }
+    grid.innerHTML = eventPhotos.map((ph) => `
+      <div class="photo-admin-card" data-id="${ph.id}">
+        <img src="${photoUrl(ph.storage_path)}" alt="" loading="lazy" />
+        <input type="text" class="photo-caption" data-id="${ph.id}" value="${escapeHtml(ph.caption || '')}" placeholder="Caption (optional)" />
+        <button type="button" class="photo-del" data-id="${ph.id}" title="Delete photo">✕</button>
+      </div>`).join('');
+  }
+  // Shrink big phone photos before upload (max 1600px, JPEG ~0.82) — keeps
+  // Storage small and uploads quick.
+  async function downscaleImage(file) {
+    if (!file.type || !file.type.startsWith('image/')) return file;
+    let bitmap;
+    try { bitmap = await createImageBitmap(file); } catch { return file; }
+    const max = 1600;
+    const { width, height } = bitmap;
+    if (width <= max && height <= max && file.size < 600 * 1024) { bitmap.close && bitmap.close(); return file; }
+    const scale = Math.min(1, max / Math.max(width, height));
+    const w = Math.round(width * scale), h = Math.round(height * scale);
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    bitmap.close && bitmap.close();
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.82));
+    return blob || file;
+  }
+  async function uploadPhotos(files) {
+    if (!me) { const s = await getSession(); me = s?.user?.id || null; }
+    const status = $('#photo-status');
+    const baseOrder = eventPhotos.length;
+    let n = 0;
+    for (const file of files) {
+      n++;
+      status.textContent = `Uploading ${n} of ${files.length}…`;
+      try {
+        const blob = await downscaleImage(file);
+        const ext = blob.type === 'image/png' ? 'png' : (blob.type === 'image/webp' ? 'webp' : 'jpg');
+        const path = `${eventId}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from(PHOTO_BUCKET)
+          .upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+        if (upErr) throw upErr;
+        const { error: insErr } = await supabase.from('event_photos')
+          .insert({ event_id: eventId, storage_path: path, sort_order: baseOrder + n, uploaded_by: me });
+        if (insErr) throw insErr;
+      } catch (err) {
+        console.error('[admin-event] photo upload failed:', err);
+        showToast(`Couldn't upload ${file.name || 'a photo'}.`, { kind: 'error' });
+      }
+    }
+    status.textContent = '';
+    await loadEventPhotos();
+  }
+  async function deletePhoto(id) {
+    const ph = eventPhotos.find((p) => p.id === id); if (!ph) return;
+    if (!window.confirm('Delete this photo? It comes off the public write-up too.')) return;
+    await supabase.storage.from(PHOTO_BUCKET).remove([ph.storage_path]);
+    const { error } = await supabase.from('event_photos').delete().eq('id', id);
+    if (error) { showToast("Couldn't delete that photo.", { kind: 'error' }); return; }
+    await loadEventPhotos();
+  }
+  async function savePhotoCaption(id, caption) {
+    const { error } = await supabase.from('event_photos').update({ caption: caption || null }).eq('id', id);
+    if (error) showToast("Couldn't save the caption.", { kind: 'error' });
+  }
+
   // ---- Cancel / delete --------------------------------------------------
 
   async function cancelEvent() {
@@ -1097,6 +1188,12 @@
   $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
   $('#add-walkup-btn').addEventListener('click', addRosterWalkup);
   $('#add-legacy-btn').addEventListener('click', addRosterLegacy);
+
+  // Photos
+  $('#photo-add-btn').addEventListener('click', () => $('#photo-input').click());
+  $('#photo-input').addEventListener('change', (e) => { const files = [...e.target.files]; e.target.value = ''; if (files.length) uploadPhotos(files); });
+  $('#photo-grid').addEventListener('click', (e) => { const d = e.target.closest('.photo-del'); if (d) deletePhoto(d.dataset.id); });
+  $('#photo-grid').addEventListener('change', (e) => { const c = e.target.closest('.photo-caption'); if (c) savePhotoCaption(c.dataset.id, c.value.trim()); });
 
   // Delete modal
   $('#delete-event-btn').addEventListener('click', () => { $('#delete-confirm-input').value = ''; $('#delete-confirm-btn').disabled = true; $('#delete-modal').hidden = false; setTimeout(() => $('#delete-confirm-input').focus(), 50); });
