@@ -229,6 +229,27 @@
     text-transform: uppercase;
     color: var(--ink-2);
   }
+  /* Four-up slideshow collage that fills the frame once photos exist */
+  .home-snaps {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    background: var(--ink);
+  }
+  .home-snaps[hidden] { display: none; }
+  .home-snap { position: relative; overflow: hidden; background: var(--ink-2); }
+  .home-snap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.4s ease;
+  }
+  .home-snap img.swapping { opacity: 0; }
 
   /* Inner halftone background to the hero panel */
   .hero-panel::before {
@@ -1447,10 +1468,10 @@
 /* Past event recap */
 .recap-blog {
   margin-top: 30px;
-  background: var(--cream-2);
+  background: var(--steel-light);   /* Steel-City grey — breaks up the cream panels */
   border: 4px solid var(--ink);
   padding: 36px 40px;
-  box-shadow: 8px 8px 0 var(--ink);
+  box-shadow: 8px 8px 0 var(--orange);
 }
 .recap-blog h2 {
   font-family: "Bangers", sans-serif;
@@ -3275,6 +3296,10 @@ a.onons-title:hover { color: var(--orange); }
     pointer-events: none;               /* clicks fall through the gaps to content beneath */
   }
   #event-gallery .gallery-heading { text-align: right; margin-right: 12px; transform: rotate(3deg); pointer-events: none; }
+  /* When photos are floating, keep the write-up + attendee text in the left
+     column so the polaroids never sit on top of the words. */
+  .has-photos #past-content,
+  .has-photos #attendee-list-wrap { margin-right: calc((100% - 24px) / 2.4 + 24px); }
   #event-gallery .photo-gallery {
     display: block;          /* a tossed stack, not a grid */
     position: relative;

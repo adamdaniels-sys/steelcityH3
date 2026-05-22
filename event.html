@@ -195,6 +195,15 @@
           </div>
         </aside>
 
+        <!-- Past-event write-up (shown above the attendees) -->
+        <div id="past-content" hidden>
+          <div class="recap-blog">
+            <h2 id="blog-title">Write-up</h2>
+            <div class="by" id="blog-by">By Scribe</div>
+            <div id="blog-body"></div>
+          </div>
+        </div>
+
         <!-- Attendee list — populated from get_attendee_list RPC. -->
         <div id="attendee-list-wrap" hidden style="margin-top: 30px;">
           <section id="on-on-section" hidden>
@@ -214,15 +223,6 @@
         <div class="route-box" id="route-box" hidden>
           <h2>The <span class="or">plan</span></h2>
           <p id="route-blurb">Details shared closer to the date.</p>
-        </div>
-
-        <!-- Past-event write-up -->
-        <div id="past-content" hidden>
-          <div class="recap-blog">
-            <h2 id="blog-title">Write-up</h2>
-            <div class="by" id="blog-by">By Scribe</div>
-            <div id="blog-body"></div>
-          </div>
         </div>
 
       </div>
@@ -865,6 +865,7 @@
     const photos = error ? [] : (data || []);
     if (photos.length === 0) { section.hidden = true; return; }
     section.hidden = false;
+    document.getElementById('event-panel')?.classList.add('has-photos');
     grid.innerHTML = photos.map((ph) => {
       const url = photoPublicUrl(ph.storage_path);
       const cap = ph.caption ? `<figcaption>${escapeHtml(ph.caption)}</figcaption>` : '';

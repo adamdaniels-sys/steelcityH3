@@ -55,10 +55,12 @@ Rough order / open questions noted.
    - Pattern: a small `site_content` table (key → value/markdown), admin editor page,
      homepage reads the keys. Pick ~3–4 strategic slots to start.
 
-4. **Homepage past-event photo slideshows.**
-   - We have one photo slot on the home page now; add **3–4 more down the page**, each
-     a **little slideshow** of photos from a past event (feeds off the event photos
-     from #1). Keeps the site looking alive between hashes.
+4. **Homepage hero photo slideshows.** ✅ DONE (2026-05-22).
+   - The hero photo frame is now a **2×2 collage of four independently-cycling
+     slideshows**, each pulling random photos from all uploaded event photos
+     (staggered timing, preloaded crossfade, decorative/no click). Falls back to the
+     "landing here soon" placeholder when there are no photos. Needs `0022` + uploads.
+   - _Later if wanted:_ more slideshow tiles spread further down the page.
 
 _Sequencing thought: #1 (photos + attendees) unlocks #2 (round-up/share) and #4
 (home slideshows), so photos first. #3 is independent and quick — good standalone win._
