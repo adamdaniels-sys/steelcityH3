@@ -16,8 +16,13 @@ Terminology + payment-rule clarifications, and the real club history is ready to
 - _Left as-is on purpose:_ the casual marketing lines "hash virgins especially welcome"
   on the homepage (general hashing vernacular; not the system status).
 
+**Legacy on Manage Members:** legacy (pre-website) attendees now appear in the
+members list tagged **(L)** + a "Legacy" badge, with their outstanding balance,
+so you can see what a legacy person owes (e.g. Horse's Arse, run 13). A matched
+sign-up shows an "↔ account" badge (ready to merge). Needs migration 0021.
+
 **➡️ To run, in order (full walk-through: `supabase/data/LOAD_REAL_DATA.md`):**
-1. **`0020_sch3_virgin_and_free_hares.sql`** (after 0018 + 0019).
+1. **`0020_sch3_virgin_and_free_hares.sql`** + **`0021_legacy_owed.sql`** (after 0018 + 0019).
 2. **`supabase/data/clear_test_data.sql`** — wipes test events/RSVPs/rosters/audit.
    (Delete test *accounts* via the dashboard, keeping the 3 admins + Adam el Serf.)
 3. **`supabase/data/seed_real_data.sql`** — loads runs 3-13 (~95 legacy attendees).

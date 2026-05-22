@@ -72,6 +72,8 @@
           <a class="filter-pill" data-filter="owes">Owes money</a>
         </div>
 
+        <p class="profile-hint" style="margin: -2px 0 14px;">Names tagged <b>(L)</b> are legacy (pre-website) attendees with no account yet — merge them in from <a href="/admin-legacy.html">Legacy attendees</a>.</p>
+
         <table class="admin-table" id="members-table" hidden>
           <thead>
             <tr>
@@ -193,18 +195,26 @@
 
     tbody.innerHTML = filtered.map((m) => {
       const badges = [];
-      if (m.is_admin)        badges.push(badge('Admin', 'var(--red)'));
-      if (m.is_hash_virgin)  badges.push(badge('Virgin', 'var(--yellow)', 'var(--ink)'));
+      if (m.is_legacy)         badges.push(badge('Legacy', 'var(--ink-2)'));
+      if (m.is_legacy && m.matched_user_id) badges.push(badge('↔ account', 'var(--orange-2)', 'var(--ink)'));
+      if (m.is_admin)          badges.push(badge('Admin', 'var(--red)'));
+      if (m.is_hash_virgin)    badges.push(badge('Virgin', 'var(--yellow)', 'var(--ink)'));
       if (m.newsletter_opt_in) badges.push(badge('Newsletter', 'var(--ink-3)'));
-      if ((m.owed || 0) > 0) badges.push(`<span class="owes-badge">owes £${Number(m.owed).toFixed(2)}</span>`);
+      if ((m.owed || 0) > 0)   badges.push(`<span class="owes-badge">owes £${Number(m.owed).toFixed(2)}</span>`);
+      const nameCell = m.is_legacy
+        ? `<b>${escapeHtml(m.hash_name || '—')}</b> <span style="color: var(--ink-3); font-weight: 700;" title="Legacy (pre-website) attendee — no account yet">(L)</span>`
+        : `<b>${escapeHtml(m.hash_name || '—')}</b>`;
+      const action = m.is_legacy
+        ? `<a href="/admin-legacy.html" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;" title="Backfilled attendee — merge into an account from the Legacy attendees page">▸ Legacy</a>`
+        : `<a href="/admin-member.html?id=${m.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a>`;
       return `
         <tr>
-          <td data-label="Hash name"><b>${escapeHtml(m.hash_name || '—')}</b></td>
+          <td data-label="Hash name">${nameCell}</td>
           <td data-label="Real name">${escapeHtml(m.real_name || '—')}</td>
           <td data-label="Email">${escapeHtml(m.email || '—')}</td>
           <td data-label="RSVPs">${m.rsvp_count}</td>
           <td data-label="Status">${badges.join('') || '—'}</td>
-          <td><a href="/admin-member.html?id=${m.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
+          <td>${action}</td>
         </tr>
       `;
     }).join('');
@@ -215,10 +225,11 @@
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;
 
-    const [{ data, error }, debtsRes, orphanRes] = await Promise.all([
+    const [{ data, error }, debtsRes, orphanRes, legacyRes] = await Promise.all([
       supabase.rpc('get_member_admin_view'),
       supabase.rpc('get_members_with_debts'),
       supabase.from('orphaned_debts').select('*').order('owed', { ascending: false }),
+      supabase.rpc('get_legacy_attendees'),
     ]);
     if (error) {
       console.error('[admin-members] fetch failed:', error);
@@ -226,7 +237,27 @@
       return;
     }
     const debtMap = new Map((debtsRes.data || []).map((d) => [d.user_id, Number(d.owed) || 0]));
-    allMembers = (data || []).map((m) => ({ ...m, owed: debtMap.get(m.id) || 0 }));
+    const members = (data || []).map((m) => ({ ...m, owed: debtMap.get(m.id) || 0 }));
+
+    // Legacy (pre-website) attendees — no account, tagged "(L)" so their
+    // outstanding balance shows up here alongside real members.
+    if (legacyRes.error) console.warn('[admin-members] legacy fetch failed:', legacyRes.error);
+    const legacy = (legacyRes.data || []).map((l) => ({
+      id: null,
+      is_legacy: true,
+      hash_name: l.label,
+      real_name: null,
+      email: null,
+      rsvp_count: l.event_count,
+      is_admin: false,
+      is_hash_virgin: false,
+      newsletter_opt_in: false,
+      owed: Number(l.owed) || 0,
+      matched_user_id: l.matched_user_id || null,
+    }));
+
+    const nameKey = (m) => (m.hash_name || m.real_name || m.email || '').toLowerCase();
+    allMembers = members.concat(legacy).sort((a, b) => nameKey(a).localeCompare(nameKey(b)));
 
     renderOrphaned(orphanRes.data || []);
     activatePill();
