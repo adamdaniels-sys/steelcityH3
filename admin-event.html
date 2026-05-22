@@ -293,7 +293,7 @@
                   <select id="add-plusone-host" class="att-add-select" aria-label="Brought by"></select>
                   <button class="btn cream" type="button" id="add-plusone-btn">▸ Add</button>
                 </div>
-                <label class="att-add-check"><input type="checkbox" id="add-plusone-virgin" checked /> Hash virgin?</label>
+                <label class="att-add-check"><input type="checkbox" id="add-plusone-virgin" checked /> SCH3 Hash Virgin? <span style="color: var(--ink-3); font-weight: 600;">— first hash is free</span></label>
               </div>
               <div class="att-add-group">
                 <label class="att-add-label" for="add-walkup-label">Add a walk-up</label>
@@ -302,6 +302,7 @@
                   <input type="text" id="add-walkup-kennel" class="att-add-input" placeholder="Kennel (e.g. Manchester H3)" />
                   <button class="btn cream" type="button" id="add-walkup-btn">▸ Add</button>
                 </div>
+                <label class="att-add-check"><input type="checkbox" id="add-walkup-firsttimer" /> First Steel City hash? <span style="color: var(--ink-3); font-weight: 600;">— SCH3 Hash Virgins go free</span></label>
                 <div class="profile-hint" style="margin-top: 6px;">A surprise visitor from another kennel. Kennel is optional.</div>
               </div>
               <div class="att-add-group" id="add-legacy-group" hidden>
@@ -485,6 +486,7 @@
   let amountPerHead = 3.5;
   let charityPerHead = 0;
   let isCharity = false;
+  let isHashType = true;  // hashes charge a fee (hares + SCH3 Hash Virgins go free); meet-ups don't
 
   function status() { return originalEvent?.status || 'planning'; }
 
@@ -857,6 +859,7 @@
     if (!me) { const s = await getSession(); me = s?.user?.id || null; }
     amountPerHead = Number(originalEvent.amount_per_head) || 0;
     isCharity = !!originalEvent.is_charity_event;
+    isHashType = (originalEvent.event_type || 'hash') !== 'meetup';
     charityPerHead = isCharity ? (Number(originalEvent.charity_amount_per_head) || 0) : 0;
     $('#stat-charity-card').hidden = !isCharity;
     $('#stat-keep-card').hidden = !isCharity;
@@ -866,7 +869,7 @@
     $('#add-legacy-group').hidden = !(originalEvent.event_date < todayISO);
 
     if (allMembers.length === 0) {
-      const { data: mem } = await supabase.from('profiles').select('id, hash_name, real_name')
+      const { data: mem } = await supabase.from('profiles').select('id, hash_name, real_name, is_hash_virgin')
         .order('hash_name', { ascending: true, nullsFirst: false });
       allMembers = mem || [];
     }
@@ -893,11 +896,16 @@
     } else if (row.host_name) {
       base = `Plus-one of ${row.host_name}`;
     } else if (row.is_virgin_guest) {
-      base = 'Plus-one (hash virgin)';
+      base = 'Plus-one (SCH3 Hash Virgin)';
     } else {
       base = 'Walk-up';
     }
     if (row.kennel_name && String(row.kennel_name).trim()) base += ` · ${String(row.kennel_name).trim()}`;
+    if (row.user_id && initialHareIds.includes(row.user_id)) base += ' · 🐇 hare';
+    // Make a £0 charge self-explanatory on a hash (hares + SCH3 Hash Virgins go free)
+    if (isHashType && (Number(row.amount_paid) || 0) === 0 && !(row.is_legacy && !row.user_id)) {
+      base += ' · no fee';
+    }
     return base;
   }
 
@@ -1015,15 +1023,19 @@
     await reloadRoster();
   }
 
+  // On a hash, hares and SCH3 Hash Virgins (first Steel City hash) don't pay.
   async function addRosterMember() {
     const uid = $('#add-member-select').value; if (!uid) return;
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: amountPerHead, charity_amount: 0, paid: false });
+    const m = allMembers.find((x) => x.id === uid);
+    const exempt = isHashType && (initialHareIds.includes(uid) || (m && m.is_hash_virgin));
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: exempt ? 0 : amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that member.", { kind: 'error' }); return; }
     await reloadRoster();
   }
   async function addRosterPlusOne() {
     const label = $('#add-plusone-label').value.trim() || 'Plus-one';
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: $('#add-plusone-virgin').checked, host_user_id: $('#add-plusone-host').value || null, amount_paid: amountPerHead, charity_amount: 0, paid: false });
+    const isVirgin = $('#add-plusone-virgin').checked;
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, is_virgin_guest: isVirgin, host_user_id: $('#add-plusone-host').value || null, amount_paid: (isHashType && isVirgin) ? 0 : amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that plus-one.", { kind: 'error' }); return; }
     $('#add-plusone-label').value = ''; $('#add-plusone-virgin').checked = true;
     await reloadRoster();
@@ -1032,9 +1044,10 @@
     const label = $('#add-walkup-label').value.trim();
     const kennel = $('#add-walkup-kennel').value.trim() || null;
     if (!label) { showToast('Give the walk-up a hash name first.', { kind: 'error' }); return; }
-    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, amount_paid: amountPerHead, charity_amount: 0, paid: false });
+    const firstTimer = $('#add-walkup-firsttimer').checked;
+    const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: firstTimer, amount_paid: (isHashType && firstTimer) ? 0 : amountPerHead, charity_amount: 0, paid: false });
     if (error) { showToast(error.message || "Couldn't add that walk-up.", { kind: 'error' }); return; }
-    $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = '';
+    $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = ''; $('#add-walkup-firsttimer').checked = false;
     await reloadRoster();
   }
   async function addRosterLegacy() {

@@ -113,7 +113,7 @@
             <!-- State B: signed in, no RSVP yet — pick a status to start editing -->
             <div class="rsvp" id="rsvp-pristine" hidden>
               <h2>Coming along?</h2>
-              <p class="note">Pick your shade — you'll get to add hash virgins next, then confirm.</p>
+              <p class="note">Pick your shade — you'll get to add SCH3 Hash Virgins next, then confirm.</p>
               <div class="rsvp-actions" style="flex-direction: column; gap: 10px; align-items: stretch;">
                 <button class="btn orange" type="button" data-action="start-edit" data-status="on_on">▸ On-on!</button>
                 <button class="btn muted"  type="button" data-action="start-edit" data-status="maybe">▸ Maybe</button>
@@ -132,14 +132,14 @@
               </div>
 
               <div id="guests-section" hidden>
-                <p class="note" style="margin-bottom: 6px;"><b>Bringing hash virgins?</b></p>
+                <p class="note" style="margin-bottom: 6px;"><b>Bringing SCH3 Hash Virgins?</b></p>
                 <div class="stepper">
                   <button type="button" id="guests-minus" class="stepper-btn" aria-label="Fewer guests">−</button>
                   <span class="stepper-val" id="guests-count" aria-live="polite">0</span>
                   <button type="button" id="guests-plus" class="stepper-btn" aria-label="More guests">+</button>
                 </div>
                 <p class="profile-hint" style="text-align: center; margin-top: 4px;">
-                  Each hash virgin is on your tab — ~£<span id="amount-per-head">5</span> each, cash on the day, all to St Luke's.
+                  Their first Steel City hash is <b>free</b> — bring as many newcomers as you like. We love a hash virgin.
                 </p>
               </div>
 
@@ -460,7 +460,8 @@
     currentSession = await getSession();
 
     const perHead = ev.amount_per_head ?? 5;
-    $('#amount-per-head').textContent = Number(perHead).toFixed(perHead % 1 === 0 ? 0 : 2);
+    const perHeadEl = $('#amount-per-head');
+    if (perHeadEl) perHeadEl.textContent = Number(perHead).toFixed(perHead % 1 === 0 ? 0 : 2);
 
     if (!currentSession) {
       const thenPath = encodeURIComponent(location.pathname + location.search);
@@ -548,15 +549,15 @@
       headline.textContent = "You're on-on for this one!";
       const g = r.guests_count || 0;
       detail.textContent = g > 0
-        ? `Bringing ${g} hash virgin${g === 1 ? '' : 's'}. See you Saturday.`
-        : "Just you. Tap Edit to add hash virgins if you're bringing any.";
+        ? `Bringing ${g} SCH3 Hash Virgin${g === 1 ? '' : 's'}. See you Saturday.`
+        : "Just you. Tap Edit to add SCH3 Hash Virgins if you're bringing any.";
       quickBtn.hidden = false;
       quickBtn.style.display = '';
     } else if (r.status === 'maybe') {
       headline.textContent = "You said maybe — fingers crossed!";
       const g = r.guests_count || 0;
       detail.textContent = g > 0
-        ? `Pencilled in with ${g} hash virgin${g === 1 ? '' : 's'} if you make it.`
+        ? `Pencilled in with ${g} SCH3 Hash Virgin${g === 1 ? '' : 's'} if you make it.`
         : "Pencilled in. Switch to on-on when you know for sure.";
       quickBtn.hidden = false;
       quickBtn.style.display = '';
@@ -778,7 +779,7 @@
   function initialsFor(name) {
     if (!name) return '?';
     return name
-      .replace(/^Hash Virgin /i, '')
+      .replace(/^(SCH3 )?Hash Virgin /i, '')
       .split(/\s+|#/)
       .map((p) => p[0])
       .filter(Boolean)
@@ -792,7 +793,7 @@
     const guests = row.guests_count || 0;
     const guestSuffix = guests === 0
       ? ''
-      : (guests === 1 ? ' + 1 hash virgin' : ` + ${guests} hash virgins`);
+      : (guests === 1 ? ' + 1 SCH3 Hash Virgin' : ` + ${guests} SCH3 Hash Virgins`);
     return `
       <li class="${isYou ? 'you' : ''}">
         <span class="av">${escapeHtml(initialsFor(name))}</span>

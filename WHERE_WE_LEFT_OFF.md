@@ -1,6 +1,33 @@
 # Where we left off — Steel City H3
 
-_Last updated: 2026-05-21 (test-pass fixes)_
+_Last updated: 2026-05-22 (SCH3 Hash Virgin rename + free hares/virgins + real-data load)_
+
+## 🟢 Round 8 — "SCH3 Hash Virgin" + free hares/virgins + REAL DATA (2026-05-22)
+Terminology + payment-rule clarifications, and the real club history is ready to load.
+
+**Code (done, awaiting deploy/commit):**
+- Renamed "Hash Virgin" → **"SCH3 Hash Virgin"** in the app (status labels, filters,
+  leaderboard, profile copy, RSVP flow) and in the DB display functions (migration 0020).
+- **Hares + SCH3 Hash Virgins go free on a hash.** Admin roster auto-£0s them
+  (member is a hare, or `is_hash_virgin`, or the new "first Steel City hash?" tick on
+  plus-ones/walk-ups); `populate_attendance_from_rsvps` does the same on live events.
+- Fixed the RSVP page copy — brought hash virgins are now **free**, and it no longer
+  wrongly says the money goes to St Luke's (these £3 hashes are club funds, not charity).
+- _Left as-is on purpose:_ the casual marketing lines "hash virgins especially welcome"
+  on the homepage (general hashing vernacular; not the system status).
+
+**➡️ To run, in order (full walk-through: `supabase/data/LOAD_REAL_DATA.md`):**
+1. **`0020_sch3_virgin_and_free_hares.sql`** (after 0018 + 0019).
+2. **`supabase/data/clear_test_data.sql`** — wipes test events/RSVPs/rosters/audit.
+   (Delete test *accounts* via the dashboard, keeping the 3 admins + Adam el Serf.)
+3. **`supabase/data/seed_real_data.sql`** — loads runs 3-13 (~95 legacy attendees).
+4. Merge Smutley / Queen Myrtle / your hash name on **Legacy attendees**.
+5. **Run 14** (no date in sheet) + **runs 9/10** (no data) — see the chase-up list
+   at the foot of the seed.
+
+---
+
+_Earlier: 2026-05-21 (test-pass fixes)_
 
 ## 🅿️ PARKED — go-live + SEO (do AFTER the test data is cleared)
 The site is live but full of test data, so we are deliberately **NOT** chasing
