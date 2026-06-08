@@ -1,0 +1,14 @@
+# Steel City H3
+User-agent: *
+Allow: /
+
+# Members-only / admin / auth pages — keep out of search
+Disallow: /admin
+Disallow: /login.html
+Disallow: /profile.html
+Disallow: /complete-profile.html
+Disallow: /my-on-ons.html
+Disallow: /auth-callback.html
+Disallow: /api/
+
+Sitemap: https://steelcityh3.org/sitemap.xml

@@ -1,16 +1,9 @@
 {
   "rewrites": [
-    { "source": "/event/:id", "destination": "/api/event?id=:id" }
+    { "source": "/event/:id", "destination": "/api/event?id=:id" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
   ],
   "functions": {
     "api/event.js": { "includeFiles": "event.html" }
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    }
-  ]
+  }
 }
