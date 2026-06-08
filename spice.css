@@ -1290,12 +1290,12 @@
    in the header band only (beside the title/lede), so they never narrow the
    tiles or lists below. No jaunty rotation — kept square so nothing wraps. */
 .sec-head.has-pic {
-  grid-template-columns: 1fr clamp(190px, 22vw, 250px);
-  gap: 40px;
+  grid-template-columns: 1fr clamp(320px, 34vw, 470px);
+  gap: 44px;
   align-items: center;
 }
 .sec-head.has-pic.pic-left {
-  grid-template-columns: clamp(190px, 22vw, 250px) 1fr;
+  grid-template-columns: clamp(320px, 34vw, 470px) 1fr;
 }
 .sec-head.has-pic .sec-head-text { display: block; }
 .sec-head.has-pic .sec-head-text .sec-lede { margin-top: 14px; }
