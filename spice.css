@@ -1288,6 +1288,9 @@
    them (magazine style). They sit in normal flow at their spot on the page, not
    pinned/scrolling. Right by default, left with .aside-left. */
 .has-aside { display: flow-root; }   /* contain the float */
+/* The section header spans the full width at the top; the floated photo sits
+   just beneath it and the body text wraps tightly around the photo. */
+.has-aside > .sec-head { display: block; }
 .sec-aside[hidden] { display: none; }
 @media (min-width: 760px) {
   .sec-aside {
