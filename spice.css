@@ -179,11 +179,13 @@
     right: -24px;
     width: clamp(260px, 30vw, 400px);
     aspect-ratio: 1;
-    border-radius: 50%;
     border: none;
     background: transparent;
     box-shadow: none;
     object-fit: cover;
+    /* The source JPEG has a white margin around the round crest; clip tight to
+       the black edge so no white ring or offset circle shows. */
+    clip-path: circle(47% at 50% 50%);
     transform: rotate(-4deg);
     z-index: 6;
   }
@@ -1284,45 +1286,44 @@
 }
 .snap-frame img.swapping { opacity: 0; }
 
-/* Side photo frames — float to one side of a section so the text wraps around
-   them (magazine style). They sit in normal flow at their spot on the page, not
-   pinned/scrolling. Right by default, left with .aside-left. */
-.has-aside { display: flow-root; }   /* contain the float */
-/* The section header spans the full width at the top; the floated photo sits
-   just beneath it and the body text wraps tightly around the photo. */
-.has-aside > .sec-head { display: block; }
-.sec-aside[hidden] { display: none; }
-@media (min-width: 760px) {
-  .sec-aside {
-    float: right;
-    width: clamp(300px, 40%, 460px);
-    margin: 6px 0 22px 36px;
-  }
-  .aside-left .sec-aside {
-    float: left;
-    margin: 6px 36px 22px 0;
-  }
+/* Square photo frames set into a section header, alternating sides. They live
+   in the header band only (beside the title/lede), so they never narrow the
+   tiles or lists below. No jaunty rotation — kept square so nothing wraps. */
+.sec-head.has-pic {
+  grid-template-columns: 1fr clamp(190px, 22vw, 250px);
+  gap: 40px;
+  align-items: center;
 }
-.snap-side {
+.sec-head.has-pic.pic-left {
+  grid-template-columns: clamp(190px, 22vw, 250px) 1fr;
+}
+.sec-head.has-pic .sec-head-text { display: block; }
+.sec-head.has-pic .sec-head-text .sec-lede { margin-top: 14px; }
+.sec-head.has-pic.pic-left .sec-pic { order: -1; }   /* photo first when on the left */
+.sec-pic { display: block; }
+.sec-pic[hidden] { display: none; }
+.sec-frame {
   background: var(--cream);
   border: 5px solid var(--ink);
-  box-shadow: 9px 9px 0 var(--orange);
-  padding: 12px 12px 16px;
-  transform: rotate(-2deg);
+  box-shadow: 8px 8px 0 var(--orange);
+  padding: 10px 10px 12px;
 }
-.aside-left .snap-side { transform: rotate(2deg); box-shadow: 9px 9px 0 var(--red); }
-.snap-side img {
+.pic-left .sec-frame { box-shadow: 8px 8px 0 var(--red); }
+.sec-frame img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border: 3px solid var(--ink);
   background: var(--ink);
   transition: opacity 0.4s ease;
 }
-.snap-side img.swapping { opacity: 0; }
-@media (max-width: 759px) {
-  .sec-aside { margin: 24px auto; max-width: 380px; }
+.sec-frame img.swapping { opacity: 0; }
+@media (max-width: 720px) {
+  .sec-head.has-pic,
+  .sec-head.has-pic.pic-left { grid-template-columns: 1fr; }
+  .sec-head.has-pic.pic-left .sec-pic { order: 0; }
+  .sec-pic { max-width: 320px; margin-top: 6px; }
 }
 
 /* "What's a hash" intro blurb under the section header */
