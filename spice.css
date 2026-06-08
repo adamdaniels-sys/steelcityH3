@@ -181,7 +181,8 @@
     aspect-ratio: 1;
     border-radius: 50%;
     border: none;
-    box-shadow: 7px 9px 0 var(--ink);
+    background: transparent;
+    box-shadow: none;
     object-fit: cover;
     transform: rotate(-4deg);
     z-index: 6;
@@ -1283,31 +1284,30 @@
 }
 .snap-frame img.swapping { opacity: 0; }
 
-/* Side photo frames — sit beside a section's content, never in their own row.
-   The section's container becomes a 2-col grid; the frame takes the slim column
-   (right by default, left with .aside-left) and stays put while you scroll. */
-.has-aside { display: block; }
-@media (min-width: 980px) {
-  .has-aside {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(240px, 25vw, 320px);
-    gap: 44px;
-    align-items: start;
-  }
-  .has-aside.aside-left {
-    grid-template-columns: clamp(240px, 25vw, 320px) minmax(0, 1fr);
-  }
-  .sec-aside { position: sticky; top: 92px; }
-}
+/* Side photo frames — float to one side of a section so the text wraps around
+   them (magazine style). They sit in normal flow at their spot on the page, not
+   pinned/scrolling. Right by default, left with .aside-left. */
+.has-aside { display: flow-root; }   /* contain the float */
 .sec-aside[hidden] { display: none; }
+@media (min-width: 760px) {
+  .sec-aside {
+    float: right;
+    width: clamp(300px, 40%, 460px);
+    margin: 6px 0 22px 36px;
+  }
+  .aside-left .sec-aside {
+    float: left;
+    margin: 6px 36px 22px 0;
+  }
+}
 .snap-side {
   background: var(--cream);
   border: 5px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--orange);
-  padding: 11px 11px 15px;
+  box-shadow: 9px 9px 0 var(--orange);
+  padding: 12px 12px 16px;
   transform: rotate(-2deg);
 }
-.aside-left .snap-side { transform: rotate(2deg); box-shadow: 8px 8px 0 var(--red); }
+.aside-left .snap-side { transform: rotate(2deg); box-shadow: 9px 9px 0 var(--red); }
 .snap-side img {
   display: block;
   width: 100%;
@@ -1318,8 +1318,8 @@
   transition: opacity 0.4s ease;
 }
 .snap-side img.swapping { opacity: 0; }
-@media (max-width: 979px) {
-  .sec-aside { margin: 26px auto 0; max-width: 360px; }
+@media (max-width: 759px) {
+  .sec-aside { margin: 24px auto; max-width: 380px; }
 }
 
 /* "What's a hash" intro blurb under the section header */
@@ -2868,7 +2868,7 @@ a.onons-title:hover { color: var(--orange); }
     top: auto;
     right: auto;
     border: none;
-    box-shadow: 6px 7px 0 var(--ink);
+    box-shadow: none;
   }
 
   /* ---- Speech bubble: keep it on-screen, top-left of the photo frame ---- */
