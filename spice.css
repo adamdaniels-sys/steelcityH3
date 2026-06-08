@@ -180,9 +180,8 @@
     width: clamp(260px, 30vw, 400px);
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--cream);
-    border: 6px solid var(--ink);
-    box-shadow: 0 0 0 6px var(--cream), 7px 9px 0 var(--ink);
+    border: none;
+    box-shadow: 7px 9px 0 var(--ink);
     object-fit: cover;
     transform: rotate(-4deg);
     z-index: 6;
@@ -449,13 +448,13 @@
   .soundfx .fx.red { color: var(--red); }
 
   /* ===== Section header ===== */
-  .sec { padding: 80px 0; position: relative; z-index: 2; }
+  .sec { padding: 54px 0; position: relative; z-index: 2; }
   .sec-head {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 32px;
     align-items: end;
-    margin-bottom: 40px;
+    margin-bottom: 26px;
   }
   @media (max-width: 720px) { .sec-head { grid-template-columns: 1fr; } }
   .sec-num {
@@ -1283,6 +1282,114 @@
   transition: opacity 0.4s ease;
 }
 .snap-frame img.swapping { opacity: 0; }
+
+/* Side photo frames — sit beside a section's content, never in their own row.
+   The section's container becomes a 2-col grid; the frame takes the slim column
+   (right by default, left with .aside-left) and stays put while you scroll. */
+.has-aside { display: block; }
+@media (min-width: 980px) {
+  .has-aside {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 25vw, 320px);
+    gap: 44px;
+    align-items: start;
+  }
+  .has-aside.aside-left {
+    grid-template-columns: clamp(240px, 25vw, 320px) minmax(0, 1fr);
+  }
+  .sec-aside { position: sticky; top: 92px; }
+}
+.sec-aside[hidden] { display: none; }
+.snap-side {
+  background: var(--cream);
+  border: 5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--orange);
+  padding: 11px 11px 15px;
+  transform: rotate(-2deg);
+}
+.aside-left .snap-side { transform: rotate(2deg); box-shadow: 8px 8px 0 var(--red); }
+.snap-side img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  background: var(--ink);
+  transition: opacity 0.4s ease;
+}
+.snap-side img.swapping { opacity: 0; }
+@media (max-width: 979px) {
+  .sec-aside { margin: 26px auto 0; max-width: 360px; }
+}
+
+/* "What's a hash" intro blurb under the section header */
+.hash-blurb {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 70ch;
+  margin: 0 0 30px;
+}
+
+/* Other hashes — list rows (replaces the tile grid) */
+.other-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.other-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.9fr) minmax(120px, 0.7fr) 2fr auto;
+  gap: 18px;
+  align-items: center;
+  background: var(--cream-2);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 14px 20px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.other-row:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--orange);
+}
+.other-row .nm {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.03em;
+}
+.other-row .city {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.other-row .desc {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.other-row .link {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--red);
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .other-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .other-row .link { white-space: normal; }
+}
 
 .event-grid {
   display: grid;
@@ -2760,8 +2867,8 @@ a.onons-title:hover { color: var(--orange); }
     margin: 0 auto 18px;
     top: auto;
     right: auto;
-    border-width: 5px;
-    box-shadow: 0 0 0 5px var(--cream), 6px 7px 0 var(--ink);
+    border: none;
+    box-shadow: 6px 7px 0 var(--ink);
   }
 
   /* ---- Speech bubble: keep it on-screen, top-left of the photo frame ---- */
