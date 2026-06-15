@@ -186,7 +186,8 @@
     /* The source JPEG has a white margin around the round crest; clip tight to
        the black edge so no white ring or offset circle shows. */
     clip-path: circle(47% at 50% 50%);
-    transform: rotate(-4deg);
+    /* Straightened per Smutley feedback — was rotate(-4deg) */
+    transform: none;
     z-index: 6;
   }
 
