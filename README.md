@@ -1,48 +1,71 @@
 # Steel City H3
 
-The website for **Steel City H3**, Sheffield's youngest Hash House Harriers chapter — a drinking club with a walking problem.
+The website and member portal for **Steel City H3**, Sheffield's youngest Hash House
+Harriers chapter — a drinking club with a walking problem.
 
-## What's in here
+Live at **[steelcityh3.org](https://steelcityh3.org)**, running on real club data.
 
-- **`index.html`** — the main landing page (upcoming hashes, past hashes, hashing 101, jargon, mismanagement contacts, other groups, about)
-- **`event.html`** — single-event detail page. Takes a `?id=` query param (e.g. `event.html?id=18`). Handles upcoming + past states from one template.
-- **`login.html`** — sign-in / sign-up mockup with email + 6-digit OTP flow
-- **`spice.css`** — shared stylesheet (Spice & Steel design system)
-- **`logo-original.jpg`** — the club crest
+## What it is
 
-## Running it
+A plain static site — HTML, CSS and vanilla JS, **no build step and no bundler** —
+deployed on **Vercel** and backed by **Supabase** for everything dynamic:
 
-Open `index.html` in any modern browser. No build step, no server required — it's all static HTML + CSS + a small amount of vanilla JS.
+| Concern | How |
+|---|---|
+| Accounts | Supabase Auth, email one-time-code (no passwords) |
+| Data | Supabase Postgres, row-level security on every table |
+| Photos | Supabase Storage, bucket `event-photos` |
+| Transactional email | Supabase Edge Function `rapid-processor` |
+| Link previews | `api/event.js` injects per-event Open Graph tags |
 
-To preview locally with a tiny dev server (optional, recommended so query params work cleanly):
+The no-build constraint is deliberate: every page opens as a plain file, and anyone
+can read the source without a toolchain.
+
+## The shape of it
+
+**Public** — `index.html` (upcoming and past hashes, hashing 101, jargon, contacts),
+`event.html` (one hash, upcoming or past, via `?id=`), `login.html`.
+
+**Members** — `profile.html`, `complete-profile.html`, `my-on-ons.html`.
+
+**Admin** — `admin.html` is the dashboard; `admin-event.html` runs the four-tab event
+workflow (event details → who's cumming → ready to on-on → after the event), with
+`admin-events.html`, `admin-members.html`, `admin-member.html`, `admin-legacy.html`
+and `admin-attendance.html` alongside.
+
+**Shared** — `spice.css` holds the whole design system; `auth.js`, `config.js` and
+`hare-picker.js` are the only extracted scripts. Most page logic still lives in
+inline `<script>` blocks.
+
+**Backend** — `supabase/migrations/` is the numbered schema history, applied in order
+by hand through the Supabase SQL editor. `supabase/functions/rapid-processor/` is the
+email edge function. `api/` holds the two Vercel serverless functions.
+
+## Running it locally
+
+No install, no build. Open `index.html` in a browser, or serve the folder so query
+params behave:
 
 ```bash
-# Python 3
-python3 -m http.server 8000
-# then open http://localhost:8000/
-
-# or with Node
-npx serve .
+python3 -m http.server 8000   # then http://localhost:8000/
 ```
 
-## How the prototype works
+Supabase credentials live in `config.js` and point at the live project, so a local
+copy reads and writes **real club data**. Take care.
 
-**RSVPs, accounts, and admin mode are all mocked in `localStorage`** — they live only in the browser of whoever is using the site. Useful for showing the shape of the experience; not real persistence.
+## Design system
 
-- **Sign up flow:** email + hash name → any 6-digit code → logged in
-- **Sign in flow:** existing email → any 6-digit code → logged in
-- **Admin mode:** sign in as `smutley@hotmail.co.uk` to see admin-only UI (edit event, upload photos, post write-up). Buttons are placeholders.
-- **RSVPs:** logged-in users can click "Yes, I'll be there!" on upcoming event pages. The RSVP list is stored per-event in localStorage.
+"Spice & Steel" — cream Henderson's-Relish-buff backgrounds, Sheffield-steel grey
+accents, hot-orange highlights, and Beano-style comic display type (Bangers, Lilita
+One, Nunito, with Caveat for handwritten photo captions).
 
-## When you're ready to make it real
+## For admins
 
-For real accounts, shared RSVPs, photo uploads, and a content editor for Smutley, I'd recommend:
+Queen Myrtle and Smutley: everything you need is in the admin UI, and the walkthrough
+is in **`ADMIN_GUIDE.md`**.
 
-- **Backend:** [Supabase](https://supabase.com) — its built-in email-OTP login matches the prototype's flow almost exactly. Free tier is plenty for a small club.
-- **Hosting:** [Netlify](https://netlify.com), [Cloudflare Pages](https://pages.cloudflare.com) or [Vercel](https://vercel.com) — all have free tiers for static sites with one-click git deploys.
+## For contributors
 
-The HTML/CSS in this repo lifts-and-shifts onto any of those — only the localStorage calls in `event.html` and `login.html` need to be swapped for Supabase queries.
-
-## Credits
-
-Design system: cream Henderson's-Relish-buff backgrounds, Sheffield-steel grey accents, hot-orange highlights, and Beano-style comic display type (Bangers + Lilita One + Nunito).
+Project state — what's done, what's open, decisions and conventions — is tracked in
+**Acta**, not in markdown. Run `node .claude/acta.cjs now` to see where things stand,
+or just ask Claude.

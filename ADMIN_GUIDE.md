@@ -61,6 +61,56 @@ You can still edit a finalised event's roster afterwards if you spot a mistake.
 
 ---
 
+## Past members (legacy attendees)
+
+The people who came before the website existed. Backfilling them means the Hall of
+Fame counts everyone, not just the ones who signed up.
+
+### Backfill who came to an old hash
+
+1. **Admin → Manage events** → open a **past** event (▸ Edit).
+2. Go to the roster tab ("Ready to On-On" / "After the event").
+3. Under **"Add to the roster"** find **"Add a past attendee (legacy)"** — it only
+   appears on past events.
+4. Type their **hash name** (and **kennel** if you know it) → **Add**. Repeat for
+   everyone who was there.
+
+They appear tagged **"Past member (legacy)"** at £0 and already marked paid, so they
+never show up as owing money. They count in **Hall of Fame → Top Hounds** straight away.
+
+### The legacy-names list
+
+**Admin → Legacy attendees** (also on the dashboard quick actions). One row per hash
+name you've backfilled, with their kennel, how many past events they attended, and
+whether a matching account exists yet — "No account yet", or "✓ [name]" once a real
+member with that hash name has signed up.
+
+### Merge when someone signs up
+
+This is what stops "Smutley (legacy)" and "Smutley" being counted as two people.
+
+1. When a legacy person registers, set their **hash name** to match the legacy one
+   (**Manage members → Edit**).
+2. **Legacy attendees** → their row now shows **✓ [name]** and a **▸ Merge into
+   account** button.
+3. **Merge → confirm.** All their backfilled attendances re-attach to the real
+   account, the metrics count them once, and they drop off the legacy list.
+
+---
+
+## Money owed
+
+1. On the event's attendance tab, tick **Paid** for each person who has paid.
+2. The **Outstanding** total at the top of the tab turns red with what's still owed.
+3. **▸ Save & complete.**
+
+After that, **Manage events** tags the event **"Money outstanding £X"**, and **Manage
+members** puts an **"owes £X"** badge on anyone unpaid (the **Owes money** filter
+finds them). To clear it, open that member → **Outstanding payments** → **▸ Mark
+paid**. The event's takings go up by the same amount.
+
+---
+
 ## The legacy Supabase Dashboard path (fallback only)
 
 You shouldn't need this for normal management — the site UI above covers everything. Keep this section as a backup for the rare case where you need to touch raw data, query the audit log, or do something the admin UI doesn't yet support.
