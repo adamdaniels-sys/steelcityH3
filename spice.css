@@ -3674,11 +3674,12 @@ a.onons-title:hover { color: var(--orange); }
 }
 .editor-shell {
   background: var(--cream-2);
-  border: 4px solid var(--ink);
-  box-shadow: 10px 10px 0 var(--orange);
-  /* Leave room for the 10px offset shadow so it never clips at the edge. */
-  width: min(1180px, calc(100vw - 62px));
-  height: min(920px, calc(100vh - 62px));
+  border: 3px solid var(--ink);
+  /* No offset shadow: inside the editor the comic layering reads as clutter
+     rather than character (DEC-010). */
+  border-radius: 6px;
+  width: min(1180px, calc(100vw - 48px));
+  height: min(920px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3834,24 +3835,36 @@ html.embedded .ed-head { top: 0; }
   flex: 1 1 0;
   min-width: 150px;
   background: var(--cream-2);
+  /* A clip-path cuts the border off, so each step is drawn as its own fully
+     bordered box with an arrow head instead. */
   border: 2px solid var(--ink-3);
-  border-right: 0;
+  border-radius: 4px;
   color: var(--ink-2);
   font-family: "Nunito", sans-serif;
   font-weight: 700;
   font-size: 0.86rem;
   letter-spacing: 0;
   text-transform: none;
-  padding: 11px 14px 11px 30px;
+  padding: 11px 16px;
   cursor: pointer;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
   text-align: left;
+  margin-right: 14px;
 }
-.ed-head .event-tab:first-child {
-  padding-left: 16px;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+/* The arrow: a small outlined triangle sitting in the gap between steps. */
+.ed-head .event-tab::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 9px solid var(--ink-3);
 }
-.ed-head .event-tab:last-child { border-right: 2px solid var(--ink-3); }
+.ed-head .event-tab:last-child { margin-right: 0; }
+.ed-head .event-tab:last-child::after { display: none; }
 .ed-head .event-tab span {
   display: inline-block;
   font-weight: 800;
@@ -3982,3 +3995,38 @@ html.embedded .ed-head { top: 0; }
   outline: 2px solid var(--orange);
   outline-offset: 1px;
 }
+
+/* ── Editor: strip the comic layering (DEC-010) ──────────────────────────────
+   Inside the editor the halftone dots and the offset "sticker" shadows read as
+   clutter behind a form rather than as character. The public site keeps both. */
+
+/* Status chip: flat, and sized to sit in a header rather than shout. */
+.ed-head .status-chip {
+  box-shadow: none;
+  border-width: 2px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  padding: 5px 14px;
+}
+
+/* No halftone dots behind the editor. */
+html.embedded body::before,
+html.embedded body::after {
+  display: none;
+}
+
+/* Properly frozen header. It was sticky already, but the section's own top
+   padding scrolled away first, so the whole block shifted before it locked.
+   Removing that padding in embed mode means it never moves at all. */
+html.embedded main > .sec,
+html.embedded body > .sec {
+  padding-top: 0 !important;
+}
+.ed-head {
+  padding-top: 14px;
+  /* Cover the content sliding underneath, since the panels sit flush now. */
+  box-shadow: 0 6px 0 0 var(--cream);
+}
+/* Standalone (not in the modal) the site header is sticky above us, so the
+   editor header parks below it rather than at the very top. */
+html:not(.embedded) .ed-head { top: 77px; }
