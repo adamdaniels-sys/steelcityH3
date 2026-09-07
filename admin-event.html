@@ -465,11 +465,20 @@
 <div class="modal-overlay" id="reopen-modal" hidden>
   <div class="modal">
     <h3>Re-open this hash?</h3>
-    <p>It goes back to <b>Ready to On-On</b>: it shows under "Coming up" again,
-       and people can RSVP.</p>
+    <p><b>Nothing you've typed is lost.</b> The register, who paid, the write-up,
+       the photos and the hares all stay exactly as you left them, and you can
+       carry on editing any of it.</p>
+    <p>What changes while it's re-opened:</p>
+    <ul style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin: 0 0 14px 18px; line-height: 1.7;">
+      <li>It shows under "Coming up" again, and people can RSVP.</li>
+      <li id="reopen-debt-line">Anyone who still owes money for this hash stops
+          showing as owing it — until you mark it done again.</li>
+      <li id="reopen-charity-line" hidden>The charity total on the homepage drops
+          by this hash's share, and comes back when you finish it again.</li>
+    </ul>
     <p style="font-family: 'Nunito', sans-serif; font-weight: 700;">
-      Nothing is deleted. The attendance and money you've recorded stay exactly
-      as they are — they just stop being the locked final record.
+      Both of those come straight back the moment you mark it done again. Nothing
+      is deleted at any point.
     </p>
     <div class="modal-actions">
       <button class="btn muted" type="button" id="reopen-cancel-btn">↶ Cancel</button>
@@ -927,6 +936,28 @@
     }
   }
 
+  // Tailor the re-open warning to THIS hash, so it never lists a consequence
+  // that doesn't apply. Clearing attendance_finalised_at is what has reach
+  // beyond this tab: debt tracking (migration 0018) and the homepage charity
+  // counter (0012) both only count finalised events.
+  function openReopenModal() {
+    const owing = roster.filter((r) => !r.paid && Number(r.amount_paid || 0) > 0).length;
+    const debtLine = $('#reopen-debt-line');
+    if (debtLine) {
+      debtLine.hidden = owing === 0;
+      if (owing > 0) {
+        debtLine.textContent = owing === 1
+          ? 'The one person who still owes for this hash stops showing as owing it — until you mark it done again.'
+          : `The ${owing} people who still owe for this hash stop showing as owing it — until you mark it done again.`;
+      }
+    }
+    const charityLine = $('#reopen-charity-line');
+    if (charityLine) {
+      charityLine.hidden = !(originalEvent?.is_charity_event && Number(originalEvent?.charity_raised || 0) > 0);
+    }
+    $('#reopen-modal').hidden = false;
+  }
+
   // The undo. Without this, a mis-click needed Adam and a hand-written SQL
   // fix — which is exactly what happened with Hash 24 (ISS-003).
   async function doReopen() {
@@ -1374,7 +1405,7 @@
   $('#complete-btn').addEventListener('click', openCompleteModal);
   $('#complete-cancel-btn').addEventListener('click', () => { $('#complete-modal').hidden = true; });
   $('#complete-confirm-btn').addEventListener('click', doComplete);
-  $('#reopen-btn').addEventListener('click', () => { $('#reopen-modal').hidden = false; });
+  $('#reopen-btn').addEventListener('click', openReopenModal);
   $('#reopen-cancel-btn').addEventListener('click', () => { $('#reopen-modal').hidden = true; });
   $('#reopen-confirm-btn').addEventListener('click', doReopen);
   $('#save-after-btn').addEventListener('click', saveAfter);
