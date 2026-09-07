@@ -78,6 +78,14 @@
           <button class="event-tab" type="button" data-tab="after"   role="tab">4 · After the event</button>
         </div>
 
+        <!-- Form on the left, help on the right. The help panel is the point of
+             the layout, not decoration: these are volunteers using this once a
+             month, so every field explains itself as you land on it (DEC-005).
+             Desktop-first (DEC-006) is what makes a permanent side panel
+             affordable at all; under 1100px it drops below the form. -->
+        <div class="editor-split">
+        <div class="editor-main">
+
         <!-- ============================== TAB 1: EVENT DETAILS ============================== -->
         <section class="tab-panel" data-panel="details">
           <form class="admin-form" id="event-form" novalidate>
@@ -411,6 +419,26 @@
           </div>
         </section>
 
+        </div><!-- /.editor-main -->
+
+        <!-- The help panel. Updates as you move between fields; never empty,
+             because an empty panel teaches people to stop looking at it. -->
+        <aside class="field-help" id="field-help" aria-live="polite">
+          <div class="field-help-inner">
+            <h4 id="field-help-title">Event details</h4>
+            <dl>
+              <dt>What is it?</dt>
+              <dd id="field-help-what"></dd>
+              <dt>What goes in?</dt>
+              <dd id="field-help-put"></dd>
+              <dt>What does it change?</dt>
+              <dd id="field-help-affects"></dd>
+            </dl>
+          </div>
+        </aside>
+
+        </div><!-- /.editor-split -->
+
         <!-- Danger zone (edit mode) -->
         <div class="danger-zone" id="danger-zone" hidden style="margin-top: 30px;">
           <h4>▸ Danger zone</h4>
@@ -635,11 +663,232 @@
 
   function status() { return originalEvent?.status || 'planning'; }
 
+  // ---- Field help -------------------------------------------------------
+  //
+  // The panel beside the form. Whichever field you are in, it explains three
+  // things: WHAT it is, WHAT to put in it, and — the one that was missing
+  // everywhere — WHAT IT AFFECTS. Nobody could see that the status quietly
+  // decides whether a hash shows on the homepage, which is how a future hash
+  // ended up marked finished (ISS-004).
+  //
+  // Written for someone who does this once a month and never builds up any
+  // fluency: club words, no jargon, and say the consequence out loud.
+  const FIELD_HELP = {
+    event_type: {
+      title: 'Event type',
+      what: 'Is this a proper hash with a trail, or just a social get-together?',
+      put: 'Hash for anything with a trail to follow. Meet-up for a curry, a pub night, the AGM.',
+      affects: 'Meet-ups skip the pace and the hare fees. Hashes charge the sub, and hares and first-timers go free.',
+    },
+    run_number: {
+      title: 'Run number',
+      what: 'Which number hash this is in the club history.',
+      put: 'The next number after the last one. If the last was 24, this is 25.',
+      affects: 'Shows as "#25" on the homepage list and at the top of the hash page. Nothing else depends on it, so a wrong number is only cosmetic.',
+    },
+    title: {
+      title: 'Title',
+      what: 'The name of this hash, as everyone will see it.',
+      put: 'Plain and obvious, like "October Hash" or "Christmas Hash". No need to repeat the date.',
+      affects: 'The headline on the homepage, on the hash page, in the invite email, and in the link preview when someone shares it on Facebook or WhatsApp.',
+    },
+    event_date: {
+      title: 'Date',
+      what: 'The day the hash actually happens.',
+      put: 'Usually the third Saturday of the month. Use the little calendar rather than typing it.',
+      affects: 'This is the big one. Once this date passes, the hash moves itself off "Coming up" and into Past Hashes on its own. It also orders the whole list, and it is what stops you accidentally finishing a hash that has not happened yet.',
+    },
+    start_time: {
+      title: 'Start time',
+      what: 'What time everyone meets.',
+      put: 'Normally 12:00 for high noon. Change it if this one is different.',
+      affects: 'Shown on the hash page and in the invite email. Also read by Google and by AI assistants when someone asks when the next Sheffield hash is.',
+    },
+    location_summary: {
+      title: 'Where (short)',
+      what: 'The short version of where it starts — a place name, not an address.',
+      put: 'Something like "Hathersage" or "The Rising Sun, Nether Green". Keep it to a few words.',
+      affects: 'This is what shows on the homepage card, so it needs to read well small. It is public the moment you save.',
+    },
+    location_full: {
+      title: 'Where it starts (full address)',
+      what: 'The full postal address of the meeting point.',
+      put: 'Street, town and postcode. Leave it empty if the venue is still a secret.',
+      affects: 'Shows on the hash page and goes to Google as the event location, so people can find it. Optional — the short version above is the one that must be filled in.',
+    },
+    pace: {
+      title: 'Pace',
+      what: 'How hard this one is going to be.',
+      put: '"Walk or run" covers most hashes. Say if it is hillier or longer than usual.',
+      affects: 'Shown on the hash page so people know what they are signing up for. Hidden entirely on meet-ups.',
+    },
+    amount_per_head: {
+      title: 'Amount per head',
+      what: 'What each person hands over on the day.',
+      put: 'Normally 3.50. Just the number, no pound sign.',
+      affects: 'Sets what each person on the register owes, and adds up into the money total. Hares and anyone on their first Steel City hash are set to zero automatically — you do not have to do anything.',
+    },
+    is_charity_event: {
+      title: 'Charity hash?',
+      what: 'Whether part of the sub goes to a charity rather than club funds.',
+      put: 'Leave it off for a normal hash. The usual subs are club money, not charity.',
+      affects: 'Turning it on reveals the two charity boxes below, and this hash then counts towards the running charity total on the homepage.',
+    },
+    charity_amount_per_head: {
+      title: 'Charity amount per head',
+      what: 'How much of each person’s money goes to the charity.',
+      put: 'Part of the amount above, not on top. If it is 20 a head with 5 to the charity, put 5 here.',
+      affects: 'Splits the money in two on the register: the charity share and the club share. If someone pays extra, the extra goes to the charity too.',
+    },
+    charity_name: {
+      title: 'Charity name',
+      what: 'Who the money is going to.',
+      put: 'The charity name as they would write it themselves.',
+      affects: 'Appears in the "Raised X for..." line on the hash page, and in the confirmation email. Worth getting right — it is the bit people see.',
+    },
+    has_meal: {
+      title: 'Includes a meal?',
+      what: 'Whether food is part of this one.',
+      put: 'On if there is a meal people need to be counted for.',
+      affects: 'Turning it on asks everyone for their dietary needs when they RSVP, and adds a Dietary column to the list of who is coming — so you can tell the kitchen.',
+    },
+    meal_note: {
+      title: 'Meal note',
+      what: 'Anything people need to know about the food.',
+      put: 'What it is and when, like "Curry at the pub after, about 3pm".',
+      affects: 'Shows next to the meal line on the hash page.',
+    },
+    asks_accommodation: {
+      title: 'Might need a place to stay?',
+      what: 'Whether this is an overnight, like a hash weekend away.',
+      put: 'On for anything where people might stay over.',
+      affects: 'Adds "I will need a place to stay" to the RSVP, and a Stay? column to the list of who is coming, so rooms can be booked in one go.',
+    },
+    description: {
+      title: 'The plan',
+      what: 'The blurb about this hash, in your own words.',
+      put: 'Anything worth knowing: parking, buses, whether it is dog friendly, what the pub is like. Write it like you are telling a mate.',
+      affects: 'Shows on the hash page, goes into the invite email, and is used as the description when the link is shared or picked up by Google. Worth a few sentences.',
+    },
+    whatsapp_group_link: {
+      title: 'WhatsApp invite link',
+      what: 'The join link for this hash WhatsApp group.',
+      put: 'In WhatsApp, open the group, Invite via link, then copy and paste it here.',
+      affects: 'Anyone who says they are on-on gets a "Join the group" button and the link in their confirmation email. Only people who have RSVPd ever see it.',
+    },
+    facebook_url: {
+      title: 'Facebook link',
+      what: 'A link to the Facebook post or photo album for this hash.',
+      put: 'Paste the address of the post or album from Facebook.',
+      affects: 'Adds a "Photos on Facebook" button to the hash page. Handy when there are far more photos than the three that fit on the site.',
+    },
+    distance_miles: {
+      title: 'Distance',
+      what: 'How far the trail actually turned out to be.',
+      put: 'Miles, as a number. 4.5 is fine.',
+      affects: 'Shows on the write-up. Purely for the record — it does not affect money or anything else.',
+    },
+    on_on_pub: {
+      title: 'On-inn pub',
+      what: 'Where everyone ended up afterwards.',
+      put: 'The pub name.',
+      affects: 'Kept secret before the hash, then shown on the write-up afterwards.',
+    },
+    scribe_report_by: {
+      title: 'Scribe',
+      what: 'Who wrote the report.',
+      put: 'Their hash name.',
+      affects: 'Credited under the write-up on the hash page.',
+    },
+    scribe_report: {
+      title: 'Scribe report',
+      what: 'The story of the hash.',
+      put: 'Plain writing, blank line between paragraphs. No need for anything fancy.',
+      affects: 'Shows on the hash page and earns it a "Write-up" badge on the homepage list. Nothing else waits on it — you can add it weeks later, or never.',
+    },
+    written_up: {
+      title: 'Written up',
+      what: 'A tick to say this one is finished with.',
+      put: 'Tick it once you are happy with the write-up.',
+      affects: 'Only changes the tag in your admin list, so you can see at a glance which hashes still need doing. Nothing on the public site depends on it.',
+    },
+  };
+
+  // Default copy when nothing is focused, per tab. Says where you are and what
+  // this step is for, so the panel is never just empty space.
+  const TAB_HELP = {
+    details: {
+      title: 'Event details',
+      what: 'Everything about the hash itself: when, where, how much.',
+      put: 'Click into any box and this panel will tell you what it is for.',
+      affects: 'Saving here makes the hash visible to the club. Nothing is final — you can come back and change any of it.',
+    },
+    whos: {
+      title: 'Who is cumming?',
+      what: 'The hares, and everyone who has said they are coming.',
+      put: 'Add the hares once you know them. RSVPs arrive here on their own as people sign up.',
+      affects: 'Adding a hare marks them as coming and lets them off the sub automatically.',
+    },
+    ready: {
+      title: 'Ready to On-On',
+      what: 'The register and the money, on the day or just after.',
+      put: 'Tick people off as they turn up and tick what they have paid.',
+      affects: 'Every tick saves itself the moment you make it. Nothing here is waiting to be saved.',
+    },
+    after: {
+      title: 'After the event',
+      what: 'The write-up, the photos and the bits worth remembering.',
+      put: 'Fill in whatever you have. All of it is optional.',
+      affects: 'Nothing here holds anything else up, and none of it is urgent.',
+    },
+  };
+
+  let helpPinned = null;   // field id the panel is currently showing
+
+  function renderHelp(entry) {
+    if (!entry) return;
+    $('#field-help-title').textContent = entry.title;
+    $('#field-help-what').textContent = entry.what;
+    $('#field-help-put').textContent = entry.put;
+    $('#field-help-affects').textContent = entry.affects;
+  }
+
+  // Fall back to the tab's own copy whenever nothing is focused, so the panel
+  // always says something useful rather than sitting blank.
+  function showTabHelp(tabKey) {
+    helpPinned = null;
+    renderHelp(TAB_HELP[tabKey] || TAB_HELP.details);
+  }
+
+  function wireFieldHelp() {
+    // focusin/out rather than per-field listeners: catches fields added later
+    // and costs two listeners instead of twenty-three.
+    document.addEventListener('focusin', (e) => {
+      const el = e.target.closest('input, select, textarea');
+      if (!el || !el.id || !FIELD_HELP[el.id]) return;
+      helpPinned = el.id;
+      renderHelp(FIELD_HELP[el.id]);
+    });
+    // Hovering a label is a cheap way to browse the form without tabbing
+    // through it, but never override the field you are actually typing in.
+    document.addEventListener('mouseover', (e) => {
+      const lbl = e.target.closest('label[for]');
+      if (!lbl || helpPinned) return;
+      const entry = FIELD_HELP[lbl.getAttribute('for')];
+      if (entry) renderHelp(entry);
+    });
+    document.addEventListener('focusout', (e) => {
+      const el = e.target.closest('input, select, textarea');
+      if (el && el.id === helpPinned) helpPinned = null;
+    });
+  }
+
   // ---- Tabs -------------------------------------------------------------
 
   function showTab(key) {
     document.querySelectorAll('.event-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
     document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== key; });
+    showTabHelp(key);
   }
 
   function applyStatusUI() {
@@ -1428,6 +1677,7 @@
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-hares-btn').addEventListener('click', saveHares);
+  wireFieldHelp();
   $('#save-onon-btn').addEventListener('click', saveOnOn);
   $('#save-attendance-btn').addEventListener('click', saveAttendance);
   $('#complete-btn').addEventListener('click', openCompleteModal);

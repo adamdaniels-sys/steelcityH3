@@ -3730,3 +3730,67 @@ html.embedded main > .sec,
 html.embedded body > .sec {
   padding-top: 18px !important;
 }
+
+/* ── Admin: the field help panel ─────────────────────────────────────────────
+   Form left, help right. The panel is the point of this layout, not decoration:
+   the admins use the editor once a month and never build up fluency, so every
+   field explains itself as they land on it (DEC-005). It answers three things,
+   and the third — what does it change? — is the one that was missing from the
+   whole interface. Nobody could see that the date quietly decides whether a
+   hash appears on the homepage.
+
+   A permanent side panel is only affordable because they work on a laptop
+   (DEC-006). Under 1100px it drops below the form rather than being squeezed. */
+.editor-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 26px;
+  align-items: start;
+}
+.editor-main { min-width: 0; }
+
+.field-help {
+  position: sticky;
+  /* Clear the sticky topbar (77px) or the panel's heading hides behind it.
+     In the modal the topbar is gone, so embed mode overrides this below. */
+  top: 95px;
+  background: var(--yellow);
+  border: 4px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.field-help-inner { padding: 20px 22px 24px; }
+.field-help h4 {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--ink);
+}
+.field-help dt {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-top: 14px;
+}
+.field-help dt:first-of-type { margin-top: 0; }
+.field-help dd {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-top: 3px;
+}
+
+/* Inside the modal the site header is hidden, so the panel can sit higher. */
+html.embedded .field-help { top: 18px; }
+
+@media (max-width: 1100px) {
+  .editor-split { grid-template-columns: minmax(0, 1fr); }
+  .field-help { position: static; margin-top: 22px; }
+}
