@@ -333,6 +333,7 @@
                   <input type="text" id="add-legacy-label" class="att-add-input" placeholder="Hash name" />
                   <input type="text" id="add-legacy-kennel" class="att-add-input" placeholder="Kennel (optional)" />
                   <button class="btn cream" type="button" id="add-legacy-btn">▸ Add</button>
+                  <button class="btn cream" type="button" id="bulk-legacy-btn">▸ Add a whole list</button>
                 </div>
                 <div class="profile-hint" style="margin-top: 6px;">Backfill someone who came before the site. Counts in metrics; merge into their account from the <b>Legacy attendees</b> page when they sign up.</div>
               </div>
@@ -437,6 +438,32 @@
     </div>
   </section>
 </main>
+
+<!-- Bulk-add past attendees. The Buxton weekend had 77 people on a spreadsheet,
+     and the only way in was one name at a time, so it took a hand-written SQL
+     import. This puts that in the admins' hands: paste the column, check what
+     it found, add them. Deliberately shows exactly what it will do BEFORE it
+     does it, because a bulk write is the one place a mistake multiplies. -->
+<div class="modal-overlay" id="bulk-modal" hidden>
+  <div class="modal" style="max-width: 620px;">
+    <h3>Add a whole list of people</h3>
+    <p>Paste their hash names below, <b>one per line</b>. Straight out of a
+       spreadsheet column is fine.</p>
+    <textarea id="bulk-names" rows="9" placeholder="Smutley&#10;Queen Myrtle&#10;Dirty Stop Out&#10;..."
+      style="width: 100%; background: var(--cream); border: 3px solid var(--ink); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-weight: 600; line-height: 1.5;"></textarea>
+    <div id="bulk-preview" hidden style="margin-top: 14px; background: var(--cream); border: 3px solid var(--ink); padding: 14px 16px; font-family: 'Nunito', sans-serif; font-weight: 600; line-height: 1.6; max-height: 220px; overflow-y: auto;"></div>
+    <p class="profile-hint" style="margin-top: 12px;">
+      Everyone is added as a <b>past attendee</b>: they count towards the
+      numbers, owe nothing, and never show as owing money. Anyone already on
+      the list is skipped, so it is safe to paste the same list twice.
+    </p>
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="bulk-cancel-btn">↶ Cancel</button>
+      <button class="btn cream" type="button" id="bulk-check-btn">▸ Check the list</button>
+      <button class="btn orange" type="button" id="bulk-add-btn" hidden>▸ Add them</button>
+    </div>
+  </div>
+</div>
 
 <!-- Complete-confirm modal. Completing used to happen on a single click with no
      warning, on a button that was also the only save-looking control on the
@@ -1608,6 +1635,86 @@
     $('#add-walkup-label').value = ''; $('#add-walkup-kennel').value = ''; $('#add-walkup-firsttimer').checked = false;
     await reloadRoster();
   }
+  // ---- Bulk-add past attendees -----------------------------------------
+  //
+  // Same rules as the hand-written import that seeded the Buxton weekend:
+  // names go in VERBATIM (a name that looks like a typo may be two people
+  // sharing a hash name — see the "Nosejob: nj" case), and anyone already on
+  // the roster is skipped so re-pasting the same list adds nobody twice.
+  let bulkReady = null;   // names checked and ready to insert
+
+  function parseBulkNames() {
+    const raw = $('#bulk-names').value.split('\n');
+    const seen = new Set();
+    const names = [];
+    const dupesInPaste = [];
+    for (const line of raw) {
+      const name = line.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) { dupesInPaste.push(name); continue; }
+      seen.add(key);
+      names.push(name);
+    }
+    // Everyone already on this event, however they were added.
+    const already = new Set(
+      roster.map((r) => (r.display_name || r.attendee_label || '').toLowerCase().trim()).filter(Boolean),
+    );
+    return {
+      toAdd: names.filter((n) => !already.has(n.toLowerCase())),
+      skipping: names.filter((n) => already.has(n.toLowerCase())),
+      dupesInPaste,
+    };
+  }
+
+  function checkBulkNames() {
+    const r = parseBulkNames();
+    bulkReady = r.toAdd;
+    const box = $('#bulk-preview');
+    const bits = [];
+    if (r.toAdd.length === 0) {
+      bits.push('<b>Nothing to add.</b> Every name you pasted is already on the list.');
+    } else {
+      bits.push(`<b>${r.toAdd.length} ${r.toAdd.length === 1 ? 'person' : 'people'} will be added:</b><br>` +
+        r.toAdd.map(escapeHtml).join(', '));
+    }
+    if (r.skipping.length) {
+      bits.push(`<br><br><b>Already on the list, so skipping:</b><br>${r.skipping.map(escapeHtml).join(', ')}`);
+    }
+    if (r.dupesInPaste.length) {
+      bits.push(`<br><br><b>Listed twice in what you pasted:</b><br>` +
+        `${r.dupesInPaste.map(escapeHtml).join(', ')} — added once each. If they really are two different people, add the second one by hand afterwards.`);
+    }
+    box.innerHTML = bits.join('');
+    box.hidden = false;
+    $('#bulk-add-btn').hidden = r.toAdd.length === 0;
+  }
+
+  async function doBulkAdd() {
+    if (!bulkReady || bulkReady.length === 0) return;
+    const btn = $('#bulk-add-btn'); btn.disabled = true; const o = btn.textContent;
+    btn.textContent = '▸ Adding…';
+    const rows = bulkReady.map((label) => ({
+      event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: null,
+      is_virgin_guest: false, is_legacy: true, amount_paid: 0, charity_amount: 0, paid: true,
+    }));
+    const { error } = await supabase.from('event_attendances').insert(rows);
+    btn.disabled = false; btn.textContent = o;
+    if (error) {
+      showToast(error.message || "Couldn't add those names.", { kind: 'error' });
+      return;
+    }
+    const n = rows.length;
+    $('#bulk-modal').hidden = true;
+    $('#bulk-names').value = '';
+    $('#bulk-preview').hidden = true;
+    $('#bulk-add-btn').hidden = true;
+    bulkReady = null;
+    notifyHost('saved');
+    showToast(`Added ${n} ${n === 1 ? 'person' : 'people'}.`, { kind: 'ok' });
+    await reloadRoster();
+  }
+
   async function addRosterLegacy() {
     const label = $('#add-legacy-label').value.trim();
     const kennel = $('#add-legacy-kennel').value.trim() || null;
@@ -1758,6 +1865,21 @@
   $('#add-plusone-btn').addEventListener('click', addRosterPlusOne);
   $('#add-walkup-btn').addEventListener('click', addRosterWalkup);
   $('#add-legacy-btn').addEventListener('click', addRosterLegacy);
+  $('#bulk-legacy-btn').addEventListener('click', () => {
+    $('#bulk-preview').hidden = true;
+    $('#bulk-add-btn').hidden = true;
+    $('#bulk-modal').hidden = false;
+    setTimeout(() => $('#bulk-names').focus(), 50);
+  });
+  $('#bulk-cancel-btn').addEventListener('click', () => { $('#bulk-modal').hidden = true; });
+  $('#bulk-check-btn').addEventListener('click', checkBulkNames);
+  $('#bulk-add-btn').addEventListener('click', doBulkAdd);
+  // Editing the list invalidates the check, so make them look again.
+  $('#bulk-names').addEventListener('input', () => {
+    $('#bulk-preview').hidden = true;
+    $('#bulk-add-btn').hidden = true;
+    bulkReady = null;
+  });
 
   // Photos
   $('#photo-add-btn').addEventListener('click', () => $('#photo-input').click());
