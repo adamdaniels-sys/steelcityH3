@@ -644,10 +644,17 @@
         .gte('event_date', todayISO)
         .neq('status', 'completed')
         .order('event_date', { ascending: true }),
+      // Past = the DATE has passed, not "status is completed". Keying this on
+      // status used to drop any hash whose date went by before an admin
+      // finalised it: it failed the upcoming query (date in the past) AND the
+      // past query (not completed), so it vanished from the site entirely.
+      // Cancelled hashes ('closed') stay out of the archive.
       supabase
         .from('events')
         .select('*')
-        .eq('status', 'completed')
+        .lt('event_date', todayISO)
+        .neq('status', 'planning')
+        .neq('status', 'closed')
         .order('event_date', { ascending: false }),
     ]);
 

@@ -16,6 +16,11 @@
 <meta name="twitter:description" content="A drinking club with a running problem. Find the next hash and RSVP." />
 <meta name="twitter:image" content="https://steelcityh3.org/og-cover.jpg" />
 <!-- OG_BLOCK_END -->
+<!-- Canonical + Event structured data — both filled in per-event by /api/event.
+     They stay empty comments when event.html is opened directly, which is right:
+     a page served without an event has nothing to describe. -->
+<!-- SCH3_CANONICAL -->
+<!-- SCH3_JSONLD -->
 <!-- SCH3_EVENT_ID -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -340,7 +345,12 @@
       return;
     }
 
-    const isPast = ev.status === 'completed';
+    // Past = the date has gone, OR an admin has finalised it. Keying this on
+    // status alone left a hash whose date passed before anyone finalised it
+    // still billed as "Coming Up" and still taking RSVPs (DEC-003 fixes the
+    // matching hole in the homepage archive query).
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const isPast = ev.status === 'completed' || ev.event_date < todayISO;
     // Past events: full-width details, write-up tucks left, photos own the right.
     document.getElementById('event-panel')?.classList.toggle('past-layout', isPast);
 
