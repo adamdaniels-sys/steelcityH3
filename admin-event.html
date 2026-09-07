@@ -54,37 +54,38 @@
 
       <div id="admin-content" hidden>
 
-        <div class="sec-head" style="margin-bottom: 20px;">
-          <div>
-            <span class="sec-num" id="page-num">/ Admin · New event</span>
-            <h2 class="sec-title" id="page-title">New <span class="or">event</span></h2>
-          </div>
-        </div>
+        <!-- Frozen header (DEC-010). Three things a volunteer must never lose
+             while scrolling a long form: WHAT they are editing, WHERE it is up
+             to, and WHAT COMES NEXT. All of it stays put. -->
+        <div class="ed-head" id="ed-head">
 
-        <!-- Event name + status chip -->
-        <div class="event-headline">
-          <span class="event-name-label" id="event-name-label">NEW EVENT</span>
-          <div class="status-wrap">
-            <span class="status-caption">Status</span>
+          <div class="ed-bar">
+            <span class="ed-bar-label" id="page-num">Edit event</span>
             <span class="status-chip" id="status-chip">In Planning</span>
           </div>
-        </div>
 
-        <!-- Where you are, in plain words. A status chip reading "Ready to
-             On-On" tells someone who opens this once a month nothing at all;
-             this says what the stage means and what to do next (DEC-009). -->
-        <div class="status-explainer" id="status-explainer">
-          <p class="se-where" id="status-where"></p>
-          <p class="se-line"><span>What that means:</span> <em id="status-means"></em></p>
-          <p class="se-line"><span>What to do next:</span> <em id="status-next"></em></p>
-        </div>
+          <div class="ed-name-row">
+            <h2 class="ed-name" id="event-name-label">New event</h2>
+            <!-- Rename from any tab, so you never have to go back to tab 1
+                 just to fix a typo in the title. -->
+            <button type="button" class="ed-rename" id="rename-btn" title="Change the name" aria-label="Change the name">&#9998;</button>
+          </div>
+          <h2 class="sec-title" id="page-title" hidden></h2>
 
-        <!-- Workflow tabs -->
-        <div class="event-tabs" id="event-tabs" role="tablist">
-          <button class="event-tab" type="button" data-tab="details" role="tab">1 · Event details</button>
-          <button class="event-tab" type="button" data-tab="whos"    role="tab">2 · Who's Cumming?</button>
-          <button class="event-tab" type="button" data-tab="ready"   role="tab">3 · Ready to On-On</button>
-          <button class="event-tab" type="button" data-tab="after"   role="tab">4 · After the event</button>
+          <div class="status-explainer" id="status-explainer">
+            <p class="se-where" id="status-where"></p>
+            <p class="se-line"><span>What that means:</span> <em id="status-means"></em></p>
+            <p class="se-line"><span>What to do next:</span> <em id="status-next"></em></p>
+          </div>
+
+          <!-- Chevrons, not tabs: the shape points at the next step, so the
+               order of the workflow is visible rather than implied. -->
+          <div class="event-tabs" id="event-tabs" role="tablist">
+            <button class="event-tab" type="button" data-tab="details" role="tab"><span>1</span> Event details</button>
+            <button class="event-tab" type="button" data-tab="whos"    role="tab"><span>2</span> Who&#39;s Cumming?</button>
+            <button class="event-tab" type="button" data-tab="ready"   role="tab"><span>3</span> Ready to On-On</button>
+            <button class="event-tab" type="button" data-tab="after"   role="tab"><span>4</span> After the event</button>
+          </div>
         </div>
 
         <!-- ============================== TAB 1: EVENT DETAILS ============================== -->
@@ -910,6 +911,18 @@
     $('#status-next').textContent = e.next;
   }
 
+  // The pencil beside the name. Rather than a second place that can save a
+  // title (two ways to change one thing is how they drift apart), it takes you
+  // to the real field and highlights it, from whichever tab you were on.
+  function jumpToTitle() {
+    showTab('details');
+    const el = $('#title');
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.focus();
+    el.select();
+  }
+
   // ---- Inline field help ------------------------------------------------
   //
   // The help lives WITH each field, not in a panel off to the side. This is the
@@ -937,6 +950,12 @@
       box.querySelector('.fh-put em').textContent = h.put;
       box.querySelector('.fh-affects em').textContent = h.affects;
       wrap.appendChild(box);
+      // CSS lays the row out as field-left / help-right (DEC-010). Help beside
+      // the field rather than under it is IGNORABLE: once they know a field
+      // they breeze past it, and the explanation is still there on the day
+      // they cannot remember what it does. Under the field, everyone reads it
+      // forever whether they need it or not.
+      wrap.classList.add('has-help');
 
       // The old one-line hints said less than the help does, and two
       // explanations of the same box is one too many.
@@ -1839,6 +1858,12 @@
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-hares-btn').addEventListener('click', saveHares);
+  $('#rename-btn').addEventListener('click', jumpToTitle);
+  // Keep the frozen header's name in step as they type the title.
+  $('#title').addEventListener('input', () => {
+    const v = $('#title').value.trim();
+    $('#event-name-label').textContent = v || 'New event';
+  });
   injectFieldHelp();
   wireFieldFocus();
   $('#save-onon-btn').addEventListener('click', saveOnOn);

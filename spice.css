@@ -3731,49 +3731,157 @@ html.embedded body > .sec {
   padding-top: 18px !important;
 }
 
-/* ── Admin: help-first editor (DEC-009) ──────────────────────────────────────
+/* ── Admin: the event editor (DEC-009, DEC-010) ──────────────────────────────
    Built for two named people: one in their seventies who was tech-savvy a
-   decade ago, one in their sixties who never was. They use this once a month,
-   so no fluency ever builds. That makes the usual instincts wrong here: this
-   deliberately trades density and polish for explanation and breathing room.
-   Verbosity that would patronise in a consumer app is exactly right for two
-   volunteers who just want to know what the box does. */
+   decade ago, one in their sixties who never was, both using it once a month
+   so no fluency ever builds. Inside this editor the house comic styling is
+   deliberately dialled back — Bangers and heavy offset shadows are right for
+   the public site and get in the way of data entry. Plainer type, calmer
+   borders, ordinary form conventions they will recognise from every other
+   website they have ever used. Some colour stays, for continuity. */
 
-/* "Where am I?" — pinned above the tabs. */
-.status-explainer {
-  background: var(--cream-2);
-  border: 4px solid var(--ink);
-  box-shadow: 6px 6px 0 var(--orange);
-  padding: 20px 24px;
-  margin-bottom: 24px;
+/* ---- Frozen header: what am I editing, where is it up to, what is next ---- */
+.ed-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--cream);
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 12px;
+  margin-bottom: 22px;
 }
-.status-explainer .se-where {
-  font-family: "Bangers", sans-serif;
-  font-size: 1.5rem;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-  margin-bottom: 12px;
+html.embedded .ed-head { top: 0; }
+
+.ed-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0 8px;
 }
-.status-explainer .se-line {
-  font-family: "Nunito", sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--ink);
-  margin-top: 7px;
-}
-.status-explainer .se-line span {
+.ed-bar-label {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.6rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
-  display: block;
 }
-.status-explainer .se-line em { font-style: normal; font-weight: 600; }
+.ed-name-row { display: flex; align-items: center; gap: 10px; }
+.ed-name {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
+}
+.ed-rename {
+  background: none;
+  border: 2px solid var(--ink-3);
+  border-radius: 4px;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 5px 8px;
+}
+.ed-rename:hover { background: var(--yellow); border-color: var(--ink); }
 
-/* One field per row, with room to breathe. Two boxes side by side halves the
-   space each explanation gets, and density is what makes people freeze. */
+/* Status description: small, plain, always there. */
+.ed-head .status-explainer {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 0 0;
+  margin: 0;
+}
+.ed-head .se-where {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.ed-head .se-line {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin-top: 1px;
+}
+.ed-head .se-line span {
+  display: inline;
+  font-family: "Nunito", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+}
+.ed-head .se-line em { font-style: normal; font-weight: 600; }
+
+/* ---- Chevron steps: the shape points at what comes next ---- */
+.ed-head .event-tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.ed-head .event-tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 150px;
+  background: var(--cream-2);
+  border: 2px solid var(--ink-3);
+  border-right: 0;
+  color: var(--ink-2);
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 11px 14px 11px 30px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  text-align: left;
+}
+.ed-head .event-tab:first-child {
+  padding-left: 16px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+}
+.ed-head .event-tab:last-child { border-right: 2px solid var(--ink-3); }
+.ed-head .event-tab span {
+  display: inline-block;
+  font-weight: 800;
+  color: var(--ink-3);
+  margin-right: 6px;
+}
+.ed-head .event-tab.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--cream);
+}
+.ed-head .event-tab.active span { color: var(--cream); }
+.ed-head .event-tab.done { background: var(--cream-2); color: var(--ink); }
+.ed-head .event-tab:hover:not(.active) { background: var(--yellow); }
+
+/* ---- Fields left, help right ---- */
+.tab-panel .admin-form {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.tab-panel .admin-form h3 {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0;
+  border-bottom: 2px solid var(--ink-3);
+  padding-bottom: 8px;
+}
 .tab-panel .admin-form .field-grid-2,
 .tab-panel .admin-form .field-grid-3 {
   grid-template-columns: minmax(0, 1fr);
@@ -3781,57 +3889,96 @@ html.embedded body > .sec {
 }
 .tab-panel .auth-field,
 .tab-panel .profile-toggle {
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  border: 3px solid transparent;
-  background: transparent;
-  transition: background 120ms ease, border-color 120ms ease;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  border: 2px solid transparent;
+  border-radius: 4px;
 }
-/* The field you are in lifts; everything else recedes. One thing at a time. */
+.tab-panel .auth-field.has-help,
+.tab-panel .profile-toggle.has-help {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: 6px 26px;
+  align-items: start;
+}
+.tab-panel .has-help > label { grid-column: 1; }
+.tab-panel .has-help > input,
+.tab-panel .has-help > select,
+.tab-panel .has-help > textarea { grid-column: 1; }
+.tab-panel .has-help > .fh {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+}
 .tab-panel .auth-field.is-active,
 .tab-panel .profile-toggle.is-active {
   background: var(--cream-2);
-  border-color: var(--ink);
-  box-shadow: 5px 5px 0 var(--ink);
+  border-color: var(--orange);
 }
 .tab-panel .auth-field > label,
 .tab-panel .profile-toggle > label {
-  font-size: 0.95rem;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
 }
 
-/* The help itself: the primary content of the row, not a footnote. */
+/* The help column: quiet enough to skim past once you know the field, clear
+   enough to rescue you on the day you cannot remember what it does. */
 .fh {
-  margin-top: 10px;
-  padding-left: 14px;
-  border-left: 4px solid var(--yellow);
+  padding-left: 16px;
+  border-left: 3px solid var(--yellow);
 }
 .fh p {
   font-family: "Nunito", sans-serif;
-  line-height: 1.55;
-  color: var(--ink-2);
-  margin-top: 6px;
-}
-.fh .fh-what {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-top: 0;
-}
-.fh .fh-put,
-.fh .fh-affects { font-size: 0.9rem; font-weight: 600; }
-.fh span {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  line-height: 1.5;
   color: var(--ink-3);
-  display: block;
+  margin-top: 5px;
+  font-size: 0.82rem;
+}
+.fh .fh-what { font-weight: 700; color: var(--ink-2); margin-top: 0; }
+.fh .fh-put, .fh .fh-affects { font-weight: 600; }
+.fh span {
+  font-family: "Nunito", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+  display: inline;
 }
 .fh em { font-style: normal; }
-/* The consequence is the bit nobody could see before, so it gets the accent. */
-.fh .fh-affects { border-left: 0; }
-.fh .fh-affects span { color: var(--orange); }
+.is-active .fh p { color: var(--ink-2); }
+.is-active .fh { border-left-color: var(--orange); }
 
-/* An active field's help stops being grey once you are actually in it. */
-.is-active .fh p { color: var(--ink); }
+@media (max-width: 900px) {
+  .tab-panel .auth-field.has-help,
+  .tab-panel .profile-toggle.has-help { grid-template-columns: minmax(0, 1fr); }
+  .tab-panel .has-help > .fh { grid-column: 1; grid-row: auto; margin-top: 8px; }
+}
+
+/* Inputs inside the editor: plain and legible. The comic display face is right
+   for the public site and wrong for a form two people squint at once a month
+   (DEC-010). Scoped to .tab-panel so nothing else on the site changes. */
+.tab-panel .auth-field input,
+.tab-panel .auth-field select,
+.tab-panel .auth-field textarea {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0;
+  border-width: 2px;
+  border-color: var(--ink-3);
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+.tab-panel .auth-field select { padding-right: 40px; }
+.tab-panel .auth-field input:focus,
+.tab-panel .auth-field select:focus,
+.tab-panel .auth-field textarea:focus {
+  border-color: var(--orange);
+  outline: 2px solid var(--orange);
+  outline-offset: 1px;
+}
