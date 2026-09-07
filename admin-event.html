@@ -591,6 +591,27 @@
   }
 
   const params = new URLSearchParams(location.search);
+  // Running inside the modal on admin-events.html rather than as its own page.
+  // The page still works standalone (five other places link straight to it);
+  // embed mode just drops the chrome the modal already provides.
+  const isEmbedded = params.get('embed') === '1';
+  if (isEmbedded) document.documentElement.classList.add('embedded');
+  // Tell the host list what happened, so it can refresh the row behind us.
+  function notifyHost(kind) {
+    if (isEmbedded && window.parent !== window) {
+      window.parent.postMessage({ sch3: kind }, window.location.origin);
+    }
+  }
+  // Any "back to events" link would load the whole list INSIDE this frame,
+  // nesting the admin page in itself. In embed mode they close the modal.
+  if (isEmbedded) {
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href="/admin-events.html"]');
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      notifyHost('close');
+    });
+  }
   const idParam = params.get('id');
   const isNew = idParam === 'new';
   const isBlank = params.get('blank') === '1';
@@ -821,11 +842,15 @@
 
     if (isNew) {
       try { sessionStorage.setItem('sch3-toast', `Created Run #${res.data.run_number}.`); } catch {}
-      window.location.replace(`/admin-event.html?id=${res.data.id}`);
+      // Reload as the real event. Keep embed mode if we're in the modal, or
+      // the chrome reappears inside the frame.
+      notifyHost('saved');
+      window.location.replace(`/admin-event.html?id=${res.data.id}${isEmbedded ? '&embed=1' : ''}`);
       return;
     }
     originalEvent = res.data;
     applyStatusUI();
+    notifyHost('saved');
     showToast('Saved.', { kind: 'ok' });
     showTab('whos');   // details are in; the next thing is who's coming
   }
@@ -851,6 +876,7 @@
     const { data, error } = await supabase.from('events').update({ status: newStatus, ...extra }).eq('id', eventId).select().single();
     if (error) { showToast("Couldn't update status — try again.", { kind: 'error' }); console.error('[admin-event] status update failed:', error); return false; }
     originalEvent = data;
+    notifyHost('saved');
     return true;
   }
 
@@ -871,6 +897,7 @@
     btn.disabled = false; btn.textContent = o;
     if (ok) {
       await refreshAttendees(eventId);
+      notifyHost('saved');
       showToast('Hares saved.', { kind: 'ok' });
     }
   }
@@ -985,6 +1012,7 @@
     btn.disabled = false; btn.textContent = o;
     if (error) { $('#after-msg').textContent = error.message || "Couldn't save."; $('#after-msg').classList.add('show'); return; }
     originalEvent = data;
+    notifyHost('saved');
     showToast('Write-up saved.', { kind: 'ok' });
   }
 
@@ -1441,6 +1469,9 @@
     const { error } = await supabase.from('events').delete().eq('id', eventId);
     if (error) { btn.textContent = '▸ Delete'; btn.disabled = false; showToast(error.message || "Couldn't delete.", { kind: 'error' }); return; }
     try { sessionStorage.setItem('sch3-toast', `Deleted Run #${originalEvent?.run_number ?? eventId}.`); } catch {}
+    // In the modal, ask the host to close us — loading the events list INSIDE
+    // the frame would nest the whole admin page in itself.
+    if (isEmbedded) { notifyHost('close'); return; }
     window.location.replace('/admin-events.html');
   });
 

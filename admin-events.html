@@ -42,6 +42,23 @@
   </div>
 </div>
 
+<!-- The event editor, opened over this list rather than navigating away, so an
+     admin never loses their place (DEC-005). It is the SAME admin-event.html
+     page in an iframe, not a copy: that page is linked from five other places
+     (the dashboard, the public event page, admin-attendance) and duplicating
+     1,400 lines of it would guarantee the two drift apart. The <a href> on each
+     Edit button is left intact underneath, so this still works without JS and
+     middle-click still opens a tab. -->
+<div class="modal-overlay editor-overlay" id="editor-overlay" hidden>
+  <div class="editor-shell" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+    <div class="editor-bar">
+      <span class="editor-title" id="editor-title">Edit hash</span>
+      <button class="btn cream editor-close" type="button" id="editor-close">Close</button>
+    </div>
+    <iframe id="editor-frame" title="Event editor" src="about:blank"></iframe>
+  </div>
+</div>
+
 <main id="main">
   <section class="sec" style="padding-top: 40px;">
     <div class="container">
@@ -202,17 +219,14 @@
           <td data-label="Status">${statusBadgeHtml(ev.status)}${writeupTag}${outTag}</td>
           <td data-label="Hares">${haresHtml}</td>
           <td data-label="On-on">${onOn}</td>
-          <td><a href="/admin-event.html?id=${ev.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
+          <td><a href="/admin-event.html?id=${ev.id}" data-edit="${ev.id}" class="btn cream" style="padding: 6px 12px; font-size: 0.9rem;">▸ Edit</a></td>
         </tr>
       `;
     }).join('');
   }
 
-  (async () => {
-    await requireAdmin();
-    $('#admin-loading').hidden = true;
-    $('#admin-content').hidden = false;
-
+  // Pulled out of the startup block so closing the editor can re-run it.
+  async function reload() {
     const { data, error } = await supabase
       .from('events')
       .select('*')
@@ -224,6 +238,8 @@
     allEvents = data || [];
 
     // Bulk fetch attendance counts
+    countsByEventId.clear();
+    outstandingByEventId.clear();
     const ids = allEvents.map((e) => e.id);
     if (ids.length > 0) {
       const [{ data: countsData }, { data: outData }] = await Promise.all([
@@ -233,15 +249,73 @@
       (countsData || []).forEach((c) => countsByEventId.set(c.event_id, c));
       (outData || []).forEach((o) => outstandingByEventId.set(o.event_id, o));
     }
-
-    activatePill();
     render();
+  }
+
+  (async () => {
+    await requireAdmin();
+    $('#admin-loading').hidden = true;
+    $('#admin-content').hidden = false;
+
+    await reload();
+    activatePill();
 
     document.getElementById('filter-pills').addEventListener('click', (e) => {
       const pill = e.target.closest('.filter-pill');
       if (!pill) return;
       e.preventDefault();
       setFilter(pill.dataset.filter);
+    });
+
+    // ---- The editor, opened over this list ------------------------------
+    const overlay = $('#editor-overlay');
+    const frame = $('#editor-frame');
+    let dirty = false;   // did anything change while the editor was open?
+
+    function openEditor(href, label) {
+      $('#editor-title').textContent = label;
+      // ?embed=1 tells admin-event.html it is inside the modal, so it can drop
+      // its own header/nav and sit flush in the shell.
+      frame.src = href + (href.includes('?') ? '&' : '?') + 'embed=1';
+      overlay.hidden = false;
+      document.body.style.overflow = 'hidden';   // don't scroll the list behind
+      dirty = false;
+    }
+
+    async function closeEditor() {
+      overlay.hidden = true;
+      frame.src = 'about:blank';
+      document.body.style.overflow = '';
+      // Anything they did in there could have changed a row here - status,
+      // money, the write-up flag. Reload rather than guess what moved.
+      if (dirty) await reload();
+    }
+
+    // Open on Edit / Schedule / Add, but never steal a deliberate new-tab click.
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="/admin-event.html"]');
+      if (!a) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      const isNew = a.href.includes('id=new');
+      const row = a.closest('tr');
+      const title = row?.querySelector('[data-label="Title"]')?.textContent?.trim();
+      openEditor(a.getAttribute('href'), isNew ? 'New hash' : (title || 'Edit hash'));
+    });
+
+    $('#editor-close').addEventListener('click', closeEditor);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditor(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) closeEditor();
+    });
+
+    // The editor tells us when it saves, and when it wants to be closed (it
+    // redirects to this page after a delete, which makes no sense in a frame).
+    window.addEventListener('message', (e) => {
+      if (e.origin !== window.location.origin) return;
+      const m = e.data || {};
+      if (m.sch3 === 'saved') dirty = true;
+      if (m.sch3 === 'close') { dirty = true; closeEditor(); }
     });
   })().catch((err) => {
     if (err?.message !== 'Not admin' && err?.message !== 'Not signed in') {
