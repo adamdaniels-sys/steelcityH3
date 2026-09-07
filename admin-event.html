@@ -70,6 +70,15 @@
           </div>
         </div>
 
+        <!-- Where you are, in plain words. A status chip reading "Ready to
+             On-On" tells someone who opens this once a month nothing at all;
+             this says what the stage means and what to do next (DEC-009). -->
+        <div class="status-explainer" id="status-explainer">
+          <p class="se-where" id="status-where"></p>
+          <p class="se-line"><span>What that means:</span> <em id="status-means"></em></p>
+          <p class="se-line"><span>What to do next:</span> <em id="status-next"></em></p>
+        </div>
+
         <!-- Workflow tabs -->
         <div class="event-tabs" id="event-tabs" role="tablist">
           <button class="event-tab" type="button" data-tab="details" role="tab">1 · Event details</button>
@@ -77,14 +86,6 @@
           <button class="event-tab" type="button" data-tab="ready"   role="tab">3 · Ready to On-On</button>
           <button class="event-tab" type="button" data-tab="after"   role="tab">4 · After the event</button>
         </div>
-
-        <!-- Form on the left, help on the right. The help panel is the point of
-             the layout, not decoration: these are volunteers using this once a
-             month, so every field explains itself as you land on it (DEC-005).
-             Desktop-first (DEC-006) is what makes a permanent side panel
-             affordable at all; under 1100px it drops below the form. -->
-        <div class="editor-split">
-        <div class="editor-main">
 
         <!-- ============================== TAB 1: EVENT DETAILS ============================== -->
         <section class="tab-panel" data-panel="details">
@@ -418,26 +419,6 @@
             <div class="auth-msg" id="after-msg"></div>
           </div>
         </section>
-
-        </div><!-- /.editor-main -->
-
-        <!-- The help panel. Updates as you move between fields; never empty,
-             because an empty panel teaches people to stop looking at it. -->
-        <aside class="field-help" id="field-help" aria-live="polite">
-          <div class="field-help-inner">
-            <h4 id="field-help-title">Event details</h4>
-            <dl>
-              <dt>What is it?</dt>
-              <dd id="field-help-what"></dd>
-              <dt>What goes in?</dt>
-              <dd id="field-help-put"></dd>
-              <dt>What does it change?</dt>
-              <dd id="field-help-affects"></dd>
-            </dl>
-          </div>
-        </aside>
-
-        </div><!-- /.editor-split -->
 
         <!-- Danger zone (edit mode) -->
         <div class="danger-zone" id="danger-zone" hidden style="margin-top: 30px;">
@@ -843,43 +824,117 @@
     },
   };
 
-  let helpPinned = null;   // field id the panel is currently showing
+  // ---- "Where am I?" ----------------------------------------------------
+  //
+  // A plain-English explanation of the stage this hash is at, pinned to the top
+  // of the editor. Someone opening this once a month has no idea where in the
+  // process they are, and a status chip reading "Ready to On-On" tells them
+  // nothing about what that means or what to do next (DEC-009).
+  //
+  // Three parts on purpose: where you are, what that means has already
+  // happened, and what to do next. The last one is what stops people casting
+  // about for a button.
+  const STATUS_EXPLAINER = {
+    planning: {
+      where: 'This hash is still a draft.',
+      means: 'Nobody can see it yet. It is not on the website, and no one has been told about it.',
+      next: 'Fill in the details below, then press "Save & invite" to put it on the website and email the club.',
+    },
+    hares_wanted: {
+      where: 'This hash is on the website, and you are looking for hares.',
+      means: 'People can see it and say they are coming. Members can offer to lay the trail.',
+      next: 'Once you know who is haring, add them on the "Who’s Cumming?" tab.',
+    },
+    open: {
+      where: 'This hash is on the website and open for people to say they are coming.',
+      means: 'The club can see it and RSVP. The hares are sorted.',
+      next: 'Nothing needs doing until nearer the day. Come back after the hash to take the register.',
+    },
+    ready: {
+      where: 'This hash is set up and ready to go.',
+      means: 'It is on the website, the club has been told, the hares are sorted, and people are saying whether they are coming.',
+      next: 'Nothing to do until the day. Afterwards, use the "Ready to On-On" tab to tick off who came and who paid.',
+    },
+    completed: {
+      where: 'This hash is done and filed away.',
+      means: 'It has moved off "Coming up" into Past Hashes, nobody can RSVP any more, and the money and register are the final record.',
+      next: 'Add the write-up whenever you like, on the last tab. If you finished it by mistake, use "Re-open this hash".',
+    },
+    closed: {
+      where: 'This hash was cancelled.',
+      means: 'It shows on the website with a "cancelled" notice, and nobody can RSVP.',
+      next: 'Nothing needs doing. If it is going ahead after all, change the status back on the details tab.',
+    },
+  };
 
-  function renderHelp(entry) {
-    if (!entry) return;
-    $('#field-help-title').textContent = entry.title;
-    $('#field-help-what').textContent = entry.what;
-    $('#field-help-put').textContent = entry.put;
-    $('#field-help-affects').textContent = entry.affects;
+  function renderStatusExplainer() {
+    const s = status();
+    const e = STATUS_EXPLAINER[s] || STATUS_EXPLAINER.planning;
+    const box = $('#status-explainer');
+    if (!box) return;
+    if (isNew) {
+      $('#status-where').textContent = 'You are setting up a new hash.';
+      $('#status-means').textContent = 'Nothing has been saved yet, so nobody can see it and no one has been told.';
+      $('#status-next').textContent = 'Fill in the details below. Nothing happens until you press the button at the bottom.';
+      return;
+    }
+    $('#status-where').textContent = e.where;
+    $('#status-means').textContent = e.means;
+    $('#status-next').textContent = e.next;
   }
 
-  // Fall back to the tab's own copy whenever nothing is focused, so the panel
-  // always says something useful rather than sitting blank.
-  function showTabHelp(tabKey) {
-    helpPinned = null;
-    renderHelp(TAB_HELP[tabKey] || TAB_HELP.details);
-  }
+  // ---- Inline field help ------------------------------------------------
+  //
+  // The help lives WITH each field, not in a panel off to the side. This is the
+  // inversion Adam asked for (DEC-009): the explanation is the primary content
+  // and the input is what you do once you have read it. A side panel made the
+  // form and the help compete, and nothing told you where the work happened.
+  //
+  // Injected rather than hand-written into the markup so the copy stays in one
+  // place (FIELD_HELP) and no field can quietly end up without any.
+  function injectFieldHelp() {
+    Object.keys(FIELD_HELP).forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const wrap = el.closest('.auth-field, .profile-toggle');
+      if (!wrap || wrap.querySelector('.fh')) return;
 
-  function wireFieldHelp() {
-    // focusin/out rather than per-field listeners: catches fields added later
-    // and costs two listeners instead of twenty-three.
-    document.addEventListener('focusin', (e) => {
-      const el = e.target.closest('input, select, textarea');
-      if (!el || !el.id || !FIELD_HELP[el.id]) return;
-      helpPinned = el.id;
-      renderHelp(FIELD_HELP[el.id]);
+      const h = FIELD_HELP[id];
+      const box = document.createElement('div');
+      box.className = 'fh';
+      box.innerHTML =
+        '<p class="fh-what"></p>' +
+        '<p class="fh-put"><span>Put in:</span> <em></em></p>' +
+        '<p class="fh-affects"><span>This changes:</span> <em></em></p>';
+      box.querySelector('.fh-what').textContent = h.what;
+      box.querySelector('.fh-put em').textContent = h.put;
+      box.querySelector('.fh-affects em').textContent = h.affects;
+      wrap.appendChild(box);
+
+      // The old one-line hints said less than the help does, and two
+      // explanations of the same box is one too many.
+      wrap.querySelectorAll('.profile-hint, .hint').forEach((n) => n.remove());
     });
-    // Hovering a label is a cheap way to browse the form without tabbing
-    // through it, but never override the field you are actually typing in.
-    document.addEventListener('mouseover', (e) => {
-      const lbl = e.target.closest('label[for]');
-      if (!lbl || helpPinned) return;
-      const entry = FIELD_HELP[lbl.getAttribute('for')];
-      if (entry) renderHelp(entry);
+  }
+
+  // Lift the field you are working in and quieten the rest, so a long form
+  // reads as one thing at a time rather than a wall of boxes.
+  function wireFieldFocus() {
+    const setActive = (el) => {
+      document.querySelectorAll('.auth-field.is-active, .profile-toggle.is-active')
+        .forEach((n) => n.classList.remove('is-active'));
+      const wrap = el && el.closest('.auth-field, .profile-toggle');
+      if (wrap) wrap.classList.add('is-active');
+    };
+    document.addEventListener('focusin', (e) => {
+      setActive(e.target.closest('input, select, textarea'));
     });
     document.addEventListener('focusout', (e) => {
       const el = e.target.closest('input, select, textarea');
-      if (el && el.id === helpPinned) helpPinned = null;
+      const wrap = el && el.closest('.auth-field, .profile-toggle');
+      if (wrap) setTimeout(() => {
+        if (!wrap.contains(document.activeElement)) wrap.classList.remove('is-active');
+      }, 0);
     });
   }
 
@@ -888,7 +943,6 @@
   function showTab(key) {
     document.querySelectorAll('.event-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
     document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== key; });
-    showTabHelp(key);
   }
 
   function applyStatusUI() {
@@ -904,6 +958,7 @@
       t.disabled = false;
       t.classList.remove('locked');
     });
+    renderStatusExplainer();
     applyNotYetNotices();
 
     // Complete and Re-open are opposites — show whichever one applies.
@@ -1677,7 +1732,8 @@
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-hares-btn').addEventListener('click', saveHares);
-  wireFieldHelp();
+  injectFieldHelp();
+  wireFieldFocus();
   $('#save-onon-btn').addEventListener('click', saveOnOn);
   $('#save-attendance-btn').addEventListener('click', saveAttendance);
   $('#complete-btn').addEventListener('click', openCompleteModal);

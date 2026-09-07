@@ -3731,66 +3731,107 @@ html.embedded body > .sec {
   padding-top: 18px !important;
 }
 
-/* ── Admin: the field help panel ─────────────────────────────────────────────
-   Form left, help right. The panel is the point of this layout, not decoration:
-   the admins use the editor once a month and never build up fluency, so every
-   field explains itself as they land on it (DEC-005). It answers three things,
-   and the third — what does it change? — is the one that was missing from the
-   whole interface. Nobody could see that the date quietly decides whether a
-   hash appears on the homepage.
+/* ── Admin: help-first editor (DEC-009) ──────────────────────────────────────
+   Built for two named people: one in their seventies who was tech-savvy a
+   decade ago, one in their sixties who never was. They use this once a month,
+   so no fluency ever builds. That makes the usual instincts wrong here: this
+   deliberately trades density and polish for explanation and breathing room.
+   Verbosity that would patronise in a consumer app is exactly right for two
+   volunteers who just want to know what the box does. */
 
-   A permanent side panel is only affordable because they work on a laptop
-   (DEC-006). Under 1100px it drops below the form rather than being squeezed. */
-.editor-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 26px;
-  align-items: start;
-}
-.editor-main { min-width: 0; }
-
-.field-help {
-  position: sticky;
-  /* Clear the sticky topbar (77px) or the panel's heading hides behind it.
-     In the modal the topbar is gone, so embed mode overrides this below. */
-  top: 95px;
-  background: var(--yellow);
+/* "Where am I?" — pinned above the tabs. */
+.status-explainer {
+  background: var(--cream-2);
   border: 4px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--ink);
+  box-shadow: 6px 6px 0 var(--orange);
+  padding: 20px 24px;
+  margin-bottom: 24px;
 }
-.field-help-inner { padding: 20px 22px 24px; }
-.field-help h4 {
+.status-explainer .se-where {
   font-family: "Bangers", sans-serif;
-  font-size: 1.45rem;
-  letter-spacing: 0.04em;
+  font-size: 1.5rem;
+  letter-spacing: 0.03em;
   color: var(--ink);
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 3px solid var(--ink);
+  margin-bottom: 12px;
 }
-.field-help dt {
+.status-explainer .se-line {
+  font-family: "Nunito", sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-top: 7px;
+}
+.status-explainer .se-line span {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-2);
-  margin-top: 14px;
+  color: var(--ink-3);
+  display: block;
 }
-.field-help dt:first-of-type { margin-top: 0; }
-.field-help dd {
+.status-explainer .se-line em { font-style: normal; font-weight: 600; }
+
+/* One field per row, with room to breathe. Two boxes side by side halves the
+   space each explanation gets, and density is what makes people freeze. */
+.tab-panel .admin-form .field-grid-2,
+.tab-panel .admin-form .field-grid-3 {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.tab-panel .auth-field,
+.tab-panel .profile-toggle {
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  border: 3px solid transparent;
+  background: transparent;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+/* The field you are in lifts; everything else recedes. One thing at a time. */
+.tab-panel .auth-field.is-active,
+.tab-panel .profile-toggle.is-active {
+  background: var(--cream-2);
+  border-color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.tab-panel .auth-field > label,
+.tab-panel .profile-toggle > label {
+  font-size: 0.95rem;
+}
+
+/* The help itself: the primary content of the row, not a footnote. */
+.fh {
+  margin-top: 10px;
+  padding-left: 14px;
+  border-left: 4px solid var(--yellow);
+}
+.fh p {
   font-family: "Nunito", sans-serif;
-  font-weight: 600;
-  font-size: 0.92rem;
   line-height: 1.55;
+  color: var(--ink-2);
+  margin-top: 6px;
+}
+.fh .fh-what {
+  font-size: 0.98rem;
+  font-weight: 700;
   color: var(--ink);
-  margin-top: 3px;
+  margin-top: 0;
 }
-
-/* Inside the modal the site header is hidden, so the panel can sit higher. */
-html.embedded .field-help { top: 18px; }
-
-@media (max-width: 1100px) {
-  .editor-split { grid-template-columns: minmax(0, 1fr); }
-  .field-help { position: static; margin-top: 22px; }
+.fh .fh-put,
+.fh .fh-affects { font-size: 0.9rem; font-weight: 600; }
+.fh span {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: block;
 }
+.fh em { font-style: normal; }
+/* The consequence is the bit nobody could see before, so it gets the accent. */
+.fh .fh-affects { border-left: 0; }
+.fh .fh-affects span { color: var(--orange); }
+
+/* An active field's help stops being grey once you are actually in it. */
+.is-active .fh p { color: var(--ink); }
