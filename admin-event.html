@@ -241,7 +241,14 @@
           </div>
 
           <div class="profile-actions" style="margin-top: 26px;">
-            <button class="btn orange" type="button" id="save-onon-btn">▸ Save &amp; On-On</button>
+            <button class="btn cream" type="button" id="save-hares-btn">▸ Save</button>
+            <button class="btn orange" type="button" id="save-onon-btn">▸ Save &amp; mark "Ready to On-On"</button>
+          </div>
+          <div class="profile-hint" style="margin-top: 10px;">
+            <b>Save</b> keeps your changes and leaves the hash where it is — use
+            this one if you're still sorting the hares out.
+            <b>Ready to On-On</b> saves and tells the club the trail is covered.
+            Either way nothing is lost, and you can come back and change it.
           </div>
         </section>
 
@@ -323,8 +330,20 @@
             </div>
           </div>
 
+          <!-- Two separate things, deliberately. Saving is never a decision;
+               finishing the hash is. The old single "Save & complete" button
+               conflated them and cost us a wrongly-completed event (ISS-004). -->
           <div class="profile-actions" style="margin-top: 26px;">
-            <button class="btn orange" type="button" id="save-complete-btn">▸ Save &amp; complete</button>
+            <button class="btn cream" type="button" id="save-attendance-btn">▸ Save</button>
+            <button class="btn orange" type="button" id="complete-btn">▸ Mark this hash as done</button>
+            <button class="btn cream" type="button" id="reopen-btn" hidden>↶ Re-open this hash</button>
+          </div>
+          <div class="profile-hint" id="attendance-save-hint" style="margin-top: 10px;">
+            Every tick and every amount on this page saves the moment you change
+            it — there's nothing waiting to be saved. <b>Save</b> is here to
+            reassure you; it just double-checks everything landed.
+            <b>Mark this hash as done</b> is the one that finishes it off and
+            closes RSVPs, and it'll ask you first.
           </div>
         </section>
 
@@ -410,6 +429,55 @@
   </section>
 </main>
 
+<!-- Complete-confirm modal. Completing used to happen on a single click with no
+     warning, on a button that was also the only save-looking control on the
+     tab — that is how a hash three weeks in the future got marked finished
+     (ISS-004). It now says what will actually happen, in club language, and
+     shouts if the date hasn't come round yet. -->
+<div class="modal-overlay" id="complete-modal" hidden>
+  <div class="modal">
+    <h3>Mark this hash as done?</h3>
+    <div id="complete-future-warning" hidden
+         style="background: var(--red); color: var(--cream); border: 3px solid var(--ink); padding: 14px 16px; margin-bottom: 14px; font-family: 'Nunito', sans-serif; font-weight: 800;">
+      Hang on — this hash is <span id="complete-days-away"></span>. It hasn't happened yet.
+      You almost certainly don't want to do this. If you were just trying to save
+      your work, close this and use <b>Save</b> instead.
+    </div>
+    <p>Marking it done will:</p>
+    <ul style="font-family: 'Nunito', sans-serif; font-weight: 600; color: var(--ink-2); margin: 0 0 14px 18px; line-height: 1.7;">
+      <li>Close RSVPs — nobody can say they're coming any more.</li>
+      <li>Move it off "Coming up" on the homepage and into Past Hashes.</li>
+      <li>Lock in the money and the attendance as the final record.</li>
+    </ul>
+    <p style="font-family: 'Nunito', sans-serif; font-weight: 700;">
+      You can undo this afterwards with "Re-open this hash", so it's not the end
+      of the world if it's wrong.
+    </p>
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="complete-cancel-btn">↶ No, go back</button>
+      <button class="btn orange" type="button" id="complete-confirm-btn">▸ Yes, it's done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Re-open confirm. The counterpart to completing: an admin can undo their own
+     mistake without needing a database fix (ISS-004). -->
+<div class="modal-overlay" id="reopen-modal" hidden>
+  <div class="modal">
+    <h3>Re-open this hash?</h3>
+    <p>It goes back to <b>Ready to On-On</b>: it shows under "Coming up" again,
+       and people can RSVP.</p>
+    <p style="font-family: 'Nunito', sans-serif; font-weight: 700;">
+      Nothing is deleted. The attendance and money you've recorded stay exactly
+      as they are — they just stop being the locked final record.
+    </p>
+    <div class="modal-actions">
+      <button class="btn muted" type="button" id="reopen-cancel-btn">↶ Cancel</button>
+      <button class="btn orange" type="button" id="reopen-confirm-btn">↶ Yes, re-open it</button>
+    </div>
+  </div>
+</div>
+
 <!-- Delete-confirm modal -->
 <div class="modal-overlay" id="delete-modal" hidden>
   <div class="modal">
@@ -455,11 +523,45 @@
     ready:   '3 · Ready to On-On',
     after:   '4 · After the event',
   };
-  // Which tabs are reachable at each status
-  function tabsForStatus(s) {
-    if (s === 'planning') return ['details'];
-    if (s === 'ready' || s === 'completed') return ['details', 'whos', 'ready', 'after'];
-    return ['details', 'whos']; // hares_wanted, open, closed
+  // EVERY tab is always reachable — there is deliberately no tabsForStatus()
+  // any more. Tabs used to be locked by status, which meant the only way to
+  // reach a later tab was to ADVANCE THE EVENT, so "Save & complete" became a
+  // navigation control and a future hash got marked finished by someone just
+  // trying to reach the write-up (ISS-005). Looking is never destructive.
+  // A tab whose moment hasn't come says so instead (see NOT_YET_MSG).
+
+  // Shown at the top of a tab whose moment hasn't arrived, in place of locking
+  // it. Says what the tab is for and what has to happen first, so a volunteer
+  // who lands here knows where they are rather than finding a dead control.
+  const NOT_YET_MSG = {
+    whos: (s) => (s === 'planning')
+      ? "Nobody can RSVP yet — this hash is still a draft. Save the details and invite the club on tab 1, then the RSVPs land here."
+      : null,
+    ready: (s) => (['planning', 'hares_wanted', 'open'].includes(s))
+      ? "This is where you take the register and the money, on the day or just after. You can look now, but there'll be nothing to tick until people have turned up."
+      : null,
+    after: (s) => (s !== 'completed')
+      ? "The write-up and photos go here after the hash has happened. Nothing here affects anything else — you can fill it in whenever you like, or never."
+      : null,
+  };
+
+  function applyNotYetNotices() {
+    const s = status();
+    ['whos', 'ready', 'after'].forEach((key) => {
+      const panel = document.querySelector(`.tab-panel[data-panel="${key}"]`);
+      if (!panel) return;
+      let note = panel.querySelector('.not-yet-note');
+      const msg = isNew
+        ? 'Save this hash on tab 1 first — then the rest of the workflow opens up.'
+        : (NOT_YET_MSG[key] ? NOT_YET_MSG[key](s) : null);
+      if (!msg) { if (note) note.remove(); return; }
+      if (!note) {
+        note = document.createElement('div');
+        note.className = 'not-yet-note';
+        panel.prepend(note);
+      }
+      note.textContent = msg;
+    });
   }
   // Has this step been completed? (drives the ✓ on the tab)
   function tabDone(key) {
@@ -516,12 +618,21 @@
     $('#status-chip').className = 'status-chip status-' + s;
     $('#event-name-label').textContent = originalEvent?.title ? originalEvent.title : 'NEW EVENT';
 
-    const available = tabsForStatus(s);
+    // Tabs are never disabled any more (ISS-005) — navigation must never
+    // require changing the event. Clear any lock left over from an earlier
+    // render, and put the "not yet" explanation inside the panel instead.
     document.querySelectorAll('.event-tab').forEach((t) => {
-      const ok = available.includes(t.dataset.tab);
-      t.disabled = !ok;
-      t.classList.toggle('locked', !ok);
+      t.disabled = false;
+      t.classList.remove('locked');
     });
+    applyNotYetNotices();
+
+    // Complete and Re-open are opposites — show whichever one applies.
+    const done = s === 'completed';
+    const completeBtn = $('#complete-btn');
+    const reopenBtn = $('#reopen-btn');
+    if (completeBtn) completeBtn.hidden = done;
+    if (reopenBtn) reopenBtn.hidden = !done;
 
     // Tab 1 button label: invite (new/planning) vs save details
     $('#save-details-btn').innerHTML = (isNew || s === 'planning') ? '▸ Save &amp; invite' : '▸ Save details';
@@ -707,7 +818,7 @@
     originalEvent = res.data;
     applyStatusUI();
     showToast('Saved.', { kind: 'ok' });
-    if (tabsForStatus(status()).includes('whos')) showTab('whos');
+    showTab('whos');   // details are in; the next thing is who's coming
   }
 
   async function syncHares() {
@@ -741,6 +852,20 @@
     if (await setEventStatus(next)) { applyStatusUI(); showToast(next === 'open' ? 'Hares sorted — marked Open.' : 'Back to hares needed.', { kind: 'ok' }); }
   }
 
+  // Save the hares WITHOUT touching the event's status. Same split as the
+  // attendance tab: saving your work and moving the hash on are two different
+  // decisions, and only one of them is reversible-by-accident (ISS-004).
+  async function saveHares() {
+    const btn = $('#save-hares-btn'); btn.disabled = true; const o = btn.textContent;
+    btn.textContent = '▸ Saving…';
+    const ok = await syncHares();
+    btn.disabled = false; btn.textContent = o;
+    if (ok) {
+      await refreshAttendees(eventId);
+      showToast('Hares saved.', { kind: 'ok' });
+    }
+  }
+
   async function saveOnOn() {
     const btn = $('#save-onon-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Saving…';
     const ok = await syncHares();
@@ -754,12 +879,66 @@
     btn.disabled = false; btn.textContent = o;
   }
 
-  async function saveComplete() {
-    const btn = $('#save-complete-btn'); btn.disabled = true; const o = btn.textContent; btn.textContent = '▸ Completing…';
+  // "Save" on the attendance tab. Every tick already writes on change, so this
+  // has nothing of its own to persist — but a save button that isn't there is
+  // exactly what sent an admin to "Save & complete" (ISS-004). So it exists,
+  // it re-reads the roster to prove the data landed, and it says so plainly.
+  async function saveAttendance() {
+    const btn = $('#save-attendance-btn'); btn.disabled = true; const o = btn.textContent;
+    btn.textContent = '▸ Checking…';
+    await reloadRoster();
+    btn.disabled = false; btn.textContent = o;
+    showToast('All saved — nothing was waiting.', { kind: 'ok' });
+  }
+
+  // How far off is the hash? Negative = in the past.
+  function daysUntilEvent() {
+    const d = originalEvent?.event_date;
+    if (!d) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const ev = new Date(d + 'T00:00:00');
+    return Math.round((ev - today) / 86400000);
+  }
+
+  function openCompleteModal() {
+    const days = daysUntilEvent();
+    const warn = $('#complete-future-warning');
+    if (days !== null && days > 0) {
+      $('#complete-days-away').textContent =
+        days === 1 ? 'tomorrow' : `still ${days} days away`;
+      warn.hidden = false;
+    } else {
+      warn.hidden = true;
+    }
+    $('#complete-modal').hidden = false;
+  }
+
+  async function doComplete() {
+    const btn = $('#complete-confirm-btn'); btn.disabled = true; const o = btn.textContent;
+    btn.textContent = '▸ Finishing…';
     // Completing also finalises (locks in the charity total, drops it off the worklist)
     const ok = await setEventStatus('completed', { attendance_finalised_at: new Date().toISOString() });
     btn.disabled = false; btn.textContent = o;
-    if (ok) { applyStatusUI(); renderAfterTotals(); showToast("Completed. On-on!", { kind: 'ok' }); showTab('after'); }
+    $('#complete-modal').hidden = true;
+    if (ok) {
+      applyStatusUI(); renderAfterTotals();
+      showToast("That's it done. On-on!", { kind: 'ok' });
+      showTab('after');
+    }
+  }
+
+  // The undo. Without this, a mis-click needed Adam and a hand-written SQL
+  // fix — which is exactly what happened with Hash 24 (ISS-003).
+  async function doReopen() {
+    const btn = $('#reopen-confirm-btn'); btn.disabled = true; const o = btn.textContent;
+    btn.textContent = '↶ Re-opening…';
+    const ok = await setEventStatus('ready', { attendance_finalised_at: null });
+    btn.disabled = false; btn.textContent = o;
+    $('#reopen-modal').hidden = true;
+    if (ok) {
+      applyStatusUI(); renderAfterTotals();
+      showToast('Re-opened — it\'s back under "Coming up".', { kind: 'ok' });
+    }
   }
 
   async function saveAfter() {
@@ -1189,8 +1368,15 @@
   $('#has_meal').addEventListener('change', applyMealUI);
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
+  $('#save-hares-btn').addEventListener('click', saveHares);
   $('#save-onon-btn').addEventListener('click', saveOnOn);
-  $('#save-complete-btn').addEventListener('click', saveComplete);
+  $('#save-attendance-btn').addEventListener('click', saveAttendance);
+  $('#complete-btn').addEventListener('click', openCompleteModal);
+  $('#complete-cancel-btn').addEventListener('click', () => { $('#complete-modal').hidden = true; });
+  $('#complete-confirm-btn').addEventListener('click', doComplete);
+  $('#reopen-btn').addEventListener('click', () => { $('#reopen-modal').hidden = false; });
+  $('#reopen-cancel-btn').addEventListener('click', () => { $('#reopen-modal').hidden = true; });
+  $('#reopen-confirm-btn').addEventListener('click', doReopen);
   $('#save-after-btn').addEventListener('click', saveAfter);
   $('#copy-phones-btn').addEventListener('click', copyPhonesForWhatsApp);
   $('#export-csv-btn').addEventListener('click', exportCsv);

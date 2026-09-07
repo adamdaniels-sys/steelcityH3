@@ -3634,3 +3634,23 @@ a.onons-title:hover { color: var(--orange); }
 .att-badge-unpaid { background: var(--cream-3); color: var(--ink);   }
 .att-badge-missed { background: var(--steel);   color: var(--cream); }
 
+
+/* ── Admin: "this tab isn't relevant yet" notice ─────────────────────────────
+   Tabs used to be DISABLED until the event's status advanced, which meant the
+   only way to reach a later tab was to advance the event — turning a
+   destructive action into a navigation control (ISS-005). Tabs are now always
+   open, and a tab whose moment hasn't come says so with this instead. Looking
+   is never destructive; the notice explains where you are rather than
+   stonewalling you. */
+.not-yet-note {
+  background: var(--yellow);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
