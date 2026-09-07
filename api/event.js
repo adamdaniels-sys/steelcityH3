@@ -240,5 +240,11 @@ module.exports = async (req, res) => {
   // Edge-cache the rendered HTML briefly; the live event data still loads
   // client-side, so a few minutes of OG-tag staleness is harmless.
   res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600');
-  res.end(html);
+  // Write an explicit UTF-8 Buffer, and send its true byte length. Passing the
+  // string straight to res.end() let the runtime re-encode it, which turned
+  // every "·" into "Â·" and every "—" into "â€"" in the live page — visible in
+  // the JSON-LD name and in link previews.
+  const body = Buffer.from(html, 'utf8');
+  res.setHeader('content-length', body.length);
+  res.end(body);
 };
