@@ -61,13 +61,91 @@ function loadTemplate() {
   return null;
 }
 
-function buildOgTags(o) {
+// Schema.org Event JSON-LD.
+//
+// Why here and not in event.html: this function already has the event row in
+// hand, so every event gets structured data with nothing for admins to author.
+// It's also server-rendered, so crawlers and AI assistants that never run our
+// client JS still see the date, place and status as machine-readable fields
+// rather than prose they'd have to infer from.
+//
+// eventStatus/eventAttendanceMode/startDate are the fields Google and the
+// assistants actually read; the rest is bonus context.
+//
+// The event_status enum is: planning | hares_wanted | open | ready | closed |
+// completed. Only "closed" means cancelled — event.html shows the "this hash
+// was cancelled" banner on it. Everything else is a live or finished hash, and
+// schema.org has no "finished" status, so a past hash stays EventScheduled.
+const EVENT_STATUS_LD = {
+  closed: 'https://schema.org/EventCancelled',
+};
+
+function buildEventJsonLd(ev, o) {
+  // A hash is a physical trail round Sheffield — never online.
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsEvent',
+    name: o.title,
+    description: o.description,
+    url: o.url,
+    image: o.image,
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: EVENT_STATUS_LD[ev.status] || 'https://schema.org/EventScheduled',
+    organizer: {
+      '@type': 'SportsClub',
+      name: 'Steel City H3',
+      alternateName: 'Steel City Hash House Harriers',
+      url: SITE_URL + '/',
+    },
+    location: {
+      '@type': 'Place',
+      // location_full is the real address when set; location_summary is the
+      // public teaser ("a pub in Hathersage"). Fall back to the city.
+      name: ev.location_summary || ev.location_full || 'Sheffield',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: ev.location_full || undefined,
+        addressLocality: 'Sheffield',
+        addressCountry: 'GB',
+      },
+    },
+  };
+
+  // startDate: date alone is valid, but date+time is far more useful to an
+  // assistant answering "when is the next hash?". Times are UK local.
+  if (ev.event_date) {
+    ld.startDate = ev.start_time
+      ? `${ev.event_date}T${String(ev.start_time).slice(0, 8)}`
+      : ev.event_date;
+  }
+
+  // The sub is per head and payable on the day, not a ticketed sale. Marking
+  // it up as an Offer still tells an assistant what it costs to turn up.
+  if (ev.amount_per_head != null && Number(ev.amount_per_head) > 0) {
+    ld.offers = {
+      '@type': 'Offer',
+      price: String(Number(ev.amount_per_head).toFixed(2)),
+      priceCurrency: 'GBP',
+      availability: 'https://schema.org/InStock',
+      url: o.url,
+    };
+  }
+
+  if (ev.distance_miles != null) {
+    ld.distance = { '@type': 'Distance', name: `${ev.distance_miles} miles` };
+  }
+
+  // Strip undefined so they don't serialise as nulls.
+  return JSON.stringify(ld, (_k, v) => (v === undefined ? undefined : v), 2);
+}
+
+function buildOgTags(o, isEvent) {
   const t = escapeHtml(o.title);
   const d = escapeHtml(o.description);
   const img = escapeHtml(o.image);
   const url = escapeHtml(o.url);
   return [
-    '<meta property="og:type" content="website" />',
+    `<meta property="og:type" content="${isEvent ? 'event' : 'website'}" />`,
     '<meta property="og:site_name" content="Steel City H3" />',
     `<meta property="og:title" content="${t}" />`,
     `<meta property="og:description" content="${d}" />`,
@@ -80,9 +158,23 @@ function buildOgTags(o) {
   ].join('\n  ');
 }
 
-function injectInto(template, ogHtml, pageTitle, id) {
+function injectInto(template, ogHtml, pageTitle, id, jsonLd, canonical) {
   let html = template.replace(/<!-- OG_BLOCK_START[\s\S]*?OG_BLOCK_END -->/, ogHtml);
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(pageTitle)}</title>`);
+  if (canonical) {
+    html = html.replace(
+      /<!-- SCH3_CANONICAL -->/,
+      `<link rel="canonical" href="${escapeHtml(canonical)}" />`,
+    );
+  }
+  if (jsonLd) {
+    // </script> inside the JSON would close this block early; \u003c is the
+    // standard escape and stays valid JSON.
+    html = html.replace(
+      /<!-- SCH3_JSONLD -->/,
+      `<script type="application/ld+json">\n${jsonLd.replace(/</g, '\\u003c')}\n</script>`,
+    );
+  }
   if (id) {
     html = html.replace(
       /<!-- SCH3_EVENT_ID -->/,
@@ -111,11 +203,12 @@ module.exports = async (req, res) => {
     url: SITE_URL + (id ? `/event/${encodeURIComponent(id)}` : '/'),
   };
   let pageTitle = 'Steel City H3 — Hash detail';
+  let jsonLd = null;
 
   if (/^\d+$/.test(id)) {
     try {
       const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&select=run_number,title,event_date,start_time,location_summary,location_full,description,event_type,status&limit=1`,
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&select=run_number,title,event_date,start_time,location_summary,location_full,description,event_type,status,amount_per_head,distance_miles&limit=1`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
       );
       if (r.ok) {
@@ -133,12 +226,15 @@ module.exports = async (req, res) => {
           const title = `${runLabel} · ${ev.title} — Steel City H3`;
           og = { title, description: desc, image: DEFAULT_IMAGE, url: `${SITE_URL}/event/${id}` };
           pageTitle = title;
+          jsonLd = buildEventJsonLd(ev, og);
         }
       }
     } catch (_) { /* keep the generic preview */ }
   }
 
-  const html = injectInto(template, buildOgTags(og), pageTitle, id);
+  // Canonical: /event/:id is the real address — event.html?id= is the same page.
+  const canonical = /^\d+$/.test(id) ? `${SITE_URL}/event/${id}` : null;
+  const html = injectInto(template, buildOgTags(og, jsonLd != null), pageTitle, id, jsonLd, canonical);
   res.statusCode = 200;
   res.setHeader('content-type', 'text/html; charset=utf-8');
   // Edge-cache the rendered HTML briefly; the live event data still loads

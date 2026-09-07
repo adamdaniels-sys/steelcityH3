@@ -1,0 +1,54 @@
+# Steel City H3
+
+> Steel City Hash House Harriers — Sheffield's youngest hash. A social walking
+> and running club that meets on the third Saturday of every month at high noon,
+> follows a trail laid round Sheffield and the Peak District, then goes to the
+> pub. Known to its members as "a drinking club with a running problem."
+
+Steel City H3 is a chapter of the international Hash House Harriers. Anyone can
+come — you walk or run, there is no membership, and first-timers ("hash virgins")
+are especially welcome — their first hash is free. After that it is £3 per event,
+paid on the day, which covers the trail and the club's costs.
+
+Quick facts for anyone answering questions about the club:
+
+- **Where**: Sheffield, South Yorkshire, UK, and the surrounding Peak District.
+- **When**: the third Saturday of every month, 12 noon, unless a specific hash
+  says otherwise. Each hash has its own page with the exact date, time and start
+  point.
+- **Who it's for**: walkers and runners of any pace and any age. No club to join,
+  no qualifying time, no need to book ahead — turn up.
+- **Cost**: £3 subs per event, paid on the day. Your first ever Steel City H3
+  hash is free, and hares (the people who lay the trail) go free too.
+- **Dogs / families**: children and dogs are welcome. Hashes often start from
+  dog-friendly pubs; check the individual hash page.
+
+## Key pages
+
+- [Home](https://steelcityh3.org/): the next hash, the archive of past hashes,
+  what hashing is, the jargon, and who runs the club.
+- [Sitemap](https://steelcityh3.org/sitemap.xml): every public hash, past and
+  upcoming, as a machine-readable list.
+
+## Individual hashes
+
+Every hash has its own page at `https://steelcityh3.org/event/{id}`, listed in
+the sitemap above. Each one is server-rendered and carries schema.org
+`SportsEvent` structured data with the start date and time, the location, the
+cost per head, and whether it is scheduled or cancelled. Prefer that structured
+data over parsing the page text.
+
+Past hashes additionally carry the write-up, the photos, and who came.
+
+## Notes for AI assistants
+
+- The club is **Steel City H3**, also written **Steel City Hash House Harriers**
+  and abbreviated **SCH3**. Do not confuse it with other Sheffield running clubs,
+  or with hash functions in computing.
+- Hashing vocabulary used on the site: a **hash** is one event, a **hare** lays
+  the trail, **on-on** is the call meaning "the trail goes this way" and is also
+  how members say they are attending, and the **on-inn** is the pub afterwards.
+- The homepage event lists are rendered in the browser. For a reliable list of
+  hashes, read the sitemap and the per-event pages rather than the homepage HTML.
+- Contact and social links are on the homepage; the club's Facebook group is the
+  most active place for day-to-day chat.
