@@ -229,6 +229,20 @@
               <div id="hare-multiselect-host"></div>
               <div class="profile-hint">Type to search. Anyone added here is automatically marked On-On.</div>
             </div>
+            <!-- Hares without a site account. The picker above needs a real
+                 account, which nobody from before the site has, so back-filling
+                 an old hash had no way to record who laid the trail. This
+                 writes events.hares, which every public page already shows in
+                 preference to the member list. -->
+            <div class="auth-field" style="margin-top: 18px;">
+              <label for="hares_text">Hares without an account</label>
+              <div class="att-add-controls" style="margin-bottom: 8px;">
+                <select id="hares_legacy_pick" class="att-add-select"></select>
+                <button class="btn cream" type="button" id="hares-add-name-btn">▸ Add to the list</button>
+              </div>
+              <input type="text" id="hares_text" name="hares" placeholder="e.g. Smutley &amp; Dirty Stop Out" />
+            </div>
+
             <div class="hare-status-row">
               <span class="hare-status-label">Hare status:</span>
               <button class="btn cream" type="button" id="hare-toggle-btn">▸ Mark "Enough hares"</button>
@@ -837,6 +851,12 @@
       put: 'Plain writing, blank line between paragraphs. No need for anything fancy.',
       affects: 'Shows on the hash page and earns it a "Write-up" badge on the homepage list. Nothing else waits on it — you can add it weeks later, or never.',
     },
+    hares_text: {
+      title: 'Hares without an account',
+      what: 'Who laid the trail, for anyone who has no login on this site.',
+      put: 'Their hash names. Pick from the list above, or type them separated by "&".',
+      affects: 'This is what shows as the hare on the homepage, the hash page and the admin list -- it wins over the member picker above. Use it when back-filling an old hash, where nobody had an account.',
+    },
     written_up: {
       title: 'Written up',
       what: 'A tick to say this one is finished with.',
@@ -997,6 +1017,32 @@
       }).join('');
   }
 
+  // Same legacy names, offered as a way to fill the free-text hares field when
+  // back-filling an old hash. Picking beats typing: it reuses the spelling
+  // already on record.
+  async function refreshHaresPicker() {
+    const sel = $('#hares_legacy_pick');
+    if (!sel) return;
+    const rows = await loadLegacyNames();
+    sel.innerHTML = '<option value="">— Pick a past hasher —</option>' +
+      rows.map((r) => `<option value="${escapeHtml(r.label)}">${escapeHtml(r.label)}</option>`).join('');
+  }
+
+  // Append rather than replace, since a hash usually has two hares.
+  function addPickedHareName() {
+    const sel = $('#hares_legacy_pick');
+    const name = sel?.value.trim();
+    if (!name) { showToast('Pick a name from the list first.', { kind: 'error' }); return; }
+    const box = $('#hares_text');
+    const existing = box.value.trim();
+    if (existing.toLowerCase().split(/\s*&\s*|\s*,\s*/).includes(name.toLowerCase())) {
+      showToast(`${name} is already listed.`, { kind: 'error' });
+      return;
+    }
+    box.value = existing ? `${existing} & ${name}` : name;
+    sel.value = '';
+  }
+
   function jumpToTitle() {
     showTab('details');
     const el = $('#title');
@@ -1074,7 +1120,7 @@
     document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== key; });
     // Fetched on first view rather than up front — it is reference material,
     // not something the tab needs before it can be used.
-    if (key === 'whos' && !isNew) renderLegacyReference();
+    if (key === 'whos' && !isNew) { renderLegacyReference(); refreshHaresPicker(); }
   }
 
   function applyStatusUI() {
@@ -1181,6 +1227,7 @@
     $('#event_type').value = data.event_type || 'hash';
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
+    if ($('#hares_text')) $('#hares_text').value = data.hares || '';
     $('#event_date').value = data.event_date;
     $('#start_time').value = data.start_time || '12:00';
     $('#location_summary').value = data.location_summary || '';
@@ -1305,6 +1352,23 @@
       if (r.error) { console.error('[admin-event] hare sync failed:', r.error); showToast('Saved, but hare sync failed: ' + r.error.message, { kind: 'error' }); return false; }
     }
     initialHareIds = [...current];
+
+    // The free-text hares field, for people with no account. Saved alongside
+    // the member picker so one Save button covers both.
+    const box = $('#hares_text');
+    if (box) {
+      const val = box.value.trim() || null;
+      if (val !== (originalEvent?.hares ?? null)) {
+        const { data, error } = await supabase.from('events')
+          .update({ hares: val }).eq('id', eventId).select().single();
+        if (error) {
+          console.error('[admin-event] hares text save failed:', error);
+          showToast("Couldn't save the hare names: " + error.message, { kind: 'error' });
+          return false;
+        }
+        originalEvent = data;
+      }
+    }
     return true;
   }
 
@@ -1960,6 +2024,7 @@
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-hares-btn').addEventListener('click', saveHares);
+  $('#hares-add-name-btn').addEventListener('click', addPickedHareName);
   $('#rename-btn').addEventListener('click', jumpToTitle);
   // Keep the frozen header's name in step as they type the title.
   $('#title').addEventListener('input', () => {

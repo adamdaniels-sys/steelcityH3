@@ -3676,8 +3676,10 @@ a.onons-title:hover { color: var(--orange); }
   background: var(--cream-2);
   border: 3px solid var(--ink);
   /* No offset shadow: inside the editor the comic layering reads as clutter
-     rather than character (DEC-010). */
-  border-radius: 6px;
+     rather than character (DEC-010). No border-radius either: a rounded corner
+     forces the browser to clip everything inside, and that clipping can trap a
+     native <select> dropdown inside the iframe so it never appears. Square
+     corners cost nothing and the roster selects have to work. */
   width: min(1180px, calc(100vw - 48px));
   height: min(920px, calc(100vh - 48px));
   display: flex;
