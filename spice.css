@@ -4030,3 +4030,50 @@ html.embedded body > .sec {
 /* Standalone (not in the modal) the site header is sticky above us, so the
    editor header parks below it rather than at the very top. */
 html:not(.embedded) .ed-head { top: 77px; }
+
+/* ── Admin: past-attendee reference list ─────────────────────────────────────
+   The names the club already holds from before the site. Reference only on the
+   "Who's Cumming?" tab — a hare needs a real account, and these people have
+   none. Its job is to let an admin check the spelling already on record. */
+.lr-total {
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+.legacy-ref-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 2px solid var(--ink-3);
+  border-radius: 4px;
+  background: var(--cream);
+}
+.legacy-ref-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 14px;
+  font-family: "Nunito", sans-serif;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--cream-3);
+}
+.legacy-ref-list li:last-child { border-bottom: 0; }
+.legacy-ref-list .lr-name { font-weight: 700; color: var(--ink); }
+.legacy-ref-list .lr-kennel { color: var(--ink-3); font-weight: 600; }
+.legacy-ref-list .lr-matched {
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: var(--green);
+}
+/* Pushed right so the counts line up down the list. */
+.legacy-ref-list .lr-count {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}

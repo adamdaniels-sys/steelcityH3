@@ -250,6 +250,22 @@
             </table>
           </div>
 
+          <!-- Everyone the club already has on record from before the site.
+               Reference only: a hare needs a real account, and these people
+               have none. It answers "who do we already know about?" -->
+          <div class="admin-subsection" style="margin-top: 26px;">
+            <h3 class="admin-section-heading">
+              Past attendees on record <span id="legacy-reference-count" class="lr-total"></span>
+            </h3>
+            <p class="profile-hint" style="margin-bottom: 12px;">
+              People who hashed with us before the website existed. You cannot pick
+              them as hares here — that needs a site account — but this is the list
+              of names we already hold, so you can spell them the same way next time.
+              Add someone to a past hash on its <b>Ready to On-On</b> tab.
+            </p>
+            <div id="legacy-reference"></div>
+          </div>
+
           <div class="profile-actions" style="margin-top: 26px;">
             <button class="btn cream" type="button" id="save-hares-btn">▸ Save</button>
             <button class="btn orange" type="button" id="save-onon-btn">▸ Save &amp; mark "Ready to On-On"</button>
@@ -329,14 +345,20 @@
                 <div class="profile-hint" style="margin-top: 6px;">A surprise visitor from another kennel. Kennel is optional.</div>
               </div>
               <div class="att-add-group" id="add-legacy-group" hidden>
-                <label class="att-add-label" for="add-legacy-label">Add a past attendee (legacy)</label>
+                <label class="att-add-label" for="add-legacy-select">Add a past attendee (legacy)</label>
+                <!-- Pick a known name rather than retyping it. Typing by hand is
+                     how "Walkie Talkie" and "Walky Talky" become two people. -->
                 <div class="att-add-controls">
-                  <input type="text" id="add-legacy-label" class="att-add-input" placeholder="Hash name" />
-                  <input type="text" id="add-legacy-kennel" class="att-add-input" placeholder="Kennel (optional)" />
+                  <select id="add-legacy-select" class="att-add-select"></select>
                   <button class="btn cream" type="button" id="add-legacy-btn">▸ Add</button>
                   <button class="btn cream" type="button" id="bulk-legacy-btn">▸ Add a whole list</button>
                 </div>
-                <div class="profile-hint" style="margin-top: 6px;">Backfill someone who came before the site. Counts in metrics; merge into their account from the <b>Legacy attendees</b> page when they sign up.</div>
+                <!-- Only needed for someone genuinely new to the records. -->
+                <div class="att-add-controls" id="add-legacy-new" style="margin-top: 8px;">
+                  <input type="text" id="add-legacy-label" class="att-add-input" placeholder="Hash name" />
+                  <input type="text" id="add-legacy-kennel" class="att-add-input" placeholder="Kennel (optional)" />
+                </div>
+                <div class="profile-hint" style="margin-top: 6px;">Pick someone we already know from the list, or leave it on "Someone new" and type their name. Counts in metrics; merge into their account from the <b>Legacy attendees</b> page when they sign up.</div>
               </div>
             </div>
           </div>
@@ -914,6 +936,67 @@
   // The pencil beside the name. Rather than a second place that can save a
   // title (two ways to change one thing is how they drift apart), it takes you
   // to the real field and highlights it, from whichever tab you were on.
+  // ---- Legacy attendees (people who came before the site existed) --------
+  //
+  // Loaded once and shared by both places that need them: the reference list on
+  // "Who's Cumming?" and the dropdown on "Ready to On-On". Typing a name by
+  // hand is how you end up with "Walkie Talkie" and "Walky Talky" as two
+  // different people, so wherever a known name can be picked, it should be.
+  let legacyNames = [];
+
+  async function loadLegacyNames() {
+    if (legacyNames.length) return legacyNames;
+    const { data, error } = await supabase.rpc('get_legacy_attendees');
+    if (error) { console.warn('[admin-event] legacy names fetch failed:', error); return []; }
+    legacyNames = data || [];
+    return legacyNames;
+  }
+
+  // Reference list on tab 2. Deliberately NOT selectable: a hare has to be a
+  // real account (event_hares.user_id is not-null and points at profiles), and
+  // these people have no account. It answers "who do we already know about?"
+  // without pretending they can be picked.
+  async function renderLegacyReference() {
+    const host = $('#legacy-reference');
+    if (!host) return;
+    const rows = await loadLegacyNames();
+    $('#legacy-reference-count').textContent = rows.length ? String(rows.length) : '';
+    if (!rows.length) {
+      host.innerHTML = '<p class="profile-hint">Nobody on record yet. Past attendees get added on the ' +
+        '<b>Ready to On-On</b> tab of a hash that has already happened.</p>';
+      return;
+    }
+    host.innerHTML = '<ul class="legacy-ref-list">' + rows.map((r) => {
+      const kennel = r.kennel ? ` <span class="lr-kennel">${escapeHtml(r.kennel)}</span>` : '';
+      const n = Number(r.event_count) || 0;
+      const count = `<span class="lr-count">${n} hash${n === 1 ? '' : 'es'}</span>`;
+      const matched = r.matched_user_id
+        ? ` <span class="lr-matched">has an account now</span>` : '';
+      return `<li><span class="lr-name">${escapeHtml(r.label)}</span>${kennel}${matched}${count}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  // The dropdown on tab 3. Known names first so they are picked rather than
+  // retyped; "someone new" falls back to the free-text boxes.
+  async function refreshLegacyPicker() {
+    const sel = $('#add-legacy-select');
+    if (!sel) return;
+    const rows = await loadLegacyNames();
+    // Anyone already on this event's roster shouldn't be offered again.
+    const onRoster = new Set(
+      roster.map((r) => (r.display_name || r.attendee_label || '').toLowerCase().trim()).filter(Boolean),
+    );
+    const available = rows.filter((r) => !onRoster.has(String(r.label).toLowerCase().trim()));
+    sel.innerHTML =
+      '<option value="">— Someone new (type their name below) —</option>' +
+      available.map((r) => {
+        const n = Number(r.event_count) || 0;
+        const extra = [r.kennel, `${n} hash${n === 1 ? '' : 'es'}`].filter(Boolean).join(' · ');
+        return `<option value="${escapeHtml(r.label)}" data-kennel="${escapeHtml(r.kennel || '')}">` +
+               `${escapeHtml(r.label)} — ${escapeHtml(extra)}</option>`;
+      }).join('');
+  }
+
   function jumpToTitle() {
     showTab('details');
     const el = $('#title');
@@ -989,6 +1072,9 @@
   function showTab(key) {
     document.querySelectorAll('.event-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
     document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== key; });
+    // Fetched on first view rather than up front — it is reference material,
+    // not something the tab needs before it can be used.
+    if (key === 'whos' && !isNew) renderLegacyReference();
   }
 
   function applyStatusUI() {
@@ -1591,6 +1677,10 @@
     if (error) { console.error('[admin-event] roster fetch failed:', error); return; }
     roster = data || [];
     renderRoster();
+    // The legacy dropdown hides anyone already on the roster, so it has to be
+    // rebuilt whenever the roster changes - otherwise it offers someone who is
+    // already there.
+    refreshLegacyPicker();
   }
 
   async function togglePaid(id) {
@@ -1731,18 +1821,30 @@
     bulkReady = null;
     notifyHost('saved');
     showToast(`Added ${n} ${n === 1 ? 'person' : 'people'}.`, { kind: 'ok' });
-    await reloadRoster();
+    // These names are now on record, so both legacy lists need rebuilding.
+    legacyNames = [];
+    renderLegacyReference();
+    await reloadRoster();   // also rebuilds the legacy dropdown
   }
 
   async function addRosterLegacy() {
-    const label = $('#add-legacy-label').value.trim();
-    const kennel = $('#add-legacy-kennel').value.trim() || null;
-    if (!label) { showToast('Enter their hash name first.', { kind: 'error' }); return; }
+    // A name picked from the list wins over the free-text boxes, so the
+    // spelling already on record is reused rather than typed afresh.
+    const picked = $('#add-legacy-select')?.value.trim() || '';
+    const pickedOpt = picked ? $('#add-legacy-select').selectedOptions[0] : null;
+    const label = picked || $('#add-legacy-label').value.trim();
+    const kennel = picked
+      ? (pickedOpt?.dataset.kennel || null)
+      : ($('#add-legacy-kennel').value.trim() || null);
+    if (!label) { showToast('Pick a name from the list, or type a new one.', { kind: 'error' }); return; }
     // Historical backfill: counts for attendance, no money tracked, no debt.
     const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: null, attendee_label: label, attendee_kennel: kennel, is_virgin_guest: false, is_legacy: true, amount_paid: 0, charity_amount: 0, paid: true });
     if (error) { showToast(error.message || "Couldn't add that name.", { kind: 'error' }); return; }
     $('#add-legacy-label').value = ''; $('#add-legacy-kennel').value = '';
-    await reloadRoster();
+    if ($('#add-legacy-select')) $('#add-legacy-select').value = '';
+    // A brand-new name becomes a known one, so refresh both lists that show them.
+    if (!picked) { legacyNames = []; renderLegacyReference(); }
+    await reloadRoster();   // also rebuilds the legacy dropdown
   }
 
   // ---- Photos -----------------------------------------------------------
