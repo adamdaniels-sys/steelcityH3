@@ -334,6 +334,7 @@
               <h4>▸ Add to the roster</h4>
               <div class="att-add-group">
                 <label class="att-add-label" for="add-member-select">Add a member</label>
+                <div class="profile-hint" style="margin-bottom: 6px;">Anyone who said they were coming is added to the list automatically, so this is mostly for people who turned up without saying.</div>
                 <div class="att-add-controls">
                   <select id="add-member-select" class="att-add-select"></select>
                   <button class="btn cream" type="button" id="add-member-btn">▸ Add</button>
@@ -1729,14 +1730,42 @@
     const onRoster = new Set(roster.filter((r) => r.user_id).map((r) => r.user_id));
     const available = allMembers.filter((m) => !onRoster.has(m.id));
     const nm = (m) => (m.hash_name && m.hash_name.trim()) ? m.hash_name : (m.real_name || 'Unnamed member');
-    // Leads with a placeholder, like every other select on this tab. Without
-    // one the first member showed as already chosen when nobody had chosen
-    // anything -- and this was the only select here that lacked one, which is
-    // also the only one users reported would not open.
-    $('#add-member-select').innerHTML = available.length
-      ? '<option value="">— Pick a member —</option>' +
-        available.map((m) => `<option value="${m.id}">${escapeHtml(nm(m))}</option>`).join('')
-      : '<option value="">Everyone\'s on the roster</option>';
+
+    // Grouped, because "Add a member" kept looking broken when it was simply
+    // EMPTY: anyone who RSVPs on-on is auto-added to the roster by
+    // populate_attendance_from_rsvps, and this list hides anyone already on it.
+    // On a well-RSVP'd hash that left nothing to pick.
+    //
+    // So it now says WHY someone is or is not here:
+    //   Said maybe / can't make it -- they RSVP'd but were not auto-added, and
+    //     are the most likely people to turn up unannounced.
+    //   Not heard from -- no RSVP at all.
+    //   Already on the list -- shown disabled rather than hidden, so it is
+    //     obvious they are accounted for rather than missing.
+    const rsvpById = new Map(
+      currentAttendees.filter((r) => r.profile).map((r) => [r.profile.id, r.status]),
+    );
+    const label = { maybe: 'said maybe', not_this_time: "said can't make it" };
+    const opt = (m, extra) =>
+      `<option value="${m.id}">${escapeHtml(nm(m))}${extra ? ` — ${extra}` : ''}</option>`;
+
+    const responded = available.filter((m) => rsvpById.has(m.id));
+    const silent = available.filter((m) => !rsvpById.has(m.id));
+    const already = allMembers.filter((m) => onRoster.has(m.id));
+
+    let html = '<option value="">— Pick a member —</option>';
+    if (responded.length) {
+      html += '<optgroup label="Replied, but not on the list yet">' +
+        responded.map((m) => opt(m, label[rsvpById.get(m.id)] || 'replied')).join('') + '</optgroup>';
+    }
+    if (silent.length) {
+      html += '<optgroup label="Not heard from">' + silent.map((m) => opt(m, '')).join('') + '</optgroup>';
+    }
+    if (already.length) {
+      html += '<optgroup label="Already on the list">' +
+        already.map((m) => `<option value="" disabled>${escapeHtml(nm(m))}</option>`).join('') + '</optgroup>';
+    }
+    $('#add-member-select').innerHTML = html;
     $('#add-plusone-host').innerHTML = '<option value="">Brought by… (optional)</option>' +
       roster.filter((r) => r.user_id).map((r) => `<option value="${r.user_id}">${escapeHtml(r.display_name)}</option>`).join('');
   }
