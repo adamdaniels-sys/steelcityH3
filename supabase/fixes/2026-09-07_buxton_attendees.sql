@@ -23,6 +23,12 @@
 -- The general rule: import what was sent, let the people who know the club
 -- correct it. A wrong guess here is silent and permanent.
 --
+-- LATER CORRECTION (2026-09-08): "Count Sheet" was a genuine typo for "Count
+-- Sheep", confirmed by Adam, and is corrected here and in the names file. The
+-- live data was fixed separately by 2026-09-08_count_sheep_typo.sql, since this
+-- import had already run. Note this is the club telling us, not us guessing --
+-- which is exactly the process the rule above describes.
+--
 -- SAFE TO RE-RUN: it skips anyone already on this event's roster, whether they
 -- were added as a legacy attendee, a walk-up, or through a real account. The
 -- two hares already on the roster (Queen Myrtle and Smutley) are left alone,
@@ -61,7 +67,7 @@ incoming(label) as (
     ('Chicki'),
     ('Cockatool'),
     ('Commercial Whale'),
-    ('Count Sheet'),
+    ('Count Sheep'),
     ('Crashed oot'),
     ('Creeper'),
     ('Cums Every Time'),
