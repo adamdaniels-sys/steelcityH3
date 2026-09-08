@@ -1610,7 +1610,15 @@
   // ---- Attendance roster ------------------------------------------------
 
   async function setupAttendance() {
-    if (!eventId || !['ready', 'completed'].includes(status())) return;
+    if (!eventId) return;
+    // This used to bail out entirely unless the hash was 'ready' or
+    // 'completed'. That was fine when the tab was locked until then, but the
+    // tabs are open now (ISS-005), so an admin could reach this on an 'open'
+    // hash and find the roster and dropdowns never populated -- looking
+    // exactly like the broken control we have just spent two rounds chasing.
+    // Only the AUTO-POPULATE below is genuinely stage-dependent; everything
+    // else is safe to set up whenever the tab is opened.
+    const stageReady = ['ready', 'completed'].includes(status());
     if (!me) { const s = await getSession(); me = s?.user?.id || null; }
     amountPerHead = Number(originalEvent.amount_per_head) || 0;
     isCharity = !!originalEvent.is_charity_event;
@@ -1634,8 +1642,13 @@
     const guests = currentAttendees.filter((r) => r.status === 'on_on').reduce((s, r) => s + (r.guests_count || 0), 0);
     $('#stat-expected').innerHTML = `${onOn} on-on<span style="font-size:0.85rem;color:var(--ink-3);"> · ${maybe} maybe · +${guests} guests</span>`;
 
-    const { error: popErr } = await supabase.rpc('populate_attendance_from_rsvps', { p_event_id: eventId });
-    if (popErr) console.warn('[admin-event] auto-populate skipped:', popErr);
+    // Building the roster from the RSVPs is a one-way door -- it fixes who is
+    // expected and what they owe -- so it still waits until the hash is
+    // actually ready to on-on.
+    if (stageReady) {
+      const { error: popErr } = await supabase.rpc('populate_attendance_from_rsvps', { p_event_id: eventId });
+      if (popErr) console.warn('[admin-event] auto-populate skipped:', popErr);
+    }
     await reloadRoster();
   }
 
