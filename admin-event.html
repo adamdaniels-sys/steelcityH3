@@ -1729,8 +1729,13 @@
     const onRoster = new Set(roster.filter((r) => r.user_id).map((r) => r.user_id));
     const available = allMembers.filter((m) => !onRoster.has(m.id));
     const nm = (m) => (m.hash_name && m.hash_name.trim()) ? m.hash_name : (m.real_name || 'Unnamed member');
+    // Leads with a placeholder, like every other select on this tab. Without
+    // one the first member showed as already chosen when nobody had chosen
+    // anything -- and this was the only select here that lacked one, which is
+    // also the only one users reported would not open.
     $('#add-member-select').innerHTML = available.length
-      ? available.map((m) => `<option value="${m.id}">${escapeHtml(nm(m))}</option>`).join('')
+      ? '<option value="">— Pick a member —</option>' +
+        available.map((m) => `<option value="${m.id}">${escapeHtml(nm(m))}</option>`).join('')
       : '<option value="">Everyone\'s on the roster</option>';
     $('#add-plusone-host').innerHTML = '<option value="">Brought by… (optional)</option>' +
       roster.filter((r) => r.user_id).map((r) => `<option value="${r.user_id}">${escapeHtml(r.display_name)}</option>`).join('');
@@ -1783,7 +1788,10 @@
 
   // On a hash, hares and SCH3 Hash Virgins (first Steel City hash) don't pay.
   async function addRosterMember() {
-    const uid = $('#add-member-select').value; if (!uid) return;
+    const uid = $('#add-member-select').value;
+    // Say so rather than doing nothing silently -- "I clicked Add and nothing
+    // happened" is indistinguishable from a broken button.
+    if (!uid) { showToast('Pick a member from the list first.', { kind: 'error' }); return; }
     const m = allMembers.find((x) => x.id === uid);
     const exempt = isHashType && (initialHareIds.includes(uid) || (m && m.is_hash_virgin));
     const { error } = await supabase.from('event_attendances').insert({ event_id: eventId, user_id: uid, amount_paid: exempt ? 0 : amountPerHead, charity_amount: 0, paid: false });
