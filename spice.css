@@ -4080,6 +4080,39 @@ html:not(.embedded) .ed-head { top: 77px; }
   white-space: nowrap;
 }
 
+/* "Hares without an account": tappable names instead of a <select>, whose
+   native popup kept failing to open inside the editor iframe. */
+.hare-name-filter {
+  width: 100%;
+  margin-bottom: 8px;
+}
+.hare-name-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 2px solid var(--ink-3);
+  background: var(--cream);
+}
+.hare-name-chip {
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+.hare-name-chip:hover { background: var(--orange); }
+.hare-name-chip.is-on {
+  background: var(--ink);
+  color: var(--cream);
+  cursor: default;
+}
+
 /* Mismanagement photos. The .av circle was built for two-letter initials, so a
    photo needs to fill it and crop rather than letterbox. Kept in the same
    circle with the same ink border, so the cards still match. */

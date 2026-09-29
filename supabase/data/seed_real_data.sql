@@ -118,7 +118,7 @@ insert into public.event_attendances (event_id, attendee_label, attendee_kennel,
   (11, 'Wheelchair', null, true, 3.00, true),
   (11, 'Baritone', 'Quorn', true, 3.00, true),
   (11, 'Diarrhoea', 'Quorn', true, 3.00, true),
-  (11, 'Mug Plug', 'Rutland', true, 3.00, true);
+  (11, 'Mudplug', 'Rutland', true, 3.00, true);
 
 -- ===== Run 12 - January 2026 Hash - New York, Rotherham =====
 insert into public.events (id, run_number, title, event_date, start_time, location_summary, event_type, amount_per_head, is_charity_event, status, hares, written_up, attendance_finalised_at)

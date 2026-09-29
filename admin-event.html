@@ -236,11 +236,13 @@
                  preference to the member list. -->
             <div class="auth-field" style="margin-top: 18px;">
               <label for="hares_text">Hares without an account</label>
-              <div class="att-add-controls" style="margin-bottom: 8px;">
-                <select id="hares_legacy_pick" class="att-add-select"></select>
-                <button class="btn cream" type="button" id="hares-add-name-btn">▸ Add to the list</button>
-              </div>
               <input type="text" id="hares_text" name="hares" placeholder="e.g. Smutley &amp; Dirty Stop Out" />
+              <!-- A visible list of buttons rather than a <select>: native
+                   dropdown popups have repeatedly failed to open inside the
+                   editor's iframe, leaving what looks like an empty box. -->
+              <div class="profile-hint" style="margin: 10px 0 6px;">Tap a name to add them, or type names above separated by "&amp;".</div>
+              <input type="search" id="hares_name_filter" class="hare-name-filter" placeholder="Search past hashers…" autocomplete="off" />
+              <div id="hares_name_chips" class="hare-name-chips"></div>
             </div>
 
             <div class="hare-status-row">
@@ -320,6 +322,21 @@
               <div class="att-stat" id="stat-outstanding-card"><div class="lbl">Outstanding</div><div class="val">£<span id="stat-outstanding">0.00</span></div></div>
               <div class="att-stat" id="stat-keep-card" hidden><div class="lbl">Organiser keeps</div><div class="val">£<span id="stat-keep">0.00</span></div></div>
               <div class="att-stat" id="stat-charity-card" hidden><div class="lbl">To charity</div><div class="val">£<span id="stat-charity">0.00</span></div></div>
+              <div class="att-stat"><div class="lbl">Expenses</div><div class="val">£<span id="stat-expenses">0.00</span></div></div>
+              <div class="att-stat" id="stat-left-card"><div class="lbl">Left after expenses</div><div class="val">£<span id="stat-left">0.00</span></div></div>
+            </div>
+
+            <!-- Money spent on the day comes out of what was collected. -->
+            <div class="field-grid-2" style="margin-bottom: 16px;">
+              <div class="auth-field">
+                <label for="expenses">Expenses £</label>
+                <input type="number" id="expenses" name="expenses" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />
+                <div class="profile-hint">Sweets, shots, down-downs — anything paid for out of the money collected. Saves as you go.</div>
+              </div>
+              <div class="auth-field">
+                <label for="expenses_note">What it was spent on</label>
+                <input type="text" id="expenses_note" name="expenses_note" placeholder="e.g. Sweets £6, shots £12, down-downs £20" />
+              </div>
             </div>
             <p class="profile-hint" id="money-split-hint" hidden style="margin: -10px 0 16px;">
               Enter what each person actually pays. The organiser keeps the expenses; everything above that goes to the charity.
@@ -852,11 +869,23 @@
       put: 'Plain writing, blank line between paragraphs. No need for anything fancy.',
       affects: 'Shows on the hash page and earns it a "Write-up" badge on the homepage list. Nothing else waits on it — you can add it weeks later, or never.',
     },
+    expenses: {
+      title: 'Expenses',
+      what: 'Money spent on the day, paid for out of what was collected.',
+      put: 'The total in pounds, e.g. 38.50 — sweets, shots, the down-downs at the end. Leave blank if nothing was spent.',
+      affects: 'Taken off the money collected to give "Left after expenses". It does not change what anyone paid or owes, and it does not touch the charity figure.',
+    },
+    expenses_note: {
+      title: 'What it was spent on',
+      what: 'A reminder of where the expenses went.',
+      put: 'Anything short, e.g. "Sweets £6, shots £12, down-downs £20".',
+      affects: 'Only shown here, for the mismanagement. Nothing public.',
+    },
     hares_text: {
       title: 'Hares without an account',
       what: 'Who laid the trail, for anyone who has no login on this site.',
-      put: 'Their hash names. Pick from the list above, or type them separated by "&".',
-      affects: 'This is what shows as the hare on the homepage, the hash page and the admin list -- it wins over the member picker above. Use it when back-filling an old hash, where nobody had an account.',
+      put: 'Their hash names. Tap a name in the list below, or type them separated by "&". Press Save when done.',
+      affects: 'Shows as a hare on the homepage, the hash page and the admin list, alongside anyone picked in the member box above. Use it when back-filling an old hash, where nobody had an account.',
     },
     written_up: {
       title: 'Written up',
@@ -1022,26 +1051,44 @@
   // back-filling an old hash. Picking beats typing: it reuses the spelling
   // already on record.
   async function refreshHaresPicker() {
-    const sel = $('#hares_legacy_pick');
-    if (!sel) return;
+    const host = $('#hares_name_chips');
+    if (!host) return;
     const rows = await loadLegacyNames();
-    sel.innerHTML = '<option value="">— Pick a past hasher —</option>' +
-      rows.map((r) => `<option value="${escapeHtml(r.label)}">${escapeHtml(r.label)}</option>`).join('');
+    const q = ($('#hares_name_filter')?.value || '').toLowerCase().trim();
+    const listed = new Set(splitHareNames($('#hares_text').value));
+    if (!rows.length) {
+      // Say so in words, so an empty list never looks like a broken one.
+      host.innerHTML = '<p class="profile-hint" style="margin: 0;">No past hashers on record yet. ' +
+        'Type the names in the box above instead.</p>';
+      return;
+    }
+    const shown = rows.filter((r) => !q || String(r.label).toLowerCase().includes(q));
+    host.innerHTML = shown.length
+      ? shown.map((r) => {
+          const on = listed.has(String(r.label).toLowerCase().trim());
+          return `<button type="button" class="hare-name-chip${on ? ' is-on' : ''}" data-name="${escapeHtml(r.label)}"${on ? ' disabled' : ''}>` +
+                 `${on ? '✓ ' : '+ '}${escapeHtml(r.label)}</button>`;
+        }).join('')
+      : '<p class="profile-hint" style="margin: 0;">Nobody matches that. Type the name in the box above instead.</p>';
+  }
+
+  function splitHareNames(s) {
+    return String(s || '').toLowerCase().split(/\s*&\s*|\s*,\s*/).map((x) => x.trim()).filter(Boolean);
   }
 
   // Append rather than replace, since a hash usually has two hares.
-  function addPickedHareName() {
-    const sel = $('#hares_legacy_pick');
-    const name = sel?.value.trim();
-    if (!name) { showToast('Pick a name from the list first.', { kind: 'error' }); return; }
+  function addPickedHareName(name) {
+    name = String(name || '').trim();
+    if (!name) return;
     const box = $('#hares_text');
     const existing = box.value.trim();
-    if (existing.toLowerCase().split(/\s*&\s*|\s*,\s*/).includes(name.toLowerCase())) {
+    if (splitHareNames(existing).includes(name.toLowerCase())) {
       showToast(`${name} is already listed.`, { kind: 'error' });
       return;
     }
     box.value = existing ? `${existing} & ${name}` : name;
-    sel.value = '';
+    refreshHaresPicker();
+    showToast(`Added ${name}. Press Save to keep it.`, { kind: 'ok' });
   }
 
   function jumpToTitle() {
@@ -1229,6 +1276,8 @@
     $('#run_number').value = data.run_number;
     $('#title').value = data.title;
     if ($('#hares_text')) $('#hares_text').value = data.hares || '';
+    $('#expenses').value = data.expenses != null ? Number(data.expenses).toFixed(2) : '';
+    $('#expenses_note').value = data.expenses_note || '';
     $('#event_date').value = data.event_date;
     $('#start_time').value = data.start_time || '12:00';
     $('#location_summary').value = data.location_summary || '';
@@ -1720,11 +1769,15 @@
         outstanding += amt;  // on the roster but not settled = they owe it
       }
     }
-    return { collected, charity, keep: collected - charity, outstanding };
+    const expenses = Number(originalEvent?.expenses) || 0;
+    return { collected, charity, keep: collected - charity, outstanding, expenses, left: collected - charity - expenses };
   }
 
   function recomputeTotals() {
-    const { collected, charity, keep, outstanding } = computeMoney();
+    const { collected, charity, keep, outstanding, expenses, left } = computeMoney();
+    $('#stat-expenses').textContent = money(expenses);
+    $('#stat-left').textContent = money(left);
+    $('#stat-left-card').classList.toggle('att-stat-warn', left < 0);
     $('#stat-collected').textContent = money(collected);
     $('#stat-charity').textContent = money(charity);
     $('#stat-keep').textContent = money(keep);
@@ -1961,6 +2014,25 @@
     await reloadRoster();   // also rebuilds the legacy dropdown
   }
 
+  // Expenses save the moment they change, like the roster amounts around
+  // them, so there is no separate button to forget.
+  async function saveExpenses() {
+    if (!eventId) return;
+    const raw = $('#expenses').value.trim();
+    const amount = raw === '' ? null : Math.max(0, Math.round(Number(raw) * 100) / 100);
+    if (raw !== '' && !Number.isFinite(amount)) { showToast('Expenses must be a number, e.g. 12.50', { kind: 'error' }); return; }
+    const note = $('#expenses_note').value.trim() || null;
+    if (amount === (originalEvent?.expenses != null ? Number(originalEvent.expenses) : null)
+        && note === (originalEvent?.expenses_note ?? null)) return;
+    const { data, error } = await supabase.from('events')
+      .update({ expenses: amount, expenses_note: note }).eq('id', eventId).select().single();
+    if (error) { showToast("Couldn't save the expenses: " + error.message, { kind: 'error' }); return; }
+    originalEvent = data;
+    recomputeTotals();
+    notifyHost('saved');
+    showToast('Expenses saved.', { kind: 'ok' });
+  }
+
   // ---- Photos -----------------------------------------------------------
 
   function photoUrl(path) {
@@ -2074,7 +2146,14 @@
   $('#event-form').addEventListener('submit', (e) => { e.preventDefault(); saveDetails(); });
   $('#hare-toggle-btn').addEventListener('click', toggleHareStatus);
   $('#save-hares-btn').addEventListener('click', saveHares);
-  $('#hares-add-name-btn').addEventListener('click', addPickedHareName);
+  $('#hares_name_chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.hare-name-chip');
+    if (chip && !chip.disabled) addPickedHareName(chip.dataset.name);
+  });
+  $('#hares_name_filter').addEventListener('input', refreshHaresPicker);
+  $('#hares_text').addEventListener('input', refreshHaresPicker);
+  $('#expenses').addEventListener('change', saveExpenses);
+  $('#expenses_note').addEventListener('change', saveExpenses);
   $('#rename-btn').addEventListener('click', jumpToTitle);
   // Keep the frozen header's name in step as they type the title.
   $('#title').addEventListener('input', () => {

@@ -80,7 +80,8 @@
               <th>Hash name</th>
               <th>Real name</th>
               <th>Email</th>
-              <th>RSVPs</th>
+              <th title="Hashes they actually came to, from the attendance roster">Hashes attended</th>
+              <th title="Hashes they laid">Hared</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -212,7 +213,8 @@
           <td data-label="Hash name">${nameCell}</td>
           <td data-label="Real name">${escapeHtml(m.real_name || '—')}</td>
           <td data-label="Email">${escapeHtml(m.email || '—')}</td>
-          <td data-label="RSVPs">${m.rsvp_count}</td>
+          <td data-label="Hashes attended">${m.attended_count ?? '—'}</td>
+          <td data-label="Hared">${m.hared_count ?? '—'}</td>
           <td data-label="Status">${badges.join('') || '—'}</td>
           <td>${action}</td>
         </tr>
@@ -225,11 +227,13 @@
     $('#admin-loading').hidden = true;
     $('#admin-content').hidden = false;
 
-    const [{ data, error }, debtsRes, orphanRes, legacyRes] = await Promise.all([
+    const [{ data, error }, debtsRes, orphanRes, legacyRes, haresRes] = await Promise.all([
       supabase.rpc('get_member_admin_view'),
       supabase.rpc('get_members_with_debts'),
       supabase.from('orphaned_debts').select('*').order('owed', { ascending: false }),
       supabase.rpc('get_legacy_attendees'),
+      // For counting how often legacy names hared (the free-text hares field).
+      supabase.from('events').select('hares').lte('event_date', new Date().toISOString().slice(0, 10)),
     ]);
     if (error) {
       console.error('[admin-members] fetch failed:', error);
@@ -242,13 +246,19 @@
     // Legacy (pre-website) attendees — no account, tagged "(L)" so their
     // outstanding balance shows up here alongside real members.
     if (legacyRes.error) console.warn('[admin-members] legacy fetch failed:', legacyRes.error);
+    const haredByName = new Map();
+    (haresRes.data || []).forEach((ev) => {
+      new Set(String(ev.hares || '').toLowerCase().split(/\s*&\s*|\s*,\s*/).map((x) => x.trim()).filter(Boolean))
+        .forEach((n) => haredByName.set(n, (haredByName.get(n) || 0) + 1));
+    });
     const legacy = (legacyRes.data || []).map((l) => ({
       id: null,
       is_legacy: true,
       hash_name: l.label,
       real_name: null,
       email: null,
-      rsvp_count: l.event_count,
+      attended_count: l.event_count,
+      hared_count: haredByName.get(String(l.label).toLowerCase().trim()) || 0,
       is_admin: false,
       is_hash_virgin: false,
       newsletter_opt_in: false,

@@ -260,6 +260,7 @@
 
 <script type="module">
   import { supabase, getSession, isAdmin, showToast } from '/auth.js';
+  import { composeHares } from '/hares.js';
 
   const WEEKDAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1005,18 +1006,15 @@
 
   async function composeHaresString(ev) {
     // Combine: structured event_hares (resolved via RPC) + additional_hares_text + legacy text
-    const parts = [];
+    let hareRows = [];
     try {
-      const { data: hareRows } = await supabase.rpc('get_event_hares_display', { p_event_id: ev.id });
-      (hareRows || []).forEach((h) => parts.push(h.display_name));
+      const { data } = await supabase.rpc('get_event_hares_display', { p_event_id: ev.id });
+      hareRows = data || [];
     } catch (e) {
       console.warn('[event] hare display fetch failed:', e);
     }
-    if (ev.additional_hares_text && ev.additional_hares_text.trim()) {
-      parts.push(ev.additional_hares_text.trim());
-    }
-    if (parts.length > 0) return parts.join(', ');
-    if (ev.hares && ev.hares.trim()) return ev.hares;
+    const names = composeHares(ev, hareRows);
+    if (names) return names;
     if (ev.status === 'hares_wanted') return 'Volunteers wanted!';
     return 'TBC';
   }

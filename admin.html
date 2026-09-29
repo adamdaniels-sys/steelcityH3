@@ -165,6 +165,7 @@
 
 <script type="module">
   import { supabase, requireAdmin, showToast } from './auth.js';
+  import { composeHares, loadHareRows } from './hares.js';
 
   const $ = (s) => document.querySelector(s);
 
@@ -267,7 +268,10 @@
     } else {
       // Bulk-fetch attendance counts for these events
       const ids = next3.map((e) => e.id);
-      const { data: countsData } = await supabase.rpc('get_event_attendance_counts', { p_event_ids: ids });
+      const [{ data: countsData }, haresByEventId] = await Promise.all([
+        supabase.rpc('get_event_attendance_counts', { p_event_ids: ids }),
+        loadHareRows(supabase, ids),
+      ]);
       const countsByEventId = new Map();
       (countsData || []).forEach((c) => countsByEventId.set(c.event_id, c));
 
@@ -275,7 +279,7 @@
         const d = parseDate(ev.event_date);
         const counts = countsByEventId.get(ev.id);
         const onOn = counts?.on_on_total ?? 0;
-        const haresLabel = ev.status === 'hares_wanted' ? '<span class="warn-badge">▸ Volunteers wanted!</span>' : escapeHtml(ev.hares || 'TBC');
+        const haresLabel = ev.status === 'hares_wanted' ? '<span class="warn-badge">▸ Volunteers wanted!</span>' : escapeHtml(composeHares(ev, haresByEventId.get(ev.id)) || 'TBC');
         return `
           <a class="onons-row" href="/admin-event.html?id=${ev.id}">
             <div class="onons-date">

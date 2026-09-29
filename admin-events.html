@@ -123,6 +123,7 @@
 
 <script type="module">
   import { supabase, requireAdmin } from './auth.js';
+  import { composeHares, loadHareRows } from './hares.js';
 
   const $ = (s) => document.querySelector(s);
 
@@ -169,6 +170,7 @@
 
   let allEvents = [];
   let countsByEventId = new Map();
+  let haresByEventId = new Map();
   let outstandingByEventId = new Map();
 
   function render() {
@@ -203,7 +205,7 @@
       const onOn = counts?.on_on_total ?? 0;
       const haresHtml = ev.status === 'hares_wanted'
         ? `<span class="warn-badge">Volunteers wanted</span>`
-        : escapeHtml(ev.hares || 'TBC');
+        : escapeHtml(composeHares(ev, haresByEventId.get(ev.id)) || 'TBC');
       const out = outstandingByEventId.get(ev.id);
       const outTag = (out && Number(out.unpaid_total) > 0)
         ? ` <span class="owes-badge" title="${out.unpaid_count} not paid">Money outstanding £${Number(out.unpaid_total).toFixed(2)}</span>`
@@ -242,10 +244,12 @@
     outstandingByEventId.clear();
     const ids = allEvents.map((e) => e.id);
     if (ids.length > 0) {
-      const [{ data: countsData }, { data: outData }] = await Promise.all([
+      const [{ data: countsData }, { data: outData }, hareMap] = await Promise.all([
         supabase.rpc('get_event_attendance_counts', { p_event_ids: ids }),
         supabase.rpc('get_events_outstanding', { p_event_ids: ids }),
+        loadHareRows(supabase, ids),
       ]);
+      haresByEventId = hareMap;
       (countsData || []).forEach((c) => countsByEventId.set(c.event_id, c));
       (outData || []).forEach((o) => outstandingByEventId.set(o.event_id, o));
     }
